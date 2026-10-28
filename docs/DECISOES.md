@@ -16,14 +16,18 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | Q9 | Participantes de exemplo | Só no seed de dev. Nunca em produção | — | ASSUMIDO |
 | Q10 | Modelo comercial | Gratuito | — | ASSUMIDO |
 | Q11 | Multi-desafio | Modelo de dados suporta; UI usa o único desafio `ativo` | — | ASSUMIDO |
-| Q12 | Login | E-mail + senha (argon2), JWT em cookie httpOnly | — | ASSUMIDO |
+| Q12 | Login | Firebase Auth (Google + e-mail/senha) com cookie da API: o front troca o `idToken` por `POST /auth/sessao`, que grava o mesmo cookie httpOnly (JWT). Senha local (argon2) fica só como legado atrás de `AUTH_SENHA_LEGADO` | `docs/FRONTEND.md` §4.2 e §5 | CONFIRMADO |
 | Q13 | Fuso horário | `America/Sao_Paulo` | `Desafio.timezone` | ASSUMIDO |
 | Q14 | Notificações | Fora do MVP | — | ASSUMIDO |
 | Q15 🚫 | Domínio | — | env | ASSUMIDO |
 | X1 | Editar dias anteriores? | Não. Só o dia atual é editável | env `PERMITIR_EDITAR_DIAS_ANTERIORES=false` | ASSUMIDO |
 | X2 | Até quando dá para se inscrever? | Enquanto `inscricoesAbertas = true` e o desafio não terminou | banco + endpoint admin | ASSUMIDO |
-| X3 | Recuperação de senha | Fora do MVP; script `redefinir-senha` | script na API | ASSUMIDO |
+| X3 | Recuperação de senha | Firebase `sendPasswordResetEmail` (tela `/recuperar-senha`, sempre a mesma confirmação, exista ou não a conta). O script `redefinir-senha` continua só para usuários legados | `docs/FRONTEND.md` §5.3 | CONFIRMADO |
 | X4 | Sair do desafio libera a vaga? | Não; vaga permanente | — | ASSUMIDO |
+| X5 | Excluir conta | `DELETE /me` anonimiza o `Usuario` ("Participante removido"), apaga as fotos e mantém `Participante` e `DiaDesafio`: a vaga continua ocupada (não quebra a numeração `count + 1`) | `docs/FRONTEND.md` §4.2 | ASSUMIDO |
+| X6 | Narrativa da escalada | Cada dia concluído sobe 295 m (`Math.round(dias / totalDias * 8848)`); cume = 8.848 m = prêmio. Dia perdido não desce | `@everest/shared` `regras/altitude.ts` | ASSUMIDO |
+| X7 | Tema padrão | Sistema (segue `prefers-color-scheme`); opções Claro / Escuro / Sistema no Perfil | `localStorage['everest-tema']` | ASSUMIDO |
+| X8 | Fila de conferência do embaixador | Dia concluído fica "aguardando conferência" até o admin aprovar (`PATCH /admin/dias/:diaId/conferencia`); qualquer edição do dia volta para a fila. Conferência não muda a contagem do ranking | `DiaDesafio.conferidoEm` / `conferidoPorId` | ASSUMIDO |
 | LOGO 🚫 | Logo final | Placeholder até receber `apps/web/public/logo.png` | `apps/web/public/logo.png` | ASSUMIDO |
 
 ## Decisões técnicas tomadas durante a construção

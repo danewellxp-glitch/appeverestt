@@ -13,3 +13,4 @@ alwaysApply: true
 - Rode build/test/typecheck antes de dizer que terminou. Mesmo erro 3x: pare e explique.
 - UI em pt-BR, mobile-first, preto/vermelho; texto vermelho pequeno usa #ef4444, nunca #dc2626.
 - Fotos: bucket privado, URL assinada, EXIF removido. Nunca cachear /api no service worker.
+- Frontend v2: siga docs/FRONTEND.md; referência visual em docs/prototipo/everest-prototipo.html.
