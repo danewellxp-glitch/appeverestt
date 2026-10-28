@@ -21,7 +21,7 @@ export function CampoTexto({ rotulo, erro, dica, className = '', ...resto }: Cam
         id={id}
         aria-invalid={erro ? true : undefined}
         aria-describedby={descritores}
-        className={`min-h-11 rounded-xl border bg-superficie-2 px-3 text-base text-texto placeholder:text-texto-2/70 ${erro ? 'border-vermelho-texto' : 'border-borda'}`}
+        className={`min-h-11 rounded-xl border bg-superficie-2 px-3 text-base text-texto placeholder:text-texto-2 ${erro ? 'border-vermelho-texto' : 'border-borda-campo'}`}
         {...resto}
       />
       {dica && !erro && (

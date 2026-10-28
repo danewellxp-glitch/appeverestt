@@ -208,8 +208,8 @@ function AcoesInvalidacao({
                   aria-invalid={erroMotivo ? true : undefined}
                   aria-describedby={erroMotivo ? `${idErro} ${idContador}` : idContador}
                   placeholder="Ex.: foto de leitura repetida do dia anterior."
-                  className={`min-h-24 rounded-xl border bg-fundo px-3 py-2 text-base text-texto placeholder:text-texto-2/70 ${
-                    erroMotivo ? 'border-vermelho-texto' : 'border-borda'
+                  className={`min-h-24 rounded-xl border bg-fundo px-3 py-2 text-base text-texto placeholder:text-texto-2 ${
+                    erroMotivo ? 'border-vermelho-texto' : 'border-borda-campo'
                   }`}
                 />
                 {erroMotivo && (

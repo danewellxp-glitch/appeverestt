@@ -2,6 +2,7 @@
 // TODO_DECISAO(LOGO): a logo atual é provisória. Ao receber a oficial, substitua
 // public/logo.png e rode, na raiz do repo:
 //   pnpm --filter web exec pwa-assets-generator
+//   node scripts/otimizar-logo.cjs   (regera public/logo.webp, usada na UI)
 // Os PNGs/ICO gerados em public/ são versionados (o build não depende do sharp).
 import { defineConfig, type Preset } from '@vite-pwa/assets-generator/config';
 

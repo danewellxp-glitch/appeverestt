@@ -56,7 +56,7 @@ export function ToggleInscricoes({ slug, abertas }: { slug: string; abertas: boo
           <span
             aria-hidden
             className={`relative h-7 w-12 rounded-full border transition-colors ${
-              abertas ? 'border-green-600 bg-green-700' : 'border-borda bg-superficie-2'
+              abertas ? 'border-green-600 bg-green-700' : 'border-borda-campo bg-superficie-2'
             }`}
           >
             <span

@@ -34,7 +34,7 @@ services:
     environment:
       MINIO_ROOT_USER: everest
       MINIO_ROOT_PASSWORD: everest-dev-secret
-      MINIO_API_CORS_ALLOW_ORIGIN: http://localhost:5173,http://localhost:4173
+      MINIO_API_CORS_ALLOW_ORIGIN: http://localhost:5173,http://localhost:4173,http://localhost:4174
     ports:
       - '9000:9000'
       - '9001:9001'

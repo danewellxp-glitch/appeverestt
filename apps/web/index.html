@@ -14,6 +14,8 @@
     <!-- Ícones gerados por pwa-assets-generator a partir de public/logo.png -->
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" sizes="180x180" />
+    <!-- A marca d'água (logo.webp) é o LCP de todas as rotas: começa a baixar antes do JS. -->
+    <link rel="preload" as="image" href="/logo.webp" type="image/webp" fetchpriority="high" />
     <title>Everest Desafio</title>
   </head>
   <body>

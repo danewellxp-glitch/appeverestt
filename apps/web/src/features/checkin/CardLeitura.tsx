@@ -63,7 +63,7 @@ export function CardLeitura({
               if (digitando === '') aoAlterar(() => 0);
               setDigitando(null);
             }}
-            className="min-h-11 w-full rounded-xl border border-borda bg-superficie-2 px-3 text-center text-xl font-bold text-texto disabled:opacity-60"
+            className="min-h-11 w-full rounded-xl border border-borda-campo bg-superficie-2 px-3 text-center text-xl font-bold text-texto disabled:opacity-60"
           />
         </div>
         <Botao variante="secundario" disabled={!editavel} onClick={() => somar(1)} aria-label="Somar 1 página">

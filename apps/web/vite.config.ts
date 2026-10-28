@@ -1,7 +1,11 @@
+/// <reference types="vitest/config" />
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
+// Destino do proxy /api (dev e preview). Os testes E2E (Playwright) apontam para a API de teste.
+const API_PROXY = process.env.VITE_API_PROXY ?? 'http://localhost:3000';
 
 export default defineConfig({
   plugins: [
@@ -44,6 +48,8 @@ export default defineConfig({
         // Só o app shell (assets do build + ícones). Nada de runtimeCaching:
         // /api e URLs assinadas do storage NUNCA vão para o cache.
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,webp,woff2}'],
+        // A UI usa logo.webp; logo.png é só a fonte dos ícones e não precisa ir para o precache.
+        globIgnores: ['**/logo.png'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/],
         cleanupOutdatedCaches: true,
@@ -55,13 +61,17 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': { target: 'http://localhost:3000', changeOrigin: false },
+      '/api': { target: API_PROXY, changeOrigin: false },
     },
   },
   preview: {
     port: 4173,
     proxy: {
-      '/api': { target: 'http://localhost:3000', changeOrigin: false },
+      '/api': { target: API_PROXY, changeOrigin: false },
     },
+  },
+  test: {
+    // e2e/ é do Playwright (pnpm test:e2e), não do Vitest.
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
   },
 });

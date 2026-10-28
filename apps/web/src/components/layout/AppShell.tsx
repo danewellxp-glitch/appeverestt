@@ -19,7 +19,7 @@ export function AppShell() {
       <header className="sticky top-0 z-20 border-b border-borda bg-fundo/90 pt-safe backdrop-blur">
         <div className="mx-auto flex max-w-md items-center justify-between gap-2 px-4 py-2">
           <Link to="/" className="flex min-h-11 items-center gap-2 font-bold tracking-wide">
-            <img src="/logo.png" alt="" className="size-8" />
+            <img src="/logo.webp" alt="" width={32} height={32} className="size-8" />
             <span>EVEREST</span>
           </Link>
           {me && (

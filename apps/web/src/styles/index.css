@@ -5,6 +5,8 @@
   --color-superficie: #0a0a0a;
   --color-superficie-2: #171717;
   --color-borda: #262626;
+  /* Contorno de campos e trilho de interruptor desligado: ≥ 3:1 sobre fundo/superfícies (WCAG 1.4.11). */
+  --color-borda-campo: #737373;
   --color-texto: #ffffff;
   --color-texto-2: #a3a3a3;
   /* #dc2626 só como fundo de botão/barras ou em títulos grandes (contraste ~4,3:1 sobre preto). */

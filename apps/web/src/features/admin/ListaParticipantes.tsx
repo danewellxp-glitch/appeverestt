@@ -50,7 +50,7 @@ export function ListaParticipantes({
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Nome ou e-mail"
             autoComplete="off"
-            className="min-h-11 w-full rounded-xl border border-borda bg-superficie-2 pr-3 pl-9 text-base text-texto placeholder:text-texto-2/70"
+            className="min-h-11 w-full rounded-xl border border-borda-campo bg-superficie-2 pr-3 pl-9 text-base text-texto placeholder:text-texto-2"
           />
         </div>
       </div>

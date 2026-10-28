@@ -23,7 +23,7 @@ function estilo(d: DiaResumo, selecionado: boolean): string {
     case 'NAO_CONCLUIDO':
       return `${base} bg-superficie-2 text-texto-2${anel}`;
     case 'FUTURO':
-      return `${base} border border-borda bg-transparent text-texto-2/60${anel}`;
+      return `${base} border border-borda bg-transparent text-texto-2/75${anel}`;
   }
 }
 

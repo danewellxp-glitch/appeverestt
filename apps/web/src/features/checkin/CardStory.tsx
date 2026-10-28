@@ -63,7 +63,7 @@ export function CardStory({
               readOnly
               value={texto}
               onFocus={(e) => e.currentTarget.select()}
-              className="min-h-11 rounded-xl border border-borda bg-superficie-2 px-3 text-base text-texto"
+              className="min-h-11 rounded-xl border border-borda-campo bg-superficie-2 px-3 text-base text-texto"
             />
           </div>
         )}

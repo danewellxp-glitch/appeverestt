@@ -183,7 +183,13 @@ export default function Entrada() {
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 px-5 pt-4 pb-10">
         <section className="flex flex-col items-center text-center">
-          <img src="/logo.png" alt="Everest" className="size-28 object-contain drop-shadow-[0_0_24px_rgba(220,38,38,0.25)]" />
+          <img
+            src="/logo.webp"
+            alt="Everest"
+            width={112}
+            height={112}
+            className="size-28 object-contain drop-shadow-[0_0_24px_rgba(220,38,38,0.25)]"
+          />
           <p className="rotulo mt-6">Desafio 30 dias</p>
           <h1 className="mt-2 text-[2.6rem] font-black uppercase leading-[0.95] tracking-tight">
             A sua <span className="text-vermelho">melhor</span> versão

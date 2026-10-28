@@ -22,7 +22,7 @@ export function Interruptor({
       <span>{rotulo}</span>
       <span
         aria-hidden
-        className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${ligado ? 'bg-vermelho' : 'bg-borda'}`}
+        className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${ligado ? 'bg-vermelho' : 'bg-borda-campo'}`}
       >
         <span
           className={`inline-block size-5 rounded-full bg-white shadow transition-transform ${ligado ? 'translate-x-6' : 'translate-x-1'}`}
