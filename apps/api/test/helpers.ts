@@ -101,3 +101,78 @@ export async function esperar<T>(
   }
   return ultimo;
 }
+
+/** Desafio ativo que começou há `diasAtras` dias + usuário inscrito (hoje = dia diasAtras+1). */
+export async function cenarioInscrito(
+  ctx: Contexto,
+  opcoes: { diasAtras?: number; nome?: string } = {},
+): Promise<{
+  desafio: Desafio;
+  agente: ReturnType<typeof request.agent>;
+  usuarioId: string;
+  participanteId: string;
+  hoje: number;
+}> {
+  const diasAtras = opcoes.diasAtras ?? 3;
+  const desafio =
+    (await ctx.prisma.desafio.findUnique({ where: { slug: 'desafio-teste' } })) ??
+    (await criarDesafio(ctx.prisma, { inicioRelativo: -diasAtras }));
+  const { agente, id } = await novoUsuarioLogado(ctx.http, opcoes.nome ?? 'Pessoa Teste');
+  const r = await agente.post('/api/desafios/desafio-teste/inscricao');
+  if (r.status !== 201) throw new Error(`inscrição falhou: ${JSON.stringify(r.body)}`);
+  const corpo = r.body as { participacao: { participanteId: string } };
+  return { desafio, agente, usuarioId: id, participanteId: corpo.participacao.participanteId, hoje: diasAtras + 1 };
+}
+
+export const CHECKIN_COMPLETO = { aguaMl: 3000, exercicio: true, paginasLidas: 10, storyPostado: true };
+
+/** Insere direto no banco 3 fotos CONFIRMADA (sem storage) para um dia. */
+export async function fotosFalsas(prisma: PrismaService, participanteId: string, numeroDia: number): Promise<string> {
+  const dia = await prisma.diaDesafio.upsert({
+    where: { participanteId_numeroDia: { participanteId, numeroDia } },
+    update: {},
+    create: { participanteId, numeroDia },
+  });
+  for (const tipo of ['AGUA', 'EXERCICIO', 'LEITURA'] as const) {
+    await prisma.fotoProva.upsert({
+      where: { diaId_tipo: { diaId: dia.id, tipo } },
+      update: { status: 'CONFIRMADA' },
+      create: {
+        diaId: dia.id,
+        tipo,
+        storageKey: `falsa/${dia.id}/${tipo}.webp`,
+        thumbKey: `falsa/${dia.id}/${tipo}.thumb.webp`,
+        mimeType: 'image/webp',
+        tamanhoBytes: 100,
+        status: 'CONFIRMADA',
+      },
+    });
+  }
+  return dia.id;
+}
+
+/** Cria participante + dias concluídos direto no banco (para ranking/admin). */
+export async function participanteComDias(
+  prisma: PrismaService,
+  desafioId: string,
+  nome: string,
+  diasConcluidos: number[],
+  extra: { dataInscricao?: Date; vagaNumero?: number } = {},
+): Promise<string> {
+  const u = await prisma.usuario.create({
+    data: { nome, email: emailUnico('rank'), senhaHash: 'x', aceitouTermosEm: new Date() },
+  });
+  const ocupadas = await prisma.participante.count({ where: { desafioId, vagaNumero: { not: null } } });
+  const p = await prisma.participante.create({
+    data: {
+      desafioId,
+      usuarioId: u.id,
+      vagaNumero: extra.vagaNumero ?? ocupadas + 1,
+      ...(extra.dataInscricao ? { dataInscricao: extra.dataInscricao } : {}),
+    },
+  });
+  for (const n of diasConcluidos) {
+    await prisma.diaDesafio.create({ data: { participanteId: p.id, numeroDia: n, ...CHECKIN_COMPLETO, concluido: true } });
+  }
+  return p.id;
+}

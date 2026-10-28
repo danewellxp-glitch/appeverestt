@@ -19,58 +19,58 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] **DoD:** `test` 100%; `build` gera `dist/index.js`, `index.cjs`, `index.d.ts`; typecheck e lint ok
 
 ## FASE 2: Base da API
-- [ ] Projeto Nest em `apps/api` dependendo de `@everest/shared`
-- [ ] ConfigModule com validação zod do env
-- [ ] Prisma: schema, migration inicial + `checks`, `PrismaService`
-- [ ] `RedisModule`
-- [ ] `main.ts`: `/api`, helmet, cookie-parser, trust proxy, Swagger em dev, filtro de exceções, ZodValidationPipe, CORS dev
-- [ ] `GET /api/health`
-- [ ] `prisma/seed.ts` idempotente
-- [ ] Scripts `criar-desafio`, `criar-admin`, `redefinir-senha`
-- [ ] **DoD:** migrate ok; start:dev sobe; health 200; `/api/docs` abre; seed 2× sem duplicar; CHECK `vagaNumero = 0` falha
+- [x] Projeto Nest em `apps/api` dependendo de `@everest/shared`
+- [x] ConfigModule com validação zod do env
+- [x] Prisma: schema, migration inicial + `checks`, `PrismaService`
+- [x] `RedisModule`
+- [x] `main.ts`: `/api`, helmet, cookie-parser, trust proxy, Swagger em dev, filtro de exceções, ZodValidationPipe, CORS dev
+- [x] `GET /api/health`
+- [x] `prisma/seed.ts` idempotente
+- [x] Scripts `criar-desafio`, `criar-admin`, `redefinir-senha`
+- [x] **DoD:** migrate ok; start:dev sobe; health 200; `/api/docs` abre; seed 2× sem duplicar; CHECK `vagaNumero = 0` falha
 
 ## FASE 3: Autenticação
-- [ ] cadastro, login, logout, me
-- [ ] `JwtAuthGuard`, `AdminGuard`, `@UsuarioAtual()`, checagem de `Origin`
-- [ ] `ThrottlerModule`
-- [ ] Testes e2e de auth
-- [ ] **DoD:** `pnpm --filter api test:e2e` passa
+- [x] cadastro, login, logout, me
+- [x] `JwtAuthGuard`, `AdminGuard`, `@UsuarioAtual()`, checagem de `Origin`
+- [x] `ThrottlerModule`
+- [x] Testes e2e de auth
+- [x] **DoD:** `pnpm --filter api test:e2e` passa
 
 ## FASE 4: Desafio e inscrição
-- [ ] `GET /desafios/atual` com cache de vagas
-- [ ] `POST /desafios/:slug/inscricao` com trava
-- [ ] Q3 aplicada no seed/script do embaixador
-- [ ] Teste de concorrência 60 → 50/10
-- [ ] Teste mesmo usuário 2× em paralelo
-- [ ] Teste `INSCRICOES_FECHADAS`
-- [ ] **DoD:** testes passando
+- [x] `GET /desafios/atual` com cache de vagas
+- [x] `POST /desafios/:slug/inscricao` com trava
+- [x] Q3 aplicada no seed/script do embaixador
+- [x] Teste de concorrência 60 → 50/10 (sem vaga repetida, todas entre 1 e 50)
+- [x] Teste mesmo usuário 2× em paralelo
+- [x] Teste `INSCRICOES_FECHADAS`
+- [x] **DoD:** testes passando
 
 ## FASE 5: Check-in diário e progresso
-- [ ] `GET /meu-progresso`, `GET /dias/:n`, `PUT /dias/:n`
-- [ ] PUT valida janela, upsert, recalcula `concluido`, invalida ranking
-- [ ] Testes da fase
-- [ ] **DoD:** testes passando; Swagger com exemplos
+- [x] `GET /meu-progresso`, `GET /dias/:n`, `PUT /dias/:n`
+- [x] PUT valida janela, upsert, recalcula `concluido`, invalida ranking
+- [x] Testes da fase
+- [x] **DoD:** testes passando; Swagger com exemplos
 
 ## FASE 6: Fotos
-- [ ] `StorageService`
-- [ ] `upload-url`, `confirmar`, `DELETE`
-- [ ] BullMQ: fila `fotos`, `processar-foto`, limpeza repetível
-- [ ] Recálculo do dia após confirmar/rejeitar/deletar
-- [ ] Testes de integração com MinIO
-- [ ] Teste sem EXIF
-- [ ] **DoD:** testes passando; objeto no MinIO; URL assinada abre e expira
+- [x] `StorageService`
+- [x] `upload-url`, `confirmar`, `DELETE`
+- [x] BullMQ: fila `fotos`, `processar-foto`, limpeza repetível
+- [x] Recálculo do dia após confirmar/rejeitar/deletar
+- [x] Testes de integração com MinIO
+- [x] Teste sem EXIF
+- [x] **DoD:** testes passando; objeto no MinIO; URL assinada abre e expira
 
 ## FASE 7: Ranking
-- [ ] Consulta agregada + sequências + `ordenarRanking` + `nomeExibicao`
-- [ ] Cache + `minhaPosicao`
-- [ ] Testes
-- [ ] **DoD:** testes passando
+- [x] Consulta agregada + sequências + `ordenarRanking` + `nomeExibicao`
+- [x] Cache + `minhaPosicao`
+- [x] Testes
+- [x] **DoD:** testes passando
 
 ## FASE 8: Admin
-- [ ] Endpoints admin com `AdminGuard`
-- [ ] Invalidação grava quem/quando, recalcula, invalida ranking
-- [ ] Testes
-- [ ] **DoD:** `pnpm --filter api test && pnpm --filter api test:e2e`
+- [x] Endpoints admin com `AdminGuard`
+- [x] Invalidação grava quem/quando, recalcula, invalida ranking
+- [x] Testes
+- [x] **DoD:** `pnpm --filter api test` (6 unitários) + `pnpm --filter api test:e2e` (52 e2e em 6 suítes) — todos passando
 
 ## FASE 9: Base do frontend
 - [ ] Vite react-ts + `@everest/shared`

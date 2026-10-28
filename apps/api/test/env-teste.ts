@@ -15,7 +15,6 @@ export const ENV_TESTE: Record<string, string> = {
   S3_FORCE_PATH_STYLE: 'true',
   PERMITIR_EDITAR_DIAS_ANTERIORES: 'false',
   THROTTLE_ATIVO: 'false',
-  WORKER_ATIVO: 'true',
 };
 
 export function aplicarEnvTeste(): void {

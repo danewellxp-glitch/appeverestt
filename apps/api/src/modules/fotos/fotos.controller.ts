@@ -1,0 +1,71 @@
+import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, UseGuards } from '@nestjs/common';
+import { ApiCookieAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import {
+  numeroDiaSchema,
+  tipoFotoSchema,
+  uploadUrlSchema,
+  type ConfirmarFotoResposta,
+  type TipoFoto,
+  type UploadUrlResposta,
+} from '@everest/shared';
+import { UsuarioAtual } from '../../common/decorators/usuario-atual.decorator';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { ApiZodBody } from '../../common/swagger';
+import type { UsuarioSessao } from '../auth/sessao';
+import { FotosService } from './fotos.service';
+
+@ApiTags('fotos')
+@ApiCookieAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('desafios/:slug/dias/:n/fotos')
+export class FotosController {
+  constructor(private readonly fotos: FotosService) {}
+
+  @Post('upload-url')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @ApiZodBody(uploadUrlSchema, { tipo: 'AGUA', mimeType: 'image/jpeg', tamanhoBytes: 524288 })
+  @ApiOkResponse({
+    description: 'Faça PUT do arquivo em `uploadUrl` com os `headers` informados e depois chame /confirmar.',
+    schema: {
+      example: {
+        fotoId: 'a1b2c3',
+        uploadUrl: 'https://storage/...',
+        headers: { 'Content-Type': 'image/jpeg' },
+      } satisfies UploadUrlResposta,
+    },
+  })
+  uploadUrl(
+    @Param('slug') slug: string,
+    @Param('n', new ZodValidationPipe(numeroDiaSchema)) n: number,
+    @Body() body: unknown,
+    @UsuarioAtual() usuario: UsuarioSessao,
+  ): Promise<UploadUrlResposta> {
+    return this.fotos.solicitarUpload(slug, usuario, n, body);
+  }
+
+  @Post(':fotoId/confirmar')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ schema: { example: { fotoId: 'a1b2c3', status: 'ENVIADA' } satisfies ConfirmarFotoResposta } })
+  confirmar(
+    @Param('slug') slug: string,
+    @Param('n', new ZodValidationPipe(numeroDiaSchema)) n: number,
+    @Param('fotoId') fotoId: string,
+    @UsuarioAtual() usuario: UsuarioSessao,
+  ): Promise<ConfirmarFotoResposta> {
+    return this.fotos.confirmar(slug, usuario, n, fotoId);
+  }
+
+  @Delete(':tipo')
+  @ApiOkResponse({ schema: { example: { ok: true } } })
+  remover(
+    @Param('slug') slug: string,
+    @Param('n', new ZodValidationPipe(numeroDiaSchema)) n: number,
+    @Param('tipo', new ZodValidationPipe(tipoFotoSchema)) tipo: TipoFoto,
+    @UsuarioAtual() usuario: UsuarioSessao,
+  ): Promise<{ ok: true }> {
+    return this.fotos.remover(slug, usuario, n, tipo);
+  }
+}

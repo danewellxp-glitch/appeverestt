@@ -50,13 +50,7 @@ export interface InscricaoResposta {
   criada: boolean;
 }
 
-export type SituacaoDia =
-  | 'CONCLUIDO'
-  | 'INVALIDADO'
-  | 'HOJE'
-  | 'EM_ANDAMENTO'
-  | 'NAO_CONCLUIDO'
-  | 'FUTURO';
+export type SituacaoDia = 'CONCLUIDO' | 'INVALIDADO' | 'HOJE' | 'NAO_CONCLUIDO' | 'FUTURO';
 
 export interface DiaResumo {
   numeroDia: number;
@@ -126,6 +120,23 @@ export interface AdminParticipante {
 export interface AdminParticipantesResposta {
   desafio: { slug: string; nome: string; inscricoesAbertas: boolean; totalVagas: number };
   participantes: AdminParticipante[];
+}
+
+export interface AdminParticipanteDetalhe {
+  participante: AdminParticipante;
+  progresso: MeuProgresso;
+}
+
+export interface ConfirmarFotoResposta {
+  fotoId: string;
+  status: StatusFoto;
+}
+
+export interface InvalidacaoResposta {
+  diaId: string;
+  invalidado: boolean;
+  concluido: boolean;
+  motivoInvalidacao: string | null;
 }
 
 export interface AdminDiaDetalhe extends DiaDetalhe {

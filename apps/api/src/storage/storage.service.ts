@@ -51,7 +51,7 @@ export class StorageService {
     return getSignedUrl(
       this.s3,
       new PutObjectCommand({ Bucket: this.bucket, Key: chave, ContentType: contentType }),
-      { expiresIn: ttl },
+      { expiresIn: ttl, signableHeaders: new Set(['content-type']) },
     );
   }
 

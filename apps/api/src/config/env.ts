@@ -30,8 +30,6 @@ export const envSchema = z.object({
   PERMITIR_EDITAR_DIAS_ANTERIORES: booleano.default(false),
   /** Desliga o rate limit (usado só nos testes automatizados). */
   THROTTLE_ATIVO: booleano.default(true),
-  /** Desliga o worker de fotos neste processo (ex.: rodar só a API). */
-  WORKER_ATIVO: booleano.default(true),
 });
 
 export type Env = z.infer<typeof envSchema>;
