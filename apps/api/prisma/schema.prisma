@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Papel {
+  USUARIO
+  ADMIN
+}
+
+enum TipoFoto {
+  AGUA
+  EXERCICIO
+  LEITURA
+}
+
+enum StatusFoto {
+  PENDENTE
+  ENVIADA
+  CONFIRMADA
+  REJEITADA
+}
+
+model Usuario {
+  id              String         @id @default(cuid())
+  nome            String
+  /// sempre salvo em lowercase + trim
+  email           String         @unique
+  senhaHash       String
+  papel           Papel          @default(USUARIO)
+  /// incrementar invalida todas as sessões
+  tokenVersao     Int            @default(0)
+  aceitouTermosEm DateTime
+  criadoEm        DateTime       @default(now())
+  participacoes   Participante[]
+}
+
+model Desafio {
+  id                  String         @id @default(cuid())
+  slug                String         @unique
+  nome                String
+  dataInicio          DateTime       @db.Date
+  totalDias           Int            @default(30)
+  totalVagas          Int            @default(50)
+  embaixadorOcupaVaga Boolean        @default(true)
+  inscricoesAbertas   Boolean        @default(true)
+  timezone            String         @default("America/Sao_Paulo")
+  /// sem "@"
+  instagramHandle     String
+  /// sem "#"
+  hashtag             String         @default("DESAFIO30EVEREST")
+  ativo               Boolean        @default(false)
+  criadoEm            DateTime       @default(now())
+  participantes       Participante[]
+}
+
+model Participante {
+  id            String       @id @default(cuid())
+  desafioId     String
+  usuarioId     String
+  /// null somente para embaixador quando embaixadorOcupaVaga = false
+  vagaNumero    Int?
+  ehEmbaixador  Boolean      @default(false)
+  dataInscricao DateTime     @default(now())
+  desafio       Desafio      @relation(fields: [desafioId], references: [id])
+  usuario       Usuario      @relation(fields: [usuarioId], references: [id])
+  dias          DiaDesafio[]
+
+  @@unique([desafioId, usuarioId])
+  @@unique([desafioId, vagaNumero])
+}
+
+model DiaDesafio {
+  id                String       @id @default(cuid())
+  participanteId    String
+  numeroDia         Int
+  aguaMl            Int          @default(0)
+  exercicio         Boolean      @default(false)
+  paginasLidas      Int          @default(0)
+  storyPostado      Boolean      @default(false)
+  /// DERIVADO: sempre recalculado no servidor
+  concluido         Boolean      @default(false)
+  invalidado        Boolean      @default(false)
+  motivoInvalidacao String?
+  invalidadoPorId   String?
+  invalidadoEm      DateTime?
+  atualizadoEm      DateTime     @updatedAt
+  participante      Participante @relation(fields: [participanteId], references: [id])
+  fotos             FotoProva[]
+
+  @@unique([participanteId, numeroDia])
+  @@index([participanteId, concluido])
+}
+
+model FotoProva {
+  id           String     @id @default(cuid())
+  diaId        String
+  tipo         TipoFoto
+  storageKey   String
+  thumbKey     String?
+  mimeType     String
+  tamanhoBytes Int
+  status       StatusFoto @default(PENDENTE)
+  criadoEm     DateTime   @default(now())
+  dia          DiaDesafio @relation(fields: [diaId], references: [id], onDelete: Cascade)
+
+  @@unique([diaId, tipo])
+  @@index([status, criadoEm])
+}

@@ -1,0 +1,49 @@
+import { z } from 'zod';
+
+const booleano = z
+  .enum(['true', 'false', '1', '0'])
+  .transform((v) => v === 'true' || v === '1');
+
+export const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  PORT: z.coerce.number().int().min(0).max(65535).default(3000),
+  DATABASE_URL: z.string().min(1),
+  REDIS_URL: z.string().min(1),
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET precisa ter pelo menos 32 caracteres'),
+  /** Uma ou mais origens separadas por vírgula. */
+  WEB_ORIGIN: z
+    .string()
+    .min(1)
+    .transform((v) =>
+      v
+        .split(',')
+        .map((o) => o.trim().replace(/\/$/, ''))
+        .filter(Boolean),
+    )
+    .pipe(z.array(z.url()).min(1)),
+  S3_ENDPOINT: z.url(),
+  S3_REGION: z.string().min(1).default('auto'),
+  S3_BUCKET: z.string().min(1),
+  S3_ACCESS_KEY_ID: z.string().min(1),
+  S3_SECRET_ACCESS_KEY: z.string().min(1),
+  S3_FORCE_PATH_STYLE: booleano.default(false),
+  PERMITIR_EDITAR_DIAS_ANTERIORES: booleano.default(false),
+  /** Desliga o rate limit (usado só nos testes automatizados). */
+  THROTTLE_ATIVO: booleano.default(true),
+  /** Desliga o worker de fotos neste processo (ex.: rodar só a API). */
+  WORKER_ATIVO: booleano.default(true),
+});
+
+export type Env = z.infer<typeof envSchema>;
+
+/** Usado pelo ConfigModule: falha rápido no boot se faltar algo. */
+export function validarEnv(config: Record<string, unknown>): Env {
+  const r = envSchema.safeParse(config);
+  if (!r.success) {
+    const detalhes = r.error.issues
+      .map((i) => `  - ${i.path.join('.') || '(raiz)'}: ${i.message}`)
+      .join('\n');
+    throw new Error(`Variáveis de ambiente inválidas:\n${detalhes}`);
+  }
+  return r.data;
+}
