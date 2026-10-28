@@ -1,0 +1,59 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-fundo: #000000;
+  --color-superficie: #0a0a0a;
+  --color-superficie-2: #171717;
+  --color-borda: #262626;
+  --color-texto: #ffffff;
+  --color-texto-2: #a3a3a3;
+  /* #dc2626 só como fundo de botão/barras ou em títulos grandes (contraste ~4,3:1 sobre preto). */
+  --color-vermelho: #dc2626;
+  /* Texto vermelho pequeno: #ef4444 (~5,6:1 sobre preto, passa AA). */
+  --color-vermelho-texto: #ef4444;
+  --color-sucesso: #22c55e;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-fundo text-texto font-sans antialiased;
+    min-height: 100dvh;
+  }
+  /* Foco sempre visível (teclado). */
+  :focus-visible {
+    outline: 2px solid var(--color-vermelho-texto);
+    outline-offset: 2px;
+  }
+  button,
+  [role='button'] {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility rotulo {
+  @apply text-xs font-semibold uppercase tracking-widest text-texto-2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
