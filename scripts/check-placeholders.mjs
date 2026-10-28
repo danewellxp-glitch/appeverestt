@@ -24,6 +24,7 @@ function alvos() {
   lista.push(join(raiz, 'apps', 'web', 'index.html'));
   lista.push(join(raiz, 'apps', 'web', 'public'));
   lista.push(join(raiz, 'apps', 'web', 'vercel.json'));
+  lista.push(join(raiz, 'apps', 'web', 'pwa-assets.config.ts'));
   return lista.filter((p) => existsSync(p));
 }
 
