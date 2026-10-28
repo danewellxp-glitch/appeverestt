@@ -67,7 +67,7 @@ export function GridDias({
                 type="button"
                 disabled={futuro}
                 aria-label={legenda}
-                aria-current={ativo ? 'date' : undefined}
+                aria-current={ativo ? 'true' : undefined}
                 onClick={() => aoSelecionar(d.numeroDia)}
                 className={`w-full ${estilo(d, ativo)} disabled:cursor-not-allowed`}
               >

@@ -3,6 +3,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router';
 import { router } from './app/router';
+import { PwaGlobais } from './features/pwa/PwaGlobais';
+import { iniciarCapturaInstalacao } from './features/pwa/useInstallPrompt';
 import { definirAoNaoAutenticado } from './lib/api';
 import { chaves } from './lib/queries';
 import { queryClient } from './lib/queryClient';
@@ -13,6 +15,9 @@ definirAoNaoAutenticado(() => {
   queryClient.setQueryData(chaves.me, null);
 });
 
+// O `beforeinstallprompt` pode chegar antes do botão "Baixar o app" montar.
+iniciarCapturaInstalacao();
+
 const raiz = document.getElementById('root');
 if (!raiz) throw new Error('Elemento #root não encontrado');
 
@@ -20,6 +25,8 @@ createRoot(raiz).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
+      {/* Toast de nova versão / offline pronto + indicador de offline em todas as rotas. */}
+      <PwaGlobais />
     </QueryClientProvider>
   </StrictMode>,
 );

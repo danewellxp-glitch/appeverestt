@@ -4,7 +4,6 @@ import { Link, Outlet } from 'react-router';
 import { useLogout } from '../../features/auth/useLogout';
 import { useMe } from '../../lib/queries';
 import { Carregando } from '../ui/basicos';
-import { BannerOffline } from './BannerOffline';
 import { BottomNav } from './BottomNav';
 import { Watermark } from './Watermark';
 
@@ -45,7 +44,6 @@ export function AppShell() {
             </div>
           )}
         </div>
-        <BannerOffline />
       </header>
       <main className={`mx-auto max-w-md px-4 pt-4 ${inscrito ? 'pb-28' : 'pb-10'}`}>
         <Suspense fallback={<Carregando />}>
