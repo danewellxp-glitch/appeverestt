@@ -1,0 +1,15 @@
+---
+description: Regras do projeto Everest Desafio
+alwaysApply: true
+---
+- Fonte de requisitos: docs/SDD.md + docs/PROMPT_CURSOR.md (o PROMPT prevalece em conflitos).
+- Antes de qualquer tarefa, leia docs/PROGRESSO.md e docs/DECISOES.md.
+- Execute só a fase pedida; ao terminar, entregue o relatório de fase e PARE.
+- Monorepo pnpm: apps/web (React+Vite+TS+Tailwind), apps/api (NestJS+Prisma+Redis/BullMQ), packages/shared (regras + zod).
+- Regras de negócio ficam em packages/shared e são aplicadas no servidor. `concluido` nunca vem do cliente.
+- TypeScript strict, sem any. Sem código incompleto, sem "// resto do código".
+- Não invente decisões de produto: use os defaults da seção 4 do PROMPT; o que faltar vira TODO_DECISAO(Qx) + registro em DECISOES.md.
+- Não adicione dependências fora da lista da seção 5 sem justificar.
+- Rode build/test/typecheck antes de dizer que terminou. Mesmo erro 3x: pare e explique.
+- UI em pt-BR, mobile-first, preto/vermelho; texto vermelho pequeno usa #ef4444, nunca #dc2626.
+- Fotos: bucket privado, URL assinada, EXIF removido. Nunca cachear /api no service worker.
