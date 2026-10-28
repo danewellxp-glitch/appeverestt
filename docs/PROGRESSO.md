@@ -13,10 +13,10 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] **DoD:** `pnpm install` ok; 3 serviços *healthy*; bucket `everest-provas` criado e privado (verificado via log do `minio-init`); `pnpm lint` passa
 
 ## FASE 1: `packages/shared`
-- [ ] Pacote `@everest/shared` com tsup (cjs + esm + dts) e `exports` corretos
-- [ ] Constantes, schemas zod e funções da seção 8
-- [ ] Testes da seção 8
-- [ ] **DoD:** `test` 100%; `build` gera `dist/index.js`, `index.cjs`, `index.d.ts`
+- [x] Pacote `@everest/shared` com tsup (cjs + esm + dts) e `exports` corretos (verificado `require` e `import`)
+- [x] Constantes, schemas zod, tipos de resposta da API e funções da seção 8
+- [x] Testes da seção 8 (52 testes, 5 arquivos)
+- [x] **DoD:** `test` 100%; `build` gera `dist/index.js`, `index.cjs`, `index.d.ts`; typecheck e lint ok
 
 ## FASE 2: Base da API
 - [ ] Projeto Nest em `apps/api` dependendo de `@everest/shared`
