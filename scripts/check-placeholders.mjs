@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const raiz = fileURLToPath(new URL('..', import.meta.url));
 const strict = process.argv.includes('--strict');
-const MARCADORES = ['[LINK_DO_APP]', '@[SEU_@]', 'TODO_DECISAO'];
+const MARCADORES = ['[LINK_DO_APP]', '@[SEU_@]', 'TODO_DECISAO', 'API_HOST_AQUI'];
 const EXTENSOES_TEXTO = new Set([
   '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json', '.html', '.css', '.md', '.txt', '.svg', '.webmanifest',
 ]);
@@ -23,6 +23,7 @@ function alvos() {
   }
   lista.push(join(raiz, 'apps', 'web', 'index.html'));
   lista.push(join(raiz, 'apps', 'web', 'public'));
+  lista.push(join(raiz, 'apps', 'web', 'vercel.json'));
   return lista.filter((p) => existsSync(p));
 }
 

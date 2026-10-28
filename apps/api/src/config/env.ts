@@ -28,6 +28,11 @@ export const envSchema = z.object({
   S3_SECRET_ACCESS_KEY: z.string().min(1),
   S3_FORCE_PATH_STYLE: booleano.default(false),
   PERMITIR_EDITAR_DIAS_ANTERIORES: booleano.default(false),
+  /**
+   * Quantos proxies confiáveis ficam na frente da API (Express `trust proxy`).
+   * Vercel (rewrite) + borda do provedor = 2. Errado aqui faz o rate limit ver o IP do proxy.
+   */
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(10).default(1),
   /** Desliga o rate limit (usado só nos testes automatizados). */
   THROTTLE_ATIVO: booleano.default(true),
 });

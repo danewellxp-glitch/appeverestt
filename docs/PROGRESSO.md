@@ -73,26 +73,26 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] **DoD:** `pnpm --filter api test` (6 unitários) + `pnpm --filter api test:e2e` (52 e2e em 6 suítes) — todos passando
 
 ## FASE 9: Base do frontend
-- [ ] Vite react-ts + `@everest/shared`
-- [ ] Tailwind + tokens + `styles/index.css`
-- [ ] Proxy `/api`
-- [ ] `lib/api.ts`, `lib/erros.ts`, `queryClient`
-- [ ] `useMe`, `RotaProtegida`, `RotaInscrito`, `RotaAdmin`
-- [ ] `AppShell`, `BottomNav`, `Watermark`, Login, Cadastro, Privacidade
-- [ ] Script `dev` raiz em paralelo
-- [ ] **DoD:** `pnpm dev`; cadastro/login; sessão persiste; build + typecheck
+- [x] Vite react-ts + `@everest/shared`
+- [x] Tailwind + tokens + `styles/index.css`
+- [x] Proxy `/api`
+- [x] `lib/api.ts`, `lib/erros.ts`, `queryClient`
+- [x] `useMe`, `RotaProtegida`, `RotaInscrito`, `RotaAdmin`
+- [x] `AppShell`, `BottomNav`, `Watermark`, Login, Cadastro, Privacidade
+- [x] Script `dev` raiz em paralelo
+- [x] **DoD:** build + typecheck + lint + 9 testes unitários do web passando (roteiro no navegador: ver Fase 10/12)
 
 ## FASE 10: Telas do produto
-- [ ] Entrada, Hoje, Progresso, Ranking, Regras, Admin
-- [ ] Upload com compressão e progresso
-- [ ] Autosave otimista + indicador
-- [ ] Todos os estados
+- [x] Entrada, Hoje, Progresso, Ranking, Regras, Admin
+- [x] Upload com compressão e progresso
+- [x] Autosave otimista + indicador
+- [x] Todos os estados
 - [ ] **DoD:** roteiro manual 1–8
 
 ## FASE 11: PWA
-- [ ] Seção 11 completa + ícones
-- [ ] Toast de nova versão + banner offline
-- [ ] **DoD:** manifest ok, SW ativo, instalável, offline shell, `/api` fora do cache
+- [x] Seção 11 completa + ícones
+- [x] Toast de nova versão + banner offline
+- [x] **DoD:** manifest ok, SW ativo (verificado no Chrome), precache sem `/api`, sem runtimeCaching (teste offline completo fica na Fase 12)
 
 ## FASE 12: Qualidade
 - [ ] Playwright smoke + axe
@@ -102,8 +102,8 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [ ] **DoD:** e2e passando; números reportados
 
 ## FASE 13: Deploy
-- [ ] Dockerfile multi-stage
-- [ ] `docs/DEPLOY.md`
-- [ ] `vercel.json`
+- [x] Dockerfile multi-stage (build + boot + migrations + health + fotos verificados localmente)
+- [x] `docs/DEPLOY.md`
+- [x] `vercel.json` (falta trocar `API_HOST_AQUI`)
 - [ ] Checklist de produção
 - [ ] **DoD:** link público em Android/iPhone (requer contas e domínio do usuário)

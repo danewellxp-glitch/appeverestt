@@ -11,7 +11,7 @@ export function configurarApp(app: NestExpressApplication): void {
   const config = app.get(AppConfig);
 
   app.setGlobalPrefix('api');
-  app.set('trust proxy', 1);
+  app.set('trust proxy', config.get('TRUST_PROXY_HOPS'));
   app.disable('x-powered-by');
   app.use(helmet({ contentSecurityPolicy: config.producao ? undefined : false }));
   app.use(cookieParser());

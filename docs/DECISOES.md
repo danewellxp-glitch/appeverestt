@@ -49,3 +49,13 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | 2026-10-27 | 6 | Versões processadas: `{tipo}-{id}.full.webp` e `.thumb.webp` (mesma pasta do original) | Evita colisão quando o original já é .webp |
 | 2026-10-27 | 6 | Presign de PUT assina o header `content-type` (`signableHeaders`) e o cliente S3 usa checksums `WHEN_REQUIRED` | Sem isso o storage aceita outro Content-Type; checksums automáticos do SDK quebram PUT direto do navegador e o R2 |
 | 2026-10-27 | 8 | Endpoint extra `GET /api/admin/desafios/:slug/participantes/:id` (progresso do participante) | A tela admin precisa do grid do participante; não havia rota para isso no contrato |
+| 2026-10-27 | 9 | **react-router 8**, **Vite 8**, **Tailwind v4** (`@theme` em `styles/index.css`, sem `tailwind.config.js`) | Versões estáveis atuais; APIs equivalentes às documentadas no PROMPT |
+| 2026-10-27 | 10 | `/hoje?dia=N` abre um dia específico (Progresso e grid usam isso) | Recarregar mantém o dia escolhido |
+| 2026-10-27 | 11 | Ícones PWA gerados uma vez a partir de `public/logo.png` (`pnpm --filter web generate-pwa-assets`) e versionados; sem geração no build | Build não depende de sharp; regenerar quando a logo final chegar (LOGO) |
+| 2026-10-27 | 11 | Indicador de offline global (`features/pwa/PwaGlobais.tsx`) em todas as rotas, inclusive `/` | A Entrada fica fora do AppShell |
+| 2026-10-27 | 13 | Dockerfile multi-stage com `pnpm deploy --prod --legacy`; Prisma CLI vem como peer do `@prisma/client` (symlink) para rodar `migrate deploy` | Workspace não usa `inject-workspace-packages`; imagem ~191 MB comprimida |
+| 2026-10-27 | 13 | Scripts de operação compilados em `dist/cli/scripts/*.js` (`tsconfig.scripts.json`) | Em produção não há ts-node; `node dist/cli/scripts/criar-admin.js ...` dentro do container |
+| 2026-10-27 | 13 | Hospedagem principal documentada: Railway (API+worker, Postgres, Redis) + Cloudflare R2 + Vercel (web) | Um único painel para API/DB/Redis; alternativas em docs/DEPLOY.md |
+| 2026-10-27 | 13 | R2: `S3_REGION=auto`, `S3_FORCE_PATH_STYLE=false`; CORS só PUT/GET do domínio do app com header `Content-Type` | Requisitos do R2 para upload direto do navegador |
+| 2026-10-27 | 13 | `TRUST_PROXY_HOPS` configurável (padrão 1; produção Vercel→Railway = 2) | Rate limit por IP precisa do IP real do usuário |
+| 2026-10-27 | 13 | `check:launch` também acusa `API_HOST_AQUI` em `apps/web/vercel.json` | Rewrite do Vercel precisa do host real da API antes do deploy |

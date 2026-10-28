@@ -10,6 +10,8 @@ export function opcoesRedis(url: string): RedisOptions {
     username: u.username ? decodeURIComponent(u.username) : undefined,
     password: u.password ? decodeURIComponent(u.password) : undefined,
     db: Number.isFinite(db) ? db : 0,
+    // ?family=0 (IPv4+IPv6) / 6 — necessário em redes privadas só-IPv6 (ex.: Railway antigo).
+    ...(u.searchParams.has('family') ? { family: Number(u.searchParams.get('family')) } : {}),
     ...(u.protocol === 'rediss:' ? { tls: {} } : {}),
   };
 }

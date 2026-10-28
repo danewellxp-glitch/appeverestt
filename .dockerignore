@@ -1,0 +1,39 @@
+# Contexto de build = raiz do repositório (docker build -f apps/api/Dockerfile .).
+# Estratégia "lista branca": ignora tudo e libera só o que a imagem da API precisa.
+# Assim nada de .git, docs, apps/web, node_modules, dist ou .env entra no contexto.
+*
+
+# Workspace pnpm
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!tsconfig.base.json
+
+# packages/shared (compilado dentro da imagem)
+!packages/shared/package.json
+!packages/shared/tsconfig.json
+!packages/shared/tsup.config.ts
+!packages/shared/src
+
+# apps/api
+!apps/api/package.json
+!apps/api/nest-cli.json
+!apps/api/tsconfig.json
+!apps/api/tsconfig.build.json
+!apps/api/tsconfig.scripts.json
+!apps/api/prisma
+!apps/api/scripts
+!apps/api/src
+
+# Só o manifesto do web: o pnpm precisa enxergar o importer do lockfile
+# (nenhuma dependência do web é instalada — o install usa --filter api...).
+!apps/web/package.json
+
+# Mesmo dentro das pastas liberadas, nunca enviar:
+**/node_modules
+**/dist
+**/*.spec.ts
+**/*.log
+**/.env
+**/.env.*
+!**/.env.example

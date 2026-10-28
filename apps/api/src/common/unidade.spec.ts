@@ -87,3 +87,9 @@ describe('opcoesRedis', () => {
     expect(opcoesRedis('redis://localhost:6379')).toMatchObject({ host: 'localhost', port: 6379, db: 0 });
   });
 });
+
+describe('opcoesRedis family', () => {
+  it('respeita ?family=0', () => {
+    expect(opcoesRedis('redis://h:6379?family=0')).toMatchObject({ family: 0 });
+  });
+});
