@@ -203,6 +203,15 @@
     transform: scale(0.965);
   }
 }
+/*
+ * Marca (logo oficial) como máscara: a forma vem do PNG em --mascara e a cor vem do
+ * background (bg-current, bg-vermelho...), então acompanha o tema. O Tailwind 4 não
+ * emite -webkit-mask, que o Safari antigo e alguns webviews ainda exigem.
+ */
+@utility mascara-marca {
+  -webkit-mask: var(--mascara) center / contain no-repeat;
+  mask: var(--mascara) center / contain no-repeat;
+}
 /* Entrada em cascata: style={{ '--i': n }} define a ordem (delay 70 + i×40 ms). */
 @utility surgir {
   animation: surgir 440ms var(--ease-saida) backwards;

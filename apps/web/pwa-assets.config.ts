@@ -1,20 +1,20 @@
-// Ícones do PWA gerados a partir de public/logo.png.
-// TODO_DECISAO(LOGO): a logo atual é provisória. Ao receber a oficial, substitua
-// public/logo.png e rode, na raiz do repo:
-//   pnpm --filter web exec pwa-assets-generator
-//   node scripts/otimizar-logo.cjs   (regera public/logo.webp, usada na UI)
+// Ícones do PWA gerados a partir de public/logo.png (logo oficial, confirmada em 2026-10-30).
+// A logo.png é gerada por scripts/marca.cjs a partir de apps/web/design/logo-original.jpg,
+// junto com as máscaras public/marca/*.png usadas na UI. Para regerar tudo, na raiz do repo:
+//   node scripts/marca.cjs
+//   pnpm --filter web generate-pwa-assets
 // Os PNGs/ICO gerados em public/ são versionados (o build não depende do sharp).
 import { defineConfig, type Preset } from '@vite-pwa/assets-generator/config';
 
 const FUNDO = '#000000';
 
 const preset: Preset = {
-  // Ícones "any" com fundo transparente (favicon, 192 e 512).
+  // Ícones "any" (favicon, 64, 192 e 512): fundo preto como a logo; a folga já vem do logo.png.
   transparent: {
     sizes: [64, 192, 512],
     favicons: [[48, 'favicon.ico']],
-    padding: 0.05,
-    resizeOptions: { background: 'transparent', fit: 'contain' },
+    padding: 0,
+    resizeOptions: { background: FUNDO, fit: 'contain' },
   },
   // Maskable: fundo preto e margem de segurança (zona segura = círculo de 80%).
   maskable: {

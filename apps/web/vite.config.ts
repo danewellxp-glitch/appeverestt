@@ -76,7 +76,8 @@ export default defineConfig({
         // Só o app shell (assets do build + ícones). Nada de runtimeCaching:
         // /api e URLs assinadas do storage NUNCA vão para o cache.
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,webp,woff2}'],
-        // A UI usa logo.webp; logo.png é só a fonte dos ícones e não precisa ir para o precache.
+        // A UI usa as máscaras public/marca/*.png (entram pelo glob acima); logo.png é só a fonte
+        // dos ícones do PWA (scripts/marca.cjs) e não precisa ir para o precache.
         globIgnores: ['**/logo.png'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/],
