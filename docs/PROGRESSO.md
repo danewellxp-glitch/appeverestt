@@ -181,11 +181,11 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] **DoD** (Playwright 390×844, login real, fotos de verdade no MinIO + worker): completar os 5 requisitos mostra o banner animado uma vez e o toast "Dia 4 concluído. +295 m na escalada."; recarregar mantém 5 de 5 com o banner parado e sem toast; remover a foto de água tira o banner (4 de 5); voltar para `/desafio` mostra "4 de 5" com a tag "Fotos 2/3"; `useCheckin.test` e `useUploadFoto.test` verdes. Conferidos também `/hoje` → `/desafio/dia/4`, `/desafio/dia/99` → `/desafio/dia/4` e o dia passado sem botões de edição
 
 ## R8: Progresso, Ranking, Regras e Privacidade
-- [ ] `Montanha` + `pages/Progresso.tsx`
-- [ ] `pages/Ranking.tsx` com o card "Sua posição" e a frase de desempate
-- [ ] `pages/Regras.tsx` e `content/regras.ts` atualizados
-- [ ] `pages/Privacidade.tsx` e `content/privacidade.ts` atualizados (mantendo o marcador Q8)
-- [ ] **DoD:** montanha anima e respeita reduced motion; grid leva para `/desafio/dia/N`; ranking rola até a sua linha
+- [x] `Montanha` (crista, trecho percorrido, acampamentos Base/C1/C2/C3/Cume, marcador com halo, 1,2 s ease-out) + `pages/Progresso.tsx` (altitude, 4 tiles com Contador, grid dos 30 dias restyle + `LegendaDias`)
+- [x] `pages/Ranking.tsx` com o card "Sua posição" (pop) e a frase de desempate (`fraseSuaPosicao` + testes), lista com avatar/foto, selo Embaixador, "Você" com anel vermelho; API passa a devolver `fotoUrl` no ranking
+- [x] `pages/Regras.tsx` e `content/regras.ts` com os textos do protótipo (handle, hashtag, vagas e dias dinâmicos; CTA "Quero participar" para não inscritos)
+- [x] `pages/Privacidade.tsx` e `content/privacidade.ts` atualizados (dados de cadastro da R1.1, foto do Google, marketing só com consentimento, 18+, login pelo Firebase, 90 dias após o fim, exclusão pelo Perfil); marcador `TODO_DECISAO(Q8)` mantido
+- [x] **DoD** (Playwright, login real): a montanha anima (traço curto ao abrir → final em 1,8 s) e, com `reducedMotion: 'reduce'`, já abre no final; o grid leva para `/desafio/dia/2`; o ranking rola até a sua linha (tela 390×600: scrollY 388, linha no meio da tela); prints das 4 telas nos dois temas conferidos
 
 ## R9: Perfil e Admin
 - [ ] `pages/Perfil.tsx` com tema, instalação, sair e excluir (seção 9.9)

@@ -1,5 +1,6 @@
 // Texto da política de privacidade exibido em /privacidade.
-// Rascunho no espírito da LGPD (Lei 13.709/2018), baseado no que o app realmente faz.
+// Rascunho no espírito da LGPD (Lei 13.709/2018), baseado no que o app realmente faz
+// (docs/FRONTEND.md §4.4 e §9.10). Precisa de aprovação do Anderson (Q8).
 
 export interface SecaoPrivacidade {
   titulo: string;
@@ -17,11 +18,11 @@ export interface ConteudoPrivacidade {
 }
 
 export const privacidade: ConteudoPrivacidade = {
-  titulo: 'Política de privacidade',
+  titulo: 'Privacidade',
   resumo:
-    'Coletamos só o necessário para você participar do Desafio 30 Dias Everest. Seus dados não são vendidos nem usados para publicidade.',
+    'Coletamos o necessário para você participar do Desafio 30 Dias Everest. Seus dados não são vendidos, e só usamos para marketing se você autorizar.',
   pendencia: 'TODO_DECISAO(Q8): texto final a ser aprovado pelo Anderson',
-  avisoProvisorio: 'Versão provisória — o texto final ainda será aprovado pela organização do desafio.',
+  avisoProvisorio: 'Rascunho. Aguardando o texto oficial do Anderson (Q8).',
   secoes: [
     {
       titulo: 'Quem cuida dos seus dados',
@@ -30,63 +31,61 @@ export const privacidade: ConteudoPrivacidade = {
       ],
     },
     {
-      titulo: 'Quais dados coletamos',
+      titulo: 'O que coletamos',
       itens: [
-        'Nome: para identificar você no desafio e no ranking.',
-        'E-mail: para o seu login.',
-        'Senha: guardada apenas como hash criptográfico (argon2). Ninguém, nem o embaixador, consegue ver a sua senha.',
-        'Registros diários: água (ml), exercício, páginas lidas e se o story foi postado.',
-        'Fotos de prova: uma foto de água, uma de exercício e uma de leitura por dia.',
+        'Cadastro: nome completo, e-mail, @ do Instagram, data de nascimento, WhatsApp, bairro, cidade e estado.',
+        'Foto do perfil do Google, se você entrar com Google.',
+        'Seus check-ins diários: água, exercício, páginas lidas e se o story foi postado.',
+        'As 3 fotos de prova de cada dia (água, treino e leitura).',
       ],
-      paragrafos: ['Não pedimos telefone, CPF, endereço nem dados de pagamento.'],
+      paragrafos: [
+        'O login é feito pelo Google Firebase: a sua senha fica com o Firebase e o app nunca a vê. Não pedimos CPF nem dados de pagamento. O desafio é só para maiores de 18 anos.',
+      ],
+    },
+    {
+      titulo: 'Para que usamos',
+      itens: [
+        'Cadastro: identificar você, conferir a participação e falar com você sobre o desafio.',
+        'Check-ins e fotos: calcular o seu progresso, o ranking e a premiação.',
+        'Marketing (novidades e ofertas da Everest por e-mail, WhatsApp e Instagram): só se você marcar a autorização. Você pode desligar quando quiser em Perfil.',
+      ],
     },
     {
       titulo: 'Fotos de prova',
-      itens: [
-        'Ao processar cada foto, removemos os metadados (EXIF), inclusive a localização (GPS) que o celular grava.',
-        'As fotos ficam em um armazenamento privado e só são abertas por links temporários, que expiram em minutos.',
-        'Só você e o embaixador do desafio (para conferir as provas) podem ver as suas fotos. Elas não aparecem no ranking nem para outros participantes.',
+      paragrafos: [
+        'Servem só para conferir os requisitos do desafio. Elas não aparecem para outros participantes nem são publicadas. Removemos a localização e outros dados escondidos da imagem quando ela chega, e ela fica num armazenamento privado, aberto só por links que expiram em minutos.',
       ],
     },
     {
-      titulo: 'O que os outros participantes veem',
-      paragrafos: [
-        'No ranking aparece apenas o seu primeiro nome e a inicial do sobrenome (por exemplo, "Maria S."), junto com os dias concluídos e as sequências. Seu e-mail nunca é exibido.',
-      ],
-    },
-    {
-      titulo: 'Para que usamos os dados',
+      titulo: 'Quem vê',
       itens: [
-        'Permitir o seu login e manter a sua sessão.',
-        'Registrar o seu progresso diário e calcular o ranking e a premiação.',
-        'Permitir que o embaixador confira as provas e invalide dias irregulares.',
-      ],
-      paragrafos: [
-        'A base legal é a execução da sua participação no desafio, que você solicita ao se inscrever, e o seu consentimento, dado ao aceitar esta política.',
+        'Você vê tudo o que enviou.',
+        'O embaixador vê suas fotos e seus dados de cadastro para a conferência.',
+        'Os outros participantes veem só seu nome curto (como "Maria S."), sua foto do Google e seus números no ranking. E-mail, WhatsApp e endereço nunca aparecem para eles.',
       ],
     },
     {
       titulo: 'Cookies',
       paragrafos: [
-        'Usamos um único cookie de sessão, do tipo httpOnly (inacessível a scripts), que mantém você conectado por até 30 dias. Não usamos cookies de publicidade nem de rastreamento de terceiros.',
+        'Usamos um único cookie de sessão, inacessível a scripts, que mantém você conectado por até 30 dias. Não usamos cookies de publicidade nem de rastreamento de terceiros.',
       ],
     },
     {
       titulo: 'Compartilhamento',
       paragrafos: [
-        'Não vendemos, alugamos nem compartilhamos os seus dados com anunciantes. Eles ficam em provedores de infraestrutura (servidor, banco de dados e armazenamento de arquivos) contratados apenas para operar o app.',
+        'Não vendemos nem alugamos seus dados. Eles ficam em provedores de infraestrutura (login, servidor, banco de dados e armazenamento de arquivos) contratados apenas para operar o app.',
       ],
     },
     {
-      titulo: 'Por quanto tempo guardamos',
+      titulo: 'Por quanto tempo',
       paragrafos: [
-        'Os dados ficam guardados enquanto durar o desafio e pelo tempo necessário para apurar e divulgar o resultado. Depois disso, você pode pedir a exclusão a qualquer momento.',
+        'Enquanto o desafio durar e por mais 90 dias depois do fim, para resolver dúvidas sobre o resultado. Os dados de marketing ficam enquanto a sua autorização estiver ativa.',
       ],
     },
     {
       titulo: 'Seus direitos',
       paragrafos: [
-        'Pela LGPD, você pode pedir acesso, correção ou exclusão dos seus dados, além de revogar o seu consentimento. Para isso, fale com o embaixador do desafio pelos canais oficiais (como o Instagram do desafio). Ao excluir a conta, os seus registros e fotos são apagados e você sai do ranking.',
+        'Pela LGPD, você pode pedir acesso, correção ou exclusão dos seus dados e revogar autorizações a qualquer momento. Para corrigir, use Perfil, depois Meus dados. Para apagar tudo, use Perfil, depois Excluir minha conta: suas fotos e dados pessoais são apagados, e no ranking você passa a aparecer como "Participante removido".',
       ],
     },
     {

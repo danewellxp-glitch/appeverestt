@@ -1,69 +1,68 @@
-import { TOTAL_DIAS_PADRAO, type DesafioAtual } from '@everest/shared';
-import { ArrowRight, AtSign, BookOpen, Camera, Droplets, Dumbbell } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { TOTAL_DIAS_PADRAO } from '@everest/shared';
+import {
+  ArrowRight,
+  AtSign,
+  BookOpen,
+  Camera,
+  ChartLine,
+  Droplets,
+  Dumbbell,
+  ShieldCheck,
+  Trophy,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Link } from 'react-router';
-import { Card, Skeleton } from '../components/ui/basicos';
-import { regras, requisitosDiarios, type RequisitoDiario } from '../content/regras';
-import { ehApiError } from '../lib/api';
+import { BotaoVoltar } from '../components/layout/BotaoVoltar';
+import { Skeleton } from '../components/ui/basicos';
+import { regrasDiarias, regrasVagasEPremio, textosRegras, type IdRegra, type Regra } from '../content/regras';
 import { formatarData } from '../lib/datas';
 import { useDesafioAtual, useMe } from '../lib/queries';
 
-const ICONES: Record<RequisitoDiario['id'], ReactNode> = {
-  AGUA: <Droplets className="size-5" aria-hidden />,
-  EXERCICIO: <Dumbbell className="size-5" aria-hidden />,
-  LEITURA: <BookOpen className="size-5" aria-hidden />,
-  FOTOS: <Camera className="size-5" aria-hidden />,
-  STORY: <AtSign className="size-5" aria-hidden />,
+const ICONES: Record<IdRegra, LucideIcon> = {
+  AGUA: Droplets,
+  EXERCICIO: Dumbbell,
+  LEITURA: BookOpen,
+  FOTOS: Camera,
+  STORY: AtSign,
+  VAGAS: Users,
+  PREMIO: Trophy,
+  DESEMPATE: ChartLine,
+  CONFERENCIA: ShieldCheck,
 };
 
 function semPrefixo(valor: string, prefixo: '@' | '#'): string {
   return valor.trim().replace(prefixo === '@' ? /^@+/ : /^#+/, '');
 }
 
-function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
+function Secao({ titulo, i, children }: { titulo: string; i: number; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="border-l-4 border-vermelho pl-3 text-xl font-bold">{titulo}</h2>
+    <section aria-label={titulo} className="surgir flex flex-col gap-3" style={{ '--i': i } as CSSProperties}>
+      <h2 className="mt-1.5 text-[13px] font-semibold tracking-[0.14em] text-texto-2 uppercase">{titulo}</h2>
       {children}
     </section>
   );
 }
 
-function Itens({ itens }: { itens: readonly string[] }) {
+function ListaRegras({ regras }: { regras: Regra[] }) {
   return (
-    <ul className="flex flex-col gap-2 text-texto-2">
-      {itens.map((item) => (
-        <li key={item} className="flex gap-2.5">
-          <span className="mt-2 size-1.5 shrink-0 rounded-full bg-vermelho" aria-hidden />
-          <span>{item}</span>
-        </li>
-      ))}
+    <ul className="overflow-hidden rounded-3xl bg-superficie shadow-[inset_0_0_0_1px_var(--borda)]">
+      {regras.map((r) => {
+        const Icone = ICONES[r.id];
+        return (
+          <li key={r.id} className="grid grid-cols-[auto_1fr] items-start gap-3 border-borda px-4 py-3.5 [&+&]:border-t">
+            <span aria-hidden className="grid size-[42px] place-items-center rounded-full bg-superficie-2 text-vermelho-texto">
+              <Icone className="size-5" />
+            </span>
+            <div>
+              <b className="block text-[15px]">{r.titulo}</b>
+              <p className="text-[13px] text-texto-2">{r.texto}</p>
+            </div>
+          </li>
+        );
+      })}
     </ul>
-  );
-}
-
-/** Valor dinâmico do desafio: skeleton enquanto carrega, "—" se não houver desafio. */
-function Valor({ carregando, children }: { carregando: boolean; children: ReactNode }) {
-  if (carregando) return <Skeleton className="inline-block h-4 w-24 align-middle" />;
-  return <>{children}</>;
-}
-
-function Datas({ desafio, carregando }: { desafio: DesafioAtual | undefined; carregando: boolean }) {
-  return (
-    <dl className="grid grid-cols-2 gap-3">
-      <Card className="flex flex-col gap-1">
-        <dt className="rotulo">Início</dt>
-        <dd className="font-bold">
-          <Valor carregando={carregando}>{desafio ? formatarData(desafio.dataInicio, { comDiaSemana: true }) : '—'}</Valor>
-        </dd>
-      </Card>
-      <Card className="flex flex-col gap-1">
-        <dt className="rotulo">Fim</dt>
-        <dd className="font-bold">
-          <Valor carregando={carregando}>{desafio ? formatarData(desafio.dataFim, { comDiaSemana: true }) : '—'}</Valor>
-        </dd>
-      </Card>
-    </dl>
   );
 }
 
@@ -71,109 +70,49 @@ export default function Regras() {
   const desafioQ = useDesafioAtual();
   const { data: me } = useMe();
   const desafio = desafioQ.data;
-  const carregando = desafioQ.isPending;
-  const semDesafio = ehApiError(desafioQ.error, 'NAO_ENCONTRADO');
-
   const instagram = desafio ? `@${semPrefixo(desafio.instagramHandle, '@')}` : 'o perfil do desafio';
   const hashtag = desafio ? `#${semPrefixo(desafio.hashtag, '#')}` : 'a hashtag do desafio';
-  const requisitos = requisitosDiarios(instagram, hashtag);
-  const totalDias = String(desafio?.totalDias ?? TOTAL_DIAS_PADRAO);
+  const totalDias = desafio?.totalDias ?? TOTAL_DIAS_PADRAO;
 
   return (
-    <article className="flex flex-col gap-8 py-4">
-      <header className="flex flex-col gap-3">
-        <p className="rotulo">{desafio?.nome ?? 'Desafio 30 Dias Everest'}</p>
-        <h1 className="text-4xl font-black uppercase leading-none tracking-tight">{regras.titulo}</h1>
-        <p className="text-texto-2">{regras.introducao}</p>
+    <article className="flex flex-col gap-4">
+      <header className="surgir flex items-center gap-3">
+        <BotaoVoltar para={me?.participacao ? '/desafio' : '/'} />
+        <div className="min-w-0 flex-1">
+          <p className="rotulo">{desafio?.nome ?? textosRegras.eyebrow}</p>
+          <h1 className="font-display text-[38px] leading-[0.9] font-black uppercase">{textosRegras.titulo}</h1>
+        </div>
       </header>
 
-      <Secao titulo="Requisitos diários">
-        <div className="overflow-x-auto rounded-2xl border border-borda bg-superficie">
-          <table className="w-full border-collapse text-left text-sm">
-            <caption className="sr-only">Requisitos para concluir cada dia do desafio</caption>
-            <thead>
-              <tr className="border-b border-borda">
-                <th scope="col" className="rotulo px-4 py-3 font-semibold">
-                  Requisito
-                </th>
-                <th scope="col" className="rotulo px-4 py-3 text-right font-semibold">
-                  Meta do dia
-                </th>
-              </tr>
-            </thead>
-            <tbody aria-busy={carregando || undefined}>
-              {requisitos.map((r) => (
-                <tr key={r.id} className="border-b border-borda last:border-b-0">
-                  <th scope="row" className="px-4 py-3 align-top font-normal">
-                    <span className="flex items-start gap-3">
-                      <span className="mt-0.5 text-vermelho-texto">{ICONES[r.id]}</span>
-                      <span className="flex flex-col gap-0.5">
-                        <span className="font-bold text-texto">{r.nome}</span>
-                        <span className="text-texto-2">{r.detalhe}</span>
-                      </span>
-                    </span>
-                  </th>
-                  <td className="px-4 py-3 text-right align-top font-black whitespace-nowrap text-texto">{r.meta}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="text-sm text-texto-2">{regras.diaConcluido}</p>
+      <Secao titulo="Todos os dias" i={1}>
+        <ListaRegras regras={regrasDiarias(instagram, hashtag)} />
+        <p className="text-[13px] text-texto-2">{textosRegras.notaDiaria}</p>
       </Secao>
 
-      <Secao titulo={regras.edicao.titulo}>
-        <Itens itens={regras.edicao.itens} />
+      <Secao titulo="Vagas e prêmio" i={2}>
+        <ListaRegras regras={regrasVagasEPremio(desafio?.totalVagas ?? null, totalDias)} />
       </Secao>
 
-      <Secao titulo={regras.vagas.titulo}>
-        <p className="text-texto-2">
-          {regras.vagas.texto(desafio?.totalVagas ?? null)}
-        </p>
-        <Itens itens={regras.vagas.itens} />
-      </Secao>
-
-      <Secao titulo={regras.premiacao.titulo}>
-        <p className="text-texto-2">{regras.premiacao.texto(totalDias)}</p>
-      </Secao>
-
-      <Secao titulo={regras.desempate.titulo}>
-        <p className="text-texto-2">{regras.desempate.introducao}</p>
-        <ol className="flex flex-col gap-2">
-          {regras.desempate.criterios.map((criterio, i) => (
-            <li key={criterio} className="flex items-start gap-3">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-vermelho text-sm font-black text-sobre-vermelho">
-                {i + 1}
-              </span>
-              <span className="pt-0.5 text-texto">{criterio}</span>
-            </li>
-          ))}
-        </ol>
-      </Secao>
-
-      <Secao titulo={regras.conferencia.titulo}>
-        <p className="text-texto-2">{regras.conferencia.texto}</p>
-      </Secao>
-
-      <Secao titulo={regras.datas.titulo}>
-        {semDesafio ? (
-          <p className="text-texto-2">Nenhum desafio aberto no momento. As datas serão divulgadas na abertura.</p>
-        ) : desafioQ.isError ? (
-          <p className="text-texto-2">Não foi possível carregar as datas agora. Tente de novo mais tarde.</p>
+      <Secao titulo="Datas" i={3}>
+        {desafioQ.isPending ? (
+          <Skeleton className="h-16 rounded-3xl" />
+        ) : desafio ? (
+          <p className="rounded-3xl bg-superficie px-4 py-3.5 text-sm shadow-[inset_0_0_0_1px_var(--borda)]">
+            De <b>{formatarData(desafio.dataInicio, { comDiaSemana: true })}</b> a{' '}
+            <b>{formatarData(desafio.dataFim, { comDiaSemana: true })}</b>: {totalDias} dias seguidos, no horário de
+            Brasília.
+          </p>
         ) : (
-          <>
-            <Datas desafio={desafio} carregando={carregando} />
-            <p className="text-sm text-texto-2">
-              São {totalDias} dias seguidos, contados no fuso de São Paulo.
-            </p>
-          </>
+          <p className="text-sm text-texto-2">As datas serão divulgadas na abertura do próximo desafio.</p>
         )}
       </Secao>
+
+      <p className="text-xs text-texto-2">{textosRegras.rodape}</p>
 
       {!me?.participacao && (
         <Link
           to="/"
-          className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-vermelho px-4 text-base font-black uppercase tracking-wide text-sobre-vermelho hover:bg-vermelho-escuro"
+          className="press inline-flex h-[54px] w-full items-center justify-center gap-2.5 rounded-full bg-vermelho px-5 font-semibold text-sobre-vermelho hover:bg-vermelho-escuro"
         >
           Quero participar
           <ArrowRight className="size-5" aria-hidden />

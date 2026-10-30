@@ -1,90 +1,142 @@
+import { ALTITUDE_CUME, METROS_POR_DIA, altitudeSimbolica } from '@everest/shared';
+import { Flame } from 'lucide-react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useNavigate } from 'react-router';
-import { GridDias } from '../components/GridDias';
+import { GridDias, LegendaDias } from '../components/GridDias';
+import { Alerta, Skeleton } from '../components/ui/basicos';
 import { Botao } from '../components/ui/Botao';
-import { Alerta, Card, Skeleton } from '../components/ui/basicos';
-import { CartoesProgresso, LegendaGrid } from '../features/ranking/ResumoProgresso';
-import { useMe, useMeuProgresso } from '../lib/queries';
+import { Contador } from '../components/ui/Contador';
 import { caminhoDoDia } from '../features/desafio/navegacao';
+import { Montanha } from '../features/progresso/Montanha';
+import { useMe, useMeuProgresso } from '../lib/queries';
+import { marcarDirecao } from '../lib/transicoes';
 
-function EsqueletoProgresso() {
+const FORMATO = new Intl.NumberFormat('pt-BR');
+
+function Tile({ rotulo, children }: { rotulo: string; children: ReactNode }) {
   return (
-    <div role="status" aria-label="Carregando seu progresso" className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-3">
-        <Skeleton className="h-24" />
-        <Skeleton className="h-24" />
-        <Skeleton className="h-24" />
-        <Skeleton className="h-24" />
-      </div>
-      <Skeleton className="h-72" />
+    <div className="grid gap-1 rounded-[22px] bg-superficie px-4 py-3.5 shadow-[inset_0_0_0_1px_var(--borda)]">
+      <span className="rotulo">{rotulo}</span>
+      <span className="flex items-baseline gap-1 font-display text-[40px] leading-[0.9] font-extrabold tabular-nums">
+        {children}
+      </span>
     </div>
   );
+}
+
+function Unidade({ children }: { children: ReactNode }) {
+  return <small className="font-display text-xl text-texto-2">{children}</small>;
 }
 
 export default function Progresso() {
   const { data: me } = useMe();
   const slug = me?.participacao?.desafioSlug;
-  const progresso = useMeuProgresso(slug);
+  const progressoQ = useMeuProgresso(slug);
   const navegar = useNavigate();
 
-  return (
-    <div className="flex flex-col gap-5">
-      <header>
-        <p className="rotulo">Sua jornada</p>
-        <h1 className="text-3xl font-bold">Progresso</h1>
-      </header>
-
-      {progresso.isPending ? (
-        <EsqueletoProgresso />
-      ) : progresso.isError ? (
+  if (progressoQ.isPending) {
+    return (
+      <div role="status" aria-label="Carregando seu progresso" className="flex flex-col gap-4">
+        <h1 className="sr-only">Progresso</h1>
+        <Skeleton className="h-12 w-1/2" />
+        <Skeleton className="h-72 rounded-[28px]" />
+        <div className="grid grid-cols-2 gap-3">
+          {Array.from({ length: 4 }, (_, i) => (
+            <Skeleton key={i} className="h-24 rounded-[22px]" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (progressoQ.isError) {
+    return (
+      <div className="flex flex-col gap-4">
+        <h1 className="font-display text-[38px] leading-[0.9] font-black uppercase">Progresso</h1>
         <Alerta
           tipo="erro"
           acao={
-            <Botao variante="secundario" onClick={() => void progresso.refetch()}>
+            <Botao variante="secundario" tamanho="sm" onClick={() => void progressoQ.refetch()}>
               Tentar de novo
             </Botao>
           }
         >
-          {progresso.error.message}
+          {progressoQ.error.message}
         </Alerta>
-      ) : (
-        <>
-          {progresso.data.status === 'NAO_INICIADO' && (
-            <Alerta tipo="info">
-              O desafio ainda não começou. Seu progresso aparece aqui a partir do dia 1.
-            </Alerta>
-          )}
-          {progresso.data.status === 'ENCERRADO' && (
-            <Alerta tipo="sucesso">
-              O desafio terminou! Você concluiu {progresso.data.diasConcluidos} de{' '}
-              {progresso.data.totalDias} dias.
-            </Alerta>
-          )}
+      </div>
+    );
+  }
 
-          <section aria-labelledby="titulo-resumo">
-            <h2 id="titulo-resumo" className="sr-only">
-              Resumo
-            </h2>
-            <CartoesProgresso progresso={progresso.data} />
-          </section>
+  const p = progressoQ.data;
+  const altitude = altitudeSimbolica(p.diasConcluidos, p.totalDias);
+  const eyebrow =
+    p.status === 'EM_ANDAMENTO'
+      ? `Dia ${p.diaAtual ?? 1} de ${p.totalDias}`
+      : p.status === 'ENCERRADO'
+        ? 'Desafio encerrado'
+        : 'O desafio ainda não começou';
 
-          <section aria-labelledby="titulo-dias">
-            <Card className="flex flex-col gap-4">
-              <div>
-                <h2 id="titulo-dias" className="text-lg font-bold">
-                  Seus 30 dias
-                </h2>
-                <p className="text-sm text-texto-2">Toque em um dia para ver o check-in.</p>
-              </div>
-              <GridDias
-                dias={progresso.data.dias}
-                aoSelecionar={(n) => void navegar(caminhoDoDia(n))}
-                rotulo="Seus dias no desafio"
-              />
-              <LegendaGrid />
-            </Card>
-          </section>
-        </>
-      )}
+  return (
+    <div className="flex flex-col gap-4">
+      <header className="surgir grid gap-1.5">
+        <p className="rotulo">{eyebrow}</p>
+        <h1 className="font-display text-[38px] leading-[0.9] font-black uppercase">Progresso</h1>
+      </header>
+
+      <section
+        aria-label="Escalada simbólica"
+        className="surgir grid gap-2 rounded-[28px] bg-superficie px-[18px] pt-[18px] pb-3.5 shadow-[inset_0_0_0_1px_var(--borda)]"
+        style={{ '--i': 1 } as CSSProperties}
+      >
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="flex items-baseline gap-1">
+            <Contador valor={altitude} className="font-display text-[64px] leading-[0.9] font-extrabold" />
+            <span className="font-display text-[26px] font-extrabold">m</span>
+          </p>
+          <p className="text-[13px] text-texto-2">cume a {FORMATO.format(ALTITUDE_CUME)} m</p>
+        </div>
+        <Montanha diasConcluidos={p.diasConcluidos} totalDias={p.totalDias} altitude={altitude} />
+        <p className="text-[13px] text-texto-2">
+          Cada dia concluído sobe {METROS_POR_DIA(p.totalDias)} m. Dia perdido não desce, só não sobe.
+        </p>
+      </section>
+
+      <div className="surgir grid grid-cols-2 gap-3" style={{ '--i': 2 } as CSSProperties}>
+        <Tile rotulo="Dias concluídos">
+          <Contador valor={p.diasConcluidos} />
+          <Unidade>/{p.totalDias}</Unidade>
+        </Tile>
+        <Tile rotulo="Evolução">
+          <Contador valor={p.evolucao} />
+          <Unidade>%</Unidade>
+        </Tile>
+        <Tile rotulo="Melhor sequência">
+          <Contador valor={p.melhorSequencia} />
+          <Unidade>{p.melhorSequencia === 1 ? 'dia' : 'dias'}</Unidade>
+        </Tile>
+        <Tile rotulo="Sequência atual">
+          <Contador valor={p.sequenciaAtual} />
+          <Flame className="size-6 self-center text-vermelho-texto" aria-hidden />
+        </Tile>
+      </div>
+
+      <section
+        aria-labelledby="titulo-30-dias"
+        className="surgir grid gap-3 rounded-3xl bg-superficie p-[18px] shadow-[inset_0_0_0_1px_var(--borda)]"
+        style={{ '--i': 3 } as CSSProperties}
+      >
+        <h2 id="titulo-30-dias" className="text-[17px] font-bold">
+          Os {p.totalDias} dias
+        </h2>
+        <GridDias
+          dias={p.dias}
+          rotulo="Seus dias no desafio: toque em um dia para ver o check-in"
+          aoSelecionar={(n) => {
+            marcarDirecao('avancar');
+            void navegar(caminhoDoDia(n), { viewTransition: true });
+          }}
+        />
+        <LegendaDias />
+      </section>
     </div>
   );
 }

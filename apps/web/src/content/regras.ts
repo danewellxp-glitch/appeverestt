@@ -1,105 +1,72 @@
-// Textos de /regras. Números vêm de METAS/TIPOS_FOTO (shared); handle, hashtag,
-// vagas e datas vêm do desafio atual (API).
-import { METAS, TIPOS_FOTO, type TipoFoto } from '@everest/shared';
+// Textos de /regras (docs/FRONTEND.md §9.8, protótipo #regras). Números vêm de METAS (shared);
+// handle, hashtag, vagas e dias vêm do desafio atual (API).
+import { METAS } from '@everest/shared';
 
 const numero = new Intl.NumberFormat('pt-BR');
 const litros = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
 
-export const NOME_FOTO: Record<TipoFoto, string> = {
-  AGUA: 'água',
-  EXERCICIO: 'exercício',
-  LEITURA: 'leitura',
-};
+export type IdRegra = 'AGUA' | 'EXERCICIO' | 'LEITURA' | 'FOTOS' | 'STORY' | 'VAGAS' | 'PREMIO' | 'DESEMPATE' | 'CONFERENCIA';
 
-function listaNatural(itens: readonly string[]): string {
-  if (itens.length <= 1) return itens.join('');
-  return `${itens.slice(0, -1).join(', ')} e ${itens[itens.length - 1] ?? ''}`;
+export interface Regra {
+  id: IdRegra;
+  titulo: string;
+  texto: string;
 }
 
-export interface RequisitoDiario {
-  id: 'AGUA' | 'EXERCICIO' | 'LEITURA' | 'FOTOS' | 'STORY';
-  nome: string;
-  meta: string;
-  detalhe: string;
-}
-
-/** Tabela dos requisitos diários. `instagram` e `hashtag` já formatados (ou texto provisório). */
-export function requisitosDiarios(instagram: string, hashtag: string): RequisitoDiario[] {
+/** "Todos os dias": os 5 requisitos. `instagram` e `hashtag` já formatados (ou texto provisório). */
+export function regrasDiarias(instagram: string, hashtag: string): Regra[] {
   return [
     {
       id: 'AGUA',
-      nome: 'Água',
-      meta: `≥ ${litros.format(METAS.aguaMl / 1000)} L`,
-      detalhe: `Pelo menos ${numero.format(METAS.aguaMl)} ml no dia.`,
+      titulo: 'Água',
+      texto: `${litros.format(METAS.aguaMl / 1000)} litros no dia. Marque no app conforme for bebendo.`,
     },
-    {
-      id: 'EXERCICIO',
-      nome: 'Exercício físico',
-      meta: 'Sim',
-      detalhe: 'Qualquer atividade física feita no dia.',
-    },
+    { id: 'EXERCICIO', titulo: 'Exercício', texto: 'Uma atividade física, qualquer treino.' },
     {
       id: 'LEITURA',
-      nome: 'Leitura',
-      meta: `≥ ${numero.format(METAS.paginas)} páginas`,
-      detalhe: `Pelo menos ${numero.format(METAS.paginas)} páginas lidas no dia.`,
+      titulo: 'Leitura',
+      texto: `${numero.format(METAS.paginas)} páginas. Informe a quantidade no app.`,
     },
     {
       id: 'FOTOS',
-      nome: 'Fotos de prova',
-      meta: `${numero.format(METAS.fotos)} fotos`,
-      detalhe: `Uma de cada: ${listaNatural(TIPOS_FOTO.map((t) => NOME_FOTO[t]))}.`,
+      titulo: 'Prova do dia',
+      texto: `${numero.format(METAS.fotos)} fotos: uma da água, uma do treino e uma da leitura.`,
+    },
+    { id: 'STORY', titulo: 'Story', texto: `Um story marcando ${instagram} e usando ${hashtag}.` },
+  ];
+}
+
+/** "Vagas e prêmio". */
+export function regrasVagasEPremio(totalVagas: number | null, totalDias: number): Regra[] {
+  return [
+    {
+      id: 'VAGAS',
+      titulo: totalVagas === null ? 'Vagas limitadas' : `${numero.format(totalVagas)} vagas`,
+      texto:
+        'Inscrição única por pessoa, por ordem de chegada. O embaixador ocupa uma das vagas e a vaga não volta para a fila.',
     },
     {
-      id: 'STORY',
-      nome: 'Story no Instagram',
-      meta: 'Postado',
-      detalhe: `Marcando ${instagram} e ${hashtag}.`,
+      id: 'PREMIO',
+      titulo: 'Prêmio',
+      texto: `Camiseta de treino, whey e creatina para quem terminar os ${numero.format(totalDias)} dias em 1º no ranking.`,
+    },
+    {
+      id: 'DESEMPATE',
+      titulo: 'Desempate',
+      texto: 'Melhor sequência, depois sequência atual, depois inscrição mais antiga.',
+    },
+    {
+      id: 'CONFERENCIA',
+      titulo: 'Conferência',
+      texto: 'O embaixador confere as fotos. Prova falsa, repetida ou de outro dia invalida o dia.',
     },
   ];
 }
 
-export const regras = {
-  titulo: 'Regras do desafio',
-  introducao:
-    'Durante o desafio, cada dia só conta como concluído quando você cumpre todos os requisitos abaixo e registra tudo no app.',
-  diaConcluido: 'O dia fecha automaticamente quando todos os requisitos são cumpridos.',
-  edicao: {
-    titulo: 'Só o dia de hoje',
-    itens: [
-      'Você só pode registrar e editar o dia de hoje. Dias anteriores ficam só para leitura e dias futuros ficam bloqueados.',
-      'O "hoje" segue o horário de Brasília (fuso de São Paulo): o dia vira à meia-noite, mesmo que você esteja em outro fuso.',
-    ],
-  },
-  vagas: {
-    titulo: 'Vagas',
-    texto: (totalVagas: number | null) =>
-      `${totalVagas === null ? 'As vagas são limitadas e' : `São ${numero.format(totalVagas)} vagas,`} preenchidas por ordem de inscrição. O embaixador do desafio também participa e ocupa uma das vagas.`,
-    itens: [
-      'A vaga é sua até o fim do desafio: não existe desistência que libere a vaga para outra pessoa.',
-      'As inscrições ficam abertas enquanto houver vagas e o embaixador mantiver as inscrições liberadas.',
-    ],
-  },
-  premiacao: {
-    titulo: 'Premiação',
-    texto: (totalDias: string) =>
-      `Vence quem tiver mais dias concluídos (e não invalidados) ao fim dos ${totalDias} dias. O prêmio vai para o 1º colocado do ranking final.`,
-  },
-  desempate: {
-    titulo: 'Desempate',
-    introducao: 'Se houver empate em dias concluídos, vale, nesta ordem:',
-    criterios: [
-      'Maior melhor sequência (mais dias concluídos seguidos).',
-      'Maior sequência atual.',
-      'Inscrição mais antiga.',
-    ],
-  },
-  conferencia: {
-    titulo: 'Conferência pelo embaixador',
-    texto:
-      'O embaixador confere as fotos de prova. Se uma prova estiver irregular (foto repetida, de outro dia ou que não mostra o requisito), ele pode invalidar o dia, que deixa de contar no ranking.',
-  },
-  datas: {
-    titulo: 'Datas',
-  },
+export const textosRegras = {
+  eyebrow: 'Desafio 30 dias Everest',
+  titulo: 'Regras',
+  notaDiaria:
+    'O dia só conta quando os 5 requisitos estão cumpridos. Só o dia de hoje pode ser editado, até 23:59 no horário de Brasília.',
+  rodape: 'Foco em evolução de hábito, sem promessa de resultado físico.',
 } as const;

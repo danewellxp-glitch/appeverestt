@@ -97,4 +97,7 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | 2026-10-30 | v2 R7 | Leitura sem campo de digitação: só stepper (−, +1, +5), como no protótipo | Meta de 10 páginas; o campo de texto confundia com o número grande |
 | 2026-10-30 | v2 R7 | Remover foto é direto no × (sem confirmação), e há um botão de trocar ao lado | Só vale no dia editável e a foto pode ser reenviada; menos toques no celular |
 | 2026-10-30 | v2 R7 | A tela do dia não tem mais o grid dos 30 dias; a navegação entre dias é pela faixa da home e pelo grid do Progresso | Segue o protótipo (`#dia`) |
+| 2026-10-30 | v2 R8 | Ranking devolve `fotoUrl` de cada participante (null para conta excluída) | A lista mostra avatar com foto, como no protótipo; o feed já mostrava a foto ao grupo |
+| 2026-10-30 | v2 R8 | Frase de empate neutra em gênero: "Empate em dias com X; você fica à frente pela …" | O protótipo usa "Empatada com X", que supõe o gênero de quem lê |
+| 2026-10-30 | v2 R8 | Texto do prêmio ("camiseta de treino, whey e creatina") vem do protótipo e aparece na home e nas regras | Conteúdo de produto: confirmar com o Anderson junto com o Q8 |
 

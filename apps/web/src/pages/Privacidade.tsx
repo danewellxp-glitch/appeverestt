@@ -1,39 +1,45 @@
-import { ShieldCheck } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
+import { BotaoVoltar } from '../components/layout/BotaoVoltar';
 import { privacidade } from '../content/privacidade';
+import { useMe } from '../lib/queries';
 
 export default function Privacidade() {
+  const { data: me } = useMe();
   return (
-    <article className="flex flex-col gap-8 py-4">
-      <header className="flex flex-col gap-3">
-        <p className="rotulo flex items-center gap-2">
-          <ShieldCheck className="size-4" aria-hidden />
-          Seus dados · LGPD
-        </p>
-        <h1 className="text-4xl font-black uppercase leading-none tracking-tight">{privacidade.titulo}</h1>
-        <p className="text-base text-texto">{privacidade.resumo}</p>
-        <p className="rounded-lg border border-borda px-3 py-2 text-xs text-texto-2">{privacidade.avisoProvisorio}</p>
+    <article className="flex flex-col gap-4">
+      <header className="surgir flex items-center gap-3">
+        <BotaoVoltar para={me ? '/perfil' : '/'} />
+        <div className="min-w-0 flex-1">
+          <p className="rotulo">Desafio 30 dias Everest</p>
+          <h1 className="font-display text-[38px] leading-[0.9] font-black uppercase">{privacidade.titulo}</h1>
+        </div>
       </header>
 
-      {privacidade.secoes.map((secao) => (
-        <section key={secao.titulo} className="flex flex-col gap-3">
-          <h2 className="border-l-4 border-vermelho pl-3 text-lg font-bold">{secao.titulo}</h2>
-          {secao.itens && (
-            <ul className="flex flex-col gap-2 text-texto-2">
-              {secao.itens.map((item) => (
-                <li key={item} className="flex gap-2.5">
-                  <span className="mt-2 size-1.5 shrink-0 rounded-full bg-vermelho" aria-hidden />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          {secao.paragrafos?.map((p) => (
-            <p key={p} className="text-texto-2">
-              {p}
-            </p>
-          ))}
-        </section>
-      ))}
+      <p className="flex items-center gap-2 rounded-[14px] bg-superficie-2 px-3 py-2.5 text-[13px] font-semibold text-vermelho-texto">
+        <AlertTriangle className="size-4 shrink-0" aria-hidden />
+        {privacidade.avisoProvisorio}
+      </p>
+      <p className="text-[15px]">{privacidade.resumo}</p>
+
+      <div className="grid gap-3.5">
+        {privacidade.secoes.map((secao) => (
+          <section key={secao.titulo} className="grid gap-2">
+            <h2 className="text-base font-bold">{secao.titulo}</h2>
+            {secao.itens && (
+              <ul className="grid max-w-[60ch] list-disc gap-1.5 pl-[18px] text-sm text-texto-2">
+                {secao.itens.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            )}
+            {secao.paragrafos?.map((p) => (
+              <p key={p} className="max-w-[60ch] text-sm text-texto-2">
+                {p}
+              </p>
+            ))}
+          </section>
+        ))}
+      </div>
     </article>
   );
 }

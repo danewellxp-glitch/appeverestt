@@ -1,122 +1,69 @@
 import type { ItemRankingPosicionado } from '@everest/shared';
-import { Shield } from 'lucide-react';
+import { Avatar } from '../../components/ui/Avatar';
 
 export const TEXTO_CRITERIO =
-  'Critério: dias concluídos. Desempate: maior melhor sequência → maior sequência atual → inscrição mais antiga.';
-
-/** Estilo do selo de posição: pódio com cores próprias (texto claro sobre fundo escuro, AA). */
-function estiloPosicao(posicao: number): string {
-  const base =
-    'inline-flex min-w-9 items-center justify-center rounded-lg px-2 py-1 text-sm font-bold tabular-nums';
-  switch (posicao) {
-    case 1:
-      return `${base} border border-aviso-borda bg-aviso-fundo text-aviso-texto`;
-    case 2:
-      return `${base} border border-borda-campo bg-superficie-2 text-texto`;
-    case 3:
-      return `${base} border border-orange-400 bg-orange-100 text-orange-900 escuro:border-orange-700 escuro:bg-orange-950 escuro:text-orange-200`;
-    default:
-      return `${base} text-texto-2`;
-  }
-}
-
-const MEDALHA: Record<number, string> = { 1: '1º lugar', 2: '2º lugar', 3: '3º lugar' };
+  'Ordem: dias concluídos, depois melhor sequência, depois sequência atual, depois inscrição mais antiga. Dias invalidados pelo embaixador não contam.';
 
 export function idLinhaRanking(participanteId: string): string {
   return `ranking-${participanteId}`;
 }
 
+/** Selo "Embaixador" (pílula vermelha pequena). */
 export function SeloEmbaixador() {
   return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-aviso-borda bg-aviso-fundo px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-aviso-texto">
-      <Shield className="size-3" aria-hidden />
+    <span className="inline-flex items-center rounded-full bg-vermelho px-[7px] py-[3px] text-[10px] font-bold tracking-[0.08em] text-sobre-vermelho uppercase">
       Embaixador
     </span>
   );
 }
 
 /**
- * Tabela do ranking: posição, nome de exibição, dias concluídos e melhor sequência.
- * A linha de quem está logado fica destacada e marcada com "Você".
+ * Lista do ranking: posição (vermelha no pódio), avatar, nome (ou "Você"), sequências e dias.
+ * A linha de quem está logado tem anel vermelho e recebe foco/scroll.
  */
-export function TabelaRanking({
+export function ListaRanking({
   itens,
   meuParticipanteId,
 }: {
-  itens: ItemRankingPosicionado[];
+  itens: readonly ItemRankingPosicionado[];
   meuParticipanteId: string | undefined;
 }) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-borda bg-superficie">
-      <table className="w-full border-collapse text-left text-sm">
-        <caption className="sr-only">
-          Ranking do desafio, ordenado por dias concluídos. {TEXTO_CRITERIO}
-        </caption>
-        <thead>
-          <tr className="border-b border-borda">
-            <th scope="col" className="rotulo px-3 py-3">
-              Pos.
-            </th>
-            <th scope="col" className="rotulo px-2 py-3">
-              Nome
-            </th>
-            <th scope="col" className="rotulo px-2 py-3 text-right">
-              <abbr title="Dias concluídos" className="no-underline">
-                Dias
-              </abbr>
-            </th>
-            <th scope="col" className="rotulo px-3 py-3 text-right">
-              <abbr title="Melhor sequência" className="no-underline">
-                Melhor seq.
-              </abbr>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {itens.map((item) => {
-            const souEu = item.participanteId === meuParticipanteId;
-            return (
-              <tr
-                key={item.participanteId}
-                id={idLinhaRanking(item.participanteId)}
-                tabIndex={souEu ? -1 : undefined}
-                aria-current={souEu ? 'true' : undefined}
-                className={`scroll-mt-24 border-b border-borda last:border-b-0 ${
-                  souEu ? 'bg-superficie-2 shadow-[inset_4px_0_0_var(--color-vermelho)]' : ''
-                }`}
-              >
-                <td className="px-3 py-3">
-                  <span className={estiloPosicao(item.posicao)}>
-                    {item.posicao}º
-                    {MEDALHA[item.posicao] && (
-                      <span className="sr-only"> ({MEDALHA[item.posicao]})</span>
-                    )}
-                  </span>
-                </td>
-                <th scope="row" className="px-2 py-3 font-semibold">
-                  <span className="flex flex-wrap items-center gap-1.5">
-                    <span className={souEu ? 'font-bold text-texto' : 'text-texto'}>
-                      {item.nomeExibicao}
-                    </span>
-                    {souEu && (
-                      <span className="rounded-md border border-vermelho-texto px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-vermelho-texto">
-                        Você
-                      </span>
-                    )}
-                    {item.ehEmbaixador && <SeloEmbaixador />}
-                  </span>
-                </th>
-                <td className="px-2 py-3 text-right text-base font-bold tabular-nums">
-                  {item.diasConcluidos}
-                </td>
-                <td className="px-3 py-3 text-right tabular-nums text-texto-2">
-                  {item.melhorSequencia}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+    <ol className="grid gap-2" aria-label={`Ranking. ${TEXTO_CRITERIO}`}>
+      {itens.map((item) => {
+        const souEu = item.participanteId === meuParticipanteId;
+        const podio = item.posicao <= 3;
+        return (
+          <li
+            key={item.participanteId}
+            id={idLinhaRanking(item.participanteId)}
+            tabIndex={souEu ? -1 : undefined}
+            aria-current={souEu ? 'true' : undefined}
+            className={`flex scroll-mt-24 scroll-mb-28 items-center gap-3 rounded-[20px] bg-superficie py-2.5 pr-3.5 pl-2.5 ${souEu ? 'shadow-[inset_0_0_0_2px_var(--vermelho)]' : 'shadow-[inset_0_0_0_1px_var(--borda)]'}`}
+          >
+            <span
+              className={`w-7 shrink-0 text-center font-display text-[22px] font-extrabold tabular-nums ${podio ? 'text-vermelho-texto' : 'text-texto-2'}`}
+            >
+              {item.posicao}
+              <span className="sr-only">º lugar</span>
+            </span>
+            <Avatar nome={item.nomeExibicao} fotoUrl={item.fotoUrl} />
+            <span className="grid min-w-0 flex-1">
+              <span className="flex flex-wrap items-center gap-1.5 font-semibold">
+                {souEu ? 'Você' : item.nomeExibicao}
+                {item.ehEmbaixador && <SeloEmbaixador />}
+              </span>
+              <small className="text-xs text-texto-2">
+                melhor sequência {item.melhorSequencia} · atual {item.sequenciaAtual}
+              </small>
+            </span>
+            <span className="grid text-right">
+              <b className="font-display text-[26px] leading-none font-extrabold tabular-nums">{item.diasConcluidos}</b>
+              <small className="text-[11px] text-texto-2">{item.diasConcluidos === 1 ? 'dia' : 'dias'}</small>
+            </span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }

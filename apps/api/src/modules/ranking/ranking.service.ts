@@ -19,6 +19,7 @@ export const TTL_RANKING_S = 60;
 interface LinhaAgregada {
   id: string;
   nome: string;
+  fotoUrl: string | null;
   removido: boolean;
   ehEmbaixador: boolean;
   dataInscricao: Date;
@@ -39,13 +40,13 @@ export class RankingService {
     if (emCache) return emCache;
 
     const linhas = await this.prisma.$queryRaw<LinhaAgregada[]>`
-      SELECT p.id, u.nome, (u."excluidoEm" IS NOT NULL) AS removido, p."ehEmbaixador", p."dataInscricao",
+      SELECT p.id, u.nome, u."fotoUrl", (u."excluidoEm" IS NOT NULL) AS removido, p."ehEmbaixador", p."dataInscricao",
              COUNT(d.id) FILTER (WHERE d.concluido AND NOT d.invalidado)::int AS "diasConcluidos"
       FROM "Participante" p
       JOIN "Usuario" u ON u.id = p."usuarioId"
       LEFT JOIN "DiaDesafio" d ON d."participanteId" = p.id
       WHERE p."desafioId" = ${desafio.id}
-      GROUP BY p.id, u.nome, u."excluidoEm"`;
+      GROUP BY p.id, u.nome, u."fotoUrl", u."excluidoEm"`;
 
     const diasOk = await this.prisma.$queryRaw<{ participanteId: string; numeroDia: number }[]>`
       SELECT d."participanteId", d."numeroDia"
@@ -67,6 +68,7 @@ export class RankingService {
         return {
           participanteId: l.id,
           nomeExibicao: l.removido ? NOME_REMOVIDO : nomeExibicao(l.nome),
+          fotoUrl: l.removido ? null : l.fotoUrl,
           ehEmbaixador: l.ehEmbaixador,
           diasConcluidos: l.diasConcluidos,
           melhorSequencia: calcularMelhorSequencia(concluidos),

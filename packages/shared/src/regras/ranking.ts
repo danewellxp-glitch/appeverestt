@@ -7,6 +7,8 @@ export interface ItemRanking {
   sequenciaAtual: number;
   /** ISO 8601. */
   dataInscricao: string;
+  /** Foto do Google (null sem foto ou conta excluída). Opcional para quem só ordena. */
+  fotoUrl?: string | null;
 }
 
 export type ItemRankingPosicionado = ItemRanking & { posicao: number };
