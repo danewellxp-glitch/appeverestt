@@ -188,9 +188,9 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] **DoD** (Playwright, login real): a montanha anima (traço curto ao abrir → final em 1,8 s) e, com `reducedMotion: 'reduce'`, já abre no final; o grid leva para `/desafio/dia/2`; o ranking rola até a sua linha (tela 390×600: scrollY 388, linha no meio da tela); prints das 4 telas nos dois temas conferidos
 
 ## R9: Perfil e Admin
-- [ ] `pages/Perfil.tsx` com tema, instalação, sair e excluir (seção 9.9)
-- [ ] `pages/Admin.tsx` e `pages/AdminParticipante.tsx` restyle + fila de conferência (seções 9.11 e 9.12)
-- [ ] **DoD:** tema persiste no app inteiro; excluir conta → `/` com toast e "Participante removido" no ranking; aprovar diminui "para revisar", invalidar exige motivo
+- [x] `pages/Perfil.tsx`: avatar, vaga e data de inscrição; Aparência (Claro/Escuro/Sistema com `Segmentado`); switch de marketing (X9); "Meus dados" em folha com o `FormularioPerfil`; instalar o app; Regras; Privacidade; Painel do embaixador (ADMIN); Sair; "Excluir minha conta" com folha de confirmação (foco inicial em "Cancelar") → `DELETE /me` → `/` com toast
+- [x] `pages/Admin.tsx` (3 tiles: vagas, fecharam hoje, para revisar; switch de inscrições com confirmação; busca sem acento; lista ordenada por "para revisar" com pílula laranja) e `pages/AdminParticipante.tsx` (grid com aguardando/invalidado + legenda; abre no último dia aguardando; `PainelDia` com pílula de situação, fotos, valores e Aprovar/Invalidar/Revalidar; motivo com 5+ caracteres)
+- [x] **DoD** (Playwright, login real): trocar para Escuro no Perfil vale em /progresso e depois de recarregar (`everest-tema=escuro`), e volta para Sistema; conta nova criada e excluída → `/` com "Conta excluída." e o ranking mostra "Participante removido"; no admin, aprovar baixa "para revisar" (8 → 7), invalidar sem motivo é bloqueado e, com motivo, o ranking recalcula (Beatriz 2 → 1 dia; revalidado depois)
 
 ## R10: PWA e polimento de navegação
 - [ ] Folha "Instalar o app" com `Segmentado` iPhone/Android (substitui o `ModalInstrucoesIOS`)

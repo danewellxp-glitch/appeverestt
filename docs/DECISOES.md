@@ -100,4 +100,8 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | 2026-10-30 | v2 R8 | Ranking devolve `fotoUrl` de cada participante (null para conta excluída) | A lista mostra avatar com foto, como no protótipo; o feed já mostrava a foto ao grupo |
 | 2026-10-30 | v2 R8 | Frase de empate neutra em gênero: "Empate em dias com X; você fica à frente pela …" | O protótipo usa "Empatada com X", que supõe o gênero de quem lê |
 | 2026-10-30 | v2 R8 | Texto do prêmio ("camiseta de treino, whey e creatina") vem do protótipo e aparece na home e nas regras | Conteúdo de produto: confirmar com o Anderson junto com o Q8 |
+| 2026-10-30 | v2 R9 | `RouterProvider` importado de `react-router/dom` e sair/excluir conta navegam com `flushSync` antes de limpar a sessão | Com o `RouterProvider` de `react-router`, a navegação vai numa transição e a rota protegida antiga redirecionava para `/entrar` |
+| 2026-10-30 | v2 R9 | No admin, o dia aberto por padrão é gravado em `?dia=N` ao abrir | Depois de aprovar, a fila muda e a seleção pulava para outro dia |
+| 2026-10-30 | v2 R9 | Motivo da invalidação com 5+ caracteres só no front (o schema da API exige não vazio) | Segue a seção 8.3 sem mudar o contrato |
+| 2026-10-30 | v2 R9 | Avatar no admin só com iniciais (a lista de admin não traz `fotoUrl`) | Evita mudar o contrato só para isso; foto aparece no ranking e no feed |
 

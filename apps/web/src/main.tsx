@@ -1,7 +1,8 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { RouterProvider } from 'react-router';
+// react-router/dom: o RouterProvider daqui suporta navigate({ flushSync }) (usado no sair/excluir conta).
+import { RouterProvider } from 'react-router/dom';
 import { router } from './app/router';
 import { ToastProvider } from './components/ui/Toast';
 import { PwaGlobais } from './features/pwa/PwaGlobais';

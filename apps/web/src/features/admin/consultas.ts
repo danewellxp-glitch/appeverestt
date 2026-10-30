@@ -5,6 +5,8 @@ import {
   type AdminParticipanteDetalhe,
   type AdminParticipantesResposta,
   type AtualizarDesafioInput,
+  type ConferenciaInput,
+  type ConferenciaResposta,
   type InvalidacaoInput,
   type InvalidacaoResposta,
 } from '@everest/shared';
@@ -103,6 +105,21 @@ export function useInvalidacaoDia() {
         qc.invalidateQueries({ queryKey: ['progresso'] }),
         qc.invalidateQueries({ queryKey: ['dia'] }),
       ]);
+    },
+  });
+}
+
+/** Aprova (ou desfaz a aprovação de) um dia na fila de conferência (X8). */
+export function useConferenciaDia() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ diaId, ...input }: ConferenciaInput & { diaId: string }) =>
+      api<ConferenciaResposta>(`/admin/dias/${encodeURIComponent(diaId)}/conferencia`, {
+        method: 'PATCH',
+        body: input,
+      }),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['admin'] });
     },
   });
 }

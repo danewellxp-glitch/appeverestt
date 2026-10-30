@@ -24,6 +24,7 @@ const Desafio = lazy(() => import('../pages/Desafio'));
 const Dia = lazy(() => import('../pages/Dia'));
 const Progresso = lazy(() => import('../pages/Progresso'));
 const Ranking = lazy(() => import('../pages/Ranking'));
+const Perfil = lazy(() => import('../pages/Perfil'));
 const Admin = lazy(() => import('../pages/Admin'));
 const AdminParticipante = lazy(() => import('../pages/AdminParticipante'));
 const NaoEncontrada = lazy(() => import('../pages/NaoEncontrada'));
@@ -50,6 +51,8 @@ export const router = createBrowserRouter([
         element: <RotaProtegida />,
         children: [
           { path: '/bem-vindo', element: <BemVindo /> },
+          // Logado basta (abas só para inscritos, pelo AppShell).
+          { path: '/perfil', element: <Perfil /> },
           {
             element: <RotaPerfilCompleto />,
             children: [

@@ -1,18 +1,19 @@
 import type { MeuProgresso } from '@everest/shared';
-import { ArrowLeft } from 'lucide-react';
-import { Link, useParams, useSearchParams } from 'react-router';
-import { GridDias } from '../components/GridDias';
+import { useEffect } from 'react';
+import { useParams, useSearchParams } from 'react-router';
+import { BotaoVoltar } from '../components/layout/BotaoVoltar';
+import { GridDias, LegendaDias } from '../components/GridDias';
+import { Alerta, Skeleton } from '../components/ui/basicos';
 import { Botao } from '../components/ui/Botao';
-import { Alerta, Card, Skeleton } from '../components/ui/basicos';
-import { formatarDataHora, useAdminParticipante, useSlugAdmin } from '../features/admin/consultas';
+import { useAdminParticipante, useSlugAdmin } from '../features/admin/consultas';
 import { PainelDia } from '../features/admin/PainelDia';
-import { CartoesProgresso, LegendaGrid } from '../features/ranking/ResumoProgresso';
 import { SeloEmbaixador } from '../features/ranking/TabelaRanking';
 import { ehApiError } from '../lib/api';
 
-/** Dia aberto por padrão: o dia atual ou, fora dele, o último dia que já chegou. */
+/** Abre por padrão no último dia aguardando conferência; senão no último dia que já chegou. */
 function diaPadrao(progresso: MeuProgresso): number | null {
-  if (progresso.diaAtual !== null) return progresso.diaAtual;
+  const aguardando = progresso.dias.filter((d) => d.situacao === 'AGUARDANDO_CONFERENCIA');
+  if (aguardando.length > 0) return aguardando.at(-1)?.numeroDia ?? null;
   const passados = progresso.dias.filter((d) => d.situacao !== 'FUTURO');
   return passados.at(-1)?.numeroDia ?? null;
 }
@@ -25,33 +26,50 @@ function diaDaUrl(valor: string | null, progresso: MeuProgresso): number | null 
   return dia && dia.situacao !== 'FUTURO' ? n : null;
 }
 
-function LinkVoltar() {
+function Topo({ titulo, subtitulo }: { titulo: string; subtitulo?: string }) {
   return (
-    <Link
-      to="/admin"
-      className="inline-flex min-h-11 items-center gap-1 self-start rounded-xl pr-2 text-sm font-semibold text-texto-2 hover:text-texto"
-    >
-      <ArrowLeft className="size-4" aria-hidden />
-      Participantes
-    </Link>
+    <header className="surgir flex items-center gap-3">
+      <BotaoVoltar para="/admin" />
+      <div className="min-w-0 flex-1">
+        <p className="rotulo">{subtitulo ?? 'Participante'}</p>
+        <h1 className="font-display text-[38px] leading-[0.9] font-black uppercase [overflow-wrap:anywhere]">{titulo}</h1>
+      </div>
+    </header>
   );
 }
 
+/** /admin/participantes/:id (docs/FRONTEND.md §9.12). */
 export default function AdminParticipante() {
   const { id } = useParams();
   const [params, setParams] = useSearchParams();
   const { slug, carregando, erro, tentarDeNovo } = useSlugAdmin();
   const consulta = useAdminParticipante(slug, id);
+  const progressoCarregado = consulta.data?.progresso;
+  const semDiaNaUrl = !params.get('dia');
+
+  // Fixa o dia padrão na URL ao abrir: depois de aprovar, a fila muda e a seleção não pode pular de dia.
+  useEffect(() => {
+    if (!progressoCarregado || !semDiaNaUrl) return;
+    const n = diaPadrao(progressoCarregado);
+    if (n === null) return;
+    setParams(
+      (atual) => {
+        const proximo = new URLSearchParams(atual);
+        proximo.set('dia', String(n));
+        return proximo;
+      },
+      { replace: true, preventScrollReset: true },
+    );
+  }, [progressoCarregado, semDiaNaUrl, setParams]);
 
   if (erro) {
     return (
       <div className="flex flex-col gap-4">
-        <LinkVoltar />
-        <h1 className="text-2xl font-bold">Participante</h1>
+        <Topo titulo="Participante" />
         <Alerta
           tipo="erro"
           acao={
-            <Botao variante="secundario" onClick={tentarDeNovo}>
+            <Botao variante="secundario" tamanho="sm" onClick={tentarDeNovo}>
               Tentar de novo
             </Botao>
           }
@@ -61,32 +79,25 @@ export default function AdminParticipante() {
       </div>
     );
   }
-
   if (carregando || consulta.isPending) {
     return (
       <div role="status" aria-label="Carregando participante" className="flex flex-col gap-3">
-        <Skeleton className="h-8 w-32" />
-        <Skeleton className="h-16" />
-        <div className="grid grid-cols-2 gap-3">
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-        </div>
-        <Skeleton className="h-72" />
+        <Skeleton className="h-12 w-2/3" />
+        <Skeleton className="h-64 rounded-3xl" />
+        <Skeleton className="h-72 rounded-3xl" />
       </div>
     );
   }
-
   if (consulta.isError) {
     const naoEncontrado = ehApiError(consulta.error, 'NAO_ENCONTRADO');
     return (
       <div className="flex flex-col gap-4">
-        <LinkVoltar />
-        <h1 className="text-2xl font-bold">Participante</h1>
+        <Topo titulo="Participante" />
         <Alerta
           tipo="erro"
           acao={
             naoEncontrado ? undefined : (
-              <Botao variante="secundario" onClick={() => void consulta.refetch()}>
+              <Botao variante="secundario" tamanho="sm" onClick={() => void consulta.refetch()}>
                 Tentar de novo
               </Botao>
             )
@@ -100,6 +111,7 @@ export default function AdminParticipante() {
 
   const { participante, progresso } = consulta.data;
   const selecionado = diaDaUrl(params.get('dia'), progresso) ?? diaPadrao(progresso);
+  const subtitulo = `${participante.vagaNumero !== null ? `Vaga nº ${participante.vagaNumero} · ` : ''}${participante.diasConcluidos} ${participante.diasConcluidos === 1 ? 'dia' : 'dias'}${participante.paraRevisar > 0 ? ` · ${participante.paraRevisar} para revisar` : ''}`;
 
   function selecionar(n: number) {
     setParams(
@@ -113,55 +125,33 @@ export default function AdminParticipante() {
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <LinkVoltar />
+    <div className="flex flex-col gap-4">
+      <Topo titulo={participante.nome} subtitulo={subtitulo} />
+      <p className="-mt-2 flex flex-wrap items-center gap-2 text-sm break-all text-texto-2">
+        {participante.email}
+        {participante.ehEmbaixador && <SeloEmbaixador />}
+      </p>
 
-      <header className="flex flex-col gap-1">
-        <p className="rotulo">Vaga {participante.vagaNumero ?? '—'}</p>
-        <h1 className="flex flex-wrap items-center gap-2 text-2xl font-bold">
-          {participante.nome}
-          {participante.ehEmbaixador && <SeloEmbaixador />}
-        </h1>
-        <p className="text-sm break-all text-texto-2">{participante.email}</p>
-        <p className="text-xs text-texto-2">
-          Inscrição em {formatarDataHora(participante.dataInscricao)}
-        </p>
-        {participante.diasInvalidados > 0 && (
-          <p className="text-sm text-aviso-texto">
-            {participante.diasInvalidados}{' '}
-            {participante.diasInvalidados === 1 ? 'dia invalidado' : 'dias invalidados'}
-          </p>
-        )}
-      </header>
-
-      <section aria-label="Resumo do progresso">
-        <CartoesProgresso progresso={progresso} />
-      </section>
-
-      <section aria-labelledby="titulo-grade">
-        <Card className="flex flex-col gap-4">
-          <div>
-            <h2 id="titulo-grade" className="text-lg font-bold">
-              Dias
-            </h2>
-            <p className="text-sm text-texto-2">Escolha um dia para ver as fotos e os valores.</p>
-          </div>
-          <GridDias
-            dias={progresso.dias}
-            selecionado={selecionado}
-            aoSelecionar={selecionar}
-            rotulo={`Dias de ${participante.nome}`}
-          />
-          <LegendaGrid />
-        </Card>
+      <section
+        aria-labelledby="titulo-dias"
+        className="grid gap-3 rounded-3xl bg-superficie p-[18px] shadow-[inset_0_0_0_1px_var(--borda)]"
+      >
+        <h2 id="titulo-dias" className="text-[17px] font-bold">
+          Dias
+        </h2>
+        <GridDias
+          dias={progresso.dias}
+          selecionado={selecionado}
+          aoSelecionar={selecionar}
+          rotulo={`Dias de ${participante.nome}`}
+        />
+        <LegendaDias comConferencia />
       </section>
 
       {selecionado === null ? (
-        <Card>
-          <p className="text-sm text-texto-2">
-            O desafio ainda não começou: nenhum dia para revisar.
-          </p>
-        </Card>
+        <p className="rounded-3xl bg-superficie p-5 text-sm text-texto-2 shadow-[inset_0_0_0_1px_var(--borda)]">
+          O desafio ainda não começou: nenhum dia para revisar.
+        </p>
       ) : slug && id ? (
         <PainelDia key={selecionado} slug={slug} participanteId={id} numeroDia={selecionado} />
       ) : null}
