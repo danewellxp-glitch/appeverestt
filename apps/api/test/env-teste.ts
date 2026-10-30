@@ -17,6 +17,9 @@ export const ENV_TESTE: Record<string, string> = {
   THROTTLE_ATIVO: 'false',
   FIREBASE_PROJECT_ID: 'demo-everest-test',
   AUTH_SENHA_LEGADO: 'false',
+  // Payload Pix de demonstração (mesmo literal do shared/__tests__/pix.test.ts).
+  PIX_COPIA_E_COLA:
+    '00020101021126560014br.gov.bcb.pix0115pix@exemplo.dev0215DESAFIO 30 DIAS520400005303986540550.005802BR5912EVEREST DEMO6009SAO PAULO62150511EVERESTDEMO63048FC9',
 };
 
 export function aplicarEnvTeste(): void {

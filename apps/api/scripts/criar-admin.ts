@@ -1,7 +1,12 @@
 // Cria um usuário ADMIN (ou promove um existente). Com --embaixador, inscreve como
-// participante embaixador no desafio ativo (respeitando Desafio.embaixadorOcupaVaga — Q3).
+// participante embaixador no desafio ativo (respeitando Desafio.embaixadorOcupaVaga — Q3);
+// o embaixador nasce com o pagamento CONFIRMADO (não paga a inscrição).
 // Uso:
-//   pnpm --filter api criar-admin --nome "Anderson" --email anderson@exemplo.com --senha "..." [--embaixador]
+//   pnpm --filter api criar-admin --nome "Anderson" --email anderson@exemplo.com [--senha "..."] [--embaixador]
+//
+// --senha é opcional: só serve para o login local legado (AUTH_SENHA_LEGADO=true). Sem senha, o usuário
+// é criado sem senha e o admin ENTRA COM O GOOGLE (Firebase) usando a conta do MESMO e-mail: no primeiro
+// POST /auth/sessao com e-mail verificado, a conta Firebase é vinculada a este usuário e o papel ADMIN vale.
 import { PrismaClient } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { cadastroSchema } from '@everest/shared';
@@ -25,7 +30,6 @@ async function main(): Promise<void> {
   const prisma = new PrismaClient();
   try {
     const existente = await prisma.usuario.findUnique({ where: { email: a.email } });
-    if (!existente && !a.senha) sair('Informe --senha para criar um usuário novo.');
     const senhaHash = a.senha ? await argon2.hash(a.senha, { type: argon2.argon2id }) : undefined;
 
     const usuario = existente
@@ -41,12 +45,14 @@ async function main(): Promise<void> {
           data: {
             nome: a.nome,
             email: a.email,
-            senhaHash: senhaHash ?? sair('senha obrigatória'),
+            // null = sem login local; entra pelo Google/Firebase com este mesmo e-mail.
+            senhaHash: senhaHash ?? null,
             papel: 'ADMIN',
             aceitouTermosEm: new Date(),
           },
         });
     console.log(`✔ ${usuario.email} agora é ADMIN.`);
+    if (!usuario.senhaHash) console.log('  Sem senha local: entre com o Google usando este mesmo e-mail.');
 
     if (a.embaixador === 'true') {
       const desafio = await prisma.desafio.findFirst({ where: { ativo: true } });

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   atualizarPerfilSchema,
   conferenciaSchema,
+  feedbackSchema,
+  pagamentoAdminSchema,
   criarContaSchema,
   entrarSchema,
   sessaoSchema,
@@ -111,5 +113,35 @@ describe('schemas do Frontend v2', () => {
   it('conferenciaSchema exige booleano', () => {
     expect(conferenciaSchema.safeParse({ conferido: true }).success).toBe(true);
     expect(conferenciaSchema.safeParse({ conferido: 'sim' }).success).toBe(false);
+  });
+});
+
+describe('feedbackSchema e pagamentoAdminSchema', () => {
+  const valido = {
+    nota: 5,
+    oQueAchou: 'Muito bom, recomendo.',
+    oQueMudou: 'Passei a beber água todo dia.',
+    autorizaDivulgacao: false,
+  };
+
+  it('aceita o feedback completo e apara os textos', () => {
+    const r = feedbackSchema.safeParse({ ...valido, oQueAchou: '  Muito bom, recomendo.  ' });
+    expect(r.success).toBe(true);
+    expect(r.data?.oQueAchou).toBe('Muito bom, recomendo.');
+  });
+
+  it('rejeita nota fora de 1..5 e textos curtos ou longos', () => {
+    expect(feedbackSchema.safeParse({ ...valido, nota: 0 }).success).toBe(false);
+    expect(feedbackSchema.safeParse({ ...valido, nota: 6 }).success).toBe(false);
+    expect(feedbackSchema.safeParse({ ...valido, nota: 4.5 }).success).toBe(false);
+    const curto = feedbackSchema.safeParse({ ...valido, oQueMudou: 'pouco' });
+    expect(curto.error?.issues[0]?.path[0]).toBe('oQueMudou');
+    expect(feedbackSchema.safeParse({ ...valido, oQueAchou: 'a'.repeat(1001) }).success).toBe(false);
+  });
+
+  it('pagamentoAdminSchema só aceita CONFIRMADO ou PENDENTE', () => {
+    expect(pagamentoAdminSchema.safeParse({ status: 'CONFIRMADO' }).success).toBe(true);
+    expect(pagamentoAdminSchema.safeParse({ status: 'PENDENTE' }).success).toBe(true);
+    expect(pagamentoAdminSchema.safeParse({ status: 'INFORMADO' }).success).toBe(false);
   });
 });

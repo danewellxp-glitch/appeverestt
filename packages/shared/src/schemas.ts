@@ -190,6 +190,32 @@ export const criarContaSchema = z.object({
 });
 export type CriarContaInput = z.infer<typeof criarContaSchema>;
 
+const textoFeedback = (rotulo: string) =>
+  z
+    .string({ error: `Conte ${rotulo}.` })
+    .trim()
+    .min(LIMITES.feedbackTextoMin, { error: `Escreva pelo menos ${LIMITES.feedbackTextoMin} caracteres.` })
+    .max(LIMITES.feedbackTextoMax, { error: `Use no máximo ${LIMITES.feedbackTextoMax} caracteres.` });
+
+/** Feedback do participante (X13): nota de 1 a 5, dois textos e a autorização de divulgação. */
+export const feedbackSchema = z.object({
+  nota: z
+    .number({ error: 'Dê uma nota de 1 a 5.' })
+    .int({ error: 'Dê uma nota de 1 a 5.' })
+    .min(1, { error: 'Dê uma nota de 1 a 5.' })
+    .max(5, { error: 'Dê uma nota de 1 a 5.' }),
+  oQueAchou: textoFeedback('o que você achou do desafio'),
+  oQueMudou: textoFeedback('o que mudou para você nestes 30 dias'),
+  autorizaDivulgacao: z.boolean({ error: 'Valor inválido.' }),
+});
+export type FeedbackInput = z.infer<typeof feedbackSchema>;
+
+/** Conferência manual do Pix pelo embaixador (X12): confirma ou volta para pendente. */
+export const pagamentoAdminSchema = z.object({
+  status: z.enum(['CONFIRMADO', 'PENDENTE'], { error: 'Status inválido.' }),
+});
+export type PagamentoAdminInput = z.infer<typeof pagamentoAdminSchema>;
+
 /** Fila de conferência do embaixador (X8). */
 export const conferenciaSchema = z.object({
   conferido: z.boolean({ error: 'Informe se o dia foi conferido.' }),

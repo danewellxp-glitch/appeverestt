@@ -5,6 +5,7 @@ import {
   cenarioInscrito,
   criarApp,
   criarDesafio,
+  definirPagamento,
   fotosFalsas,
   limparTudo,
   novoUsuarioLogado,
@@ -96,7 +97,8 @@ describe('Check-in diário e progresso (e2e)', () => {
   it('antes do início → DESAFIO_NAO_INICIADO', async () => {
     await criarDesafio(ctx.prisma, { inicioRelativo: 2 });
     const { agente } = await novoUsuarioLogado(ctx.http);
-    await agente.post('/api/desafios/desafio-teste/inscricao');
+    const ins = await agente.post('/api/desafios/desafio-teste/inscricao');
+    await definirPagamento(ctx, ins.body.participacao.participanteId, 'CONFIRMADO');
     const r = await agente.put('/api/desafios/desafio-teste/dias/1').send(CHECKIN_COMPLETO);
     expect(r.body.codigo).toBe('DESAFIO_NAO_INICIADO');
   });

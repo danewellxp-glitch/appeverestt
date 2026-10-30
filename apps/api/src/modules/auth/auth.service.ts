@@ -169,6 +169,8 @@ export class AuthService {
         select: { id: true, storageKey: true, thumbKey: true },
       });
       await tx.fotoProva.deleteMany({ where: { id: { in: fotos.map((f) => f.id) } } });
+      // O depoimento é texto pessoal: some junto com a conta (a vaga continua ocupada — X5).
+      await tx.feedback.deleteMany({ where: { participante: { usuarioId } } });
       await tx.usuario.update({
         where: { id: usuarioId },
         data: {
@@ -263,6 +265,7 @@ export class AuthService {
           vagaNumero: p.vagaNumero,
           ehEmbaixador: p.ehEmbaixador,
           dataInscricao: p.dataInscricao.toISOString(),
+          pagamentoStatus: p.pagamentoStatus,
         }
       : null;
     return {

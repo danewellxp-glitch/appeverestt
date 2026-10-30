@@ -8,9 +8,11 @@ import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DesafiosModule } from './modules/desafios/desafios.module';
 import { DiasModule } from './modules/dias/dias.module';
+import { FeedbackModule } from './modules/feedback/feedback.module';
 import { FotosModule } from './modules/fotos/fotos.module';
 import { HealthModule } from './modules/health/health.module';
 import { InscricoesModule } from './modules/inscricoes/inscricoes.module';
+import { PagamentoModule } from './modules/pagamento/pagamento.module';
 import { RankingModule } from './modules/ranking/ranking.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
@@ -29,12 +31,14 @@ import { StorageModule } from './storage/storage.service';
     PrismaModule,
     RedisModule,
     StorageModule,
+    PagamentoModule,
     AuthModule,
     DesafiosModule,
     InscricoesModule,
     DiasModule,
     FotosModule,
     RankingModule,
+    FeedbackModule,
     AdminModule,
     HealthModule,
   ],

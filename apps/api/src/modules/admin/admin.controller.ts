@@ -1,11 +1,23 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Header, Param, Patch, Res, UseGuards } from '@nestjs/common';
+import {
+  ApiConflictResponse,
+  ApiCookieAuth,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiProduces,
+  ApiTags,
+} from '@nestjs/swagger';
+import type { Response } from 'express';
 import {
   atualizarDesafioSchema,
   conferenciaSchema,
   invalidacaoSchema,
   numeroDiaSchema,
+  pagamentoAdminSchema,
   type AdminDiaDetalhe,
+  type AdminFeedbacksResposta,
+  type AdminPagamento,
+  type AdminParticipante,
   type AdminParticipanteDetalhe,
   type AdminParticipantesResposta,
   type AtualizarDesafioInput,
@@ -13,6 +25,7 @@ import {
   type ConferenciaResposta,
   type InvalidacaoInput,
   type InvalidacaoResposta,
+  type PagamentoAdminInput,
 } from '@everest/shared';
 import { UsuarioAtual } from '../../common/decorators/usuario-atual.decorator';
 import { AdminGuard } from '../../common/guards/admin.guard';
@@ -21,6 +34,35 @@ import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { ApiZodBody } from '../../common/swagger';
 import type { UsuarioSessao } from '../auth/sessao';
 import { AdminService } from './admin.service';
+import { nomeArquivoCsv } from './csv';
+
+const EXEMPLO_PARTICIPANTE = {
+  participanteId: 'ckx1',
+  usuarioId: 'ckx2',
+  nome: 'Maria Souza Lima',
+  email: 'maria@exemplo.com',
+  instagram: 'maria.lima',
+  whatsapp: '11987654321',
+  vagaNumero: 2,
+  ehEmbaixador: false,
+  dataInscricao: '2026-10-20T12:00:00.000Z',
+  pagamentoStatus: 'INFORMADO',
+  pagamentoInformadoEm: '2026-10-20T12:07:00.000Z',
+  pagamentoConfirmadoEm: null,
+  contaExcluida: false,
+  diasConcluidos: 3,
+  diasInvalidados: 0,
+  paraRevisar: 2,
+  temFeedback: false,
+} satisfies AdminParticipante;
+
+const EXEMPLO_FEEDBACK = {
+  nota: 5,
+  oQueAchou: 'Foi puxado, mas o grupo ajudou demais a não largar no meio.',
+  oQueMudou: 'Passei a dormir melhor e a ler todo dia antes de deitar.',
+  autorizaDivulgacao: true,
+  atualizadoEm: '2026-11-30T22:15:00.000Z',
+};
 
 @ApiTags('admin')
 @ApiCookieAuth()
@@ -34,21 +76,9 @@ export class AdminController {
     schema: {
       example: {
         desafio: { slug: 'desafio-30-everest', nome: 'Desafio 30 Dias Everest', inscricoesAbertas: true, totalVagas: 50 },
-        participantes: [
-          {
-            participanteId: 'ckx1',
-            usuarioId: 'ckx2',
-            nome: 'Maria Souza Lima',
-            email: 'maria@exemplo.com',
-            vagaNumero: 2,
-            ehEmbaixador: false,
-            dataInscricao: '2026-10-20T12:00:00.000Z',
-            diasConcluidos: 3,
-            diasInvalidados: 0,
-            paraRevisar: 2,
-          },
-        ],
+        participantes: [EXEMPLO_PARTICIPANTE],
         totalParaRevisar: 2,
+        totalPagamentosInformados: 1,
       } satisfies AdminParticipantesResposta,
     },
   })
@@ -56,9 +86,119 @@ export class AdminController {
     return this.admin.participantes(slug);
   }
 
+  // Declarada ANTES de `participantes/:id` (senão "participantes.csv" cairia no :id).
+  @Get('desafios/:slug/participantes.csv')
+  @Header('Cache-Control', 'no-store')
+  @ApiProduces('text/csv')
+  @ApiOkResponse({
+    description:
+      'Dados de todos os participantes (UTF-8 com BOM, separador ";", CRLF; abre direto no Excel). ' +
+      'Colunas: vaga, nome, e-mail, instagram, whatsapp, nascimento, bairro, cidade, UF, inscrição, pagamento, ' +
+      'informado em, confirmado em, dias concluídos, dias invalidados, marketing, nota do feedback, ' +
+      'autoriza divulgação, conta excluída.',
+    schema: { type: 'string', example: '﻿Vaga;Nome;E-mail;...\r\n2;Maria Souza Lima;maria@exemplo.com;...\r\n' },
+  })
+  async participantesCsv(
+    @Param('slug') slug: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<string> {
+    const { conteudo, slug: slugReal } = await this.admin.csv(slug);
+    res.type('text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${nomeArquivoCsv(slugReal)}"`);
+    return conteudo;
+  }
+
   @Get('desafios/:slug/participantes/:id')
+  @ApiOkResponse({
+    description: 'Dados de cadastro, pagamento, feedback e progresso. `removivel` = pode remover a inscrição.',
+    schema: {
+      example: {
+        participante: EXEMPLO_PARTICIPANTE,
+        dados: {
+          email: 'maria@exemplo.com',
+          instagram: 'maria.lima',
+          whatsapp: '11987654321',
+          dataNascimento: '1995-04-12',
+          idade: 31,
+          bairro: 'Pinheiros',
+          cidade: 'São Paulo',
+          uf: 'SP',
+          aceitouTermosEm: '2026-10-20T11:58:00.000Z',
+          aceitouMarketingEm: null,
+          criadoEm: '2026-10-20T11:55:00.000Z',
+          excluidoEm: null,
+        },
+        pagamento: { status: 'INFORMADO', informadoEm: '2026-10-20T12:07:00.000Z', confirmadoEm: null },
+        feedback: null,
+        progresso: {
+          diaAtual: 4,
+          status: 'EM_ANDAMENTO',
+          totalDias: 30,
+          dias: [],
+          diasConcluidos: 3,
+          evolucao: 10,
+          melhorSequencia: 3,
+          sequenciaAtual: 3,
+        },
+        removivel: false,
+      } satisfies AdminParticipanteDetalhe,
+    },
+  })
+  @ApiNotFoundResponse({ description: 'NAO_ENCONTRADO.' })
   participante(@Param('slug') slug: string, @Param('id') id: string): Promise<AdminParticipanteDetalhe> {
     return this.admin.participante(slug, id);
+  }
+
+  @Patch('desafios/:slug/participantes/:id/pagamento')
+  @ApiZodBody(pagamentoAdminSchema, { status: 'CONFIRMADO' })
+  @ApiOkResponse({
+    description:
+      'Confere o Pix (idempotente). CONFIRMADO libera o acesso; PENDENTE ("Não recebi") zera a confirmação e ' +
+      'mantém `informadoEm`. 409 VALIDACAO ao tentar voltar o embaixador para PENDENTE.',
+    schema: {
+      example: {
+        status: 'CONFIRMADO',
+        informadoEm: '2026-10-20T12:07:00.000Z',
+        confirmadoEm: '2026-10-20T15:30:00.000Z',
+      } satisfies AdminPagamento,
+    },
+  })
+  @ApiNotFoundResponse({ description: 'NAO_ENCONTRADO.' })
+  pagamento(
+    @Param('slug') slug: string,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(pagamentoAdminSchema)) body: PagamentoAdminInput,
+    @UsuarioAtual() usuario: UsuarioSessao,
+  ): Promise<AdminPagamento> {
+    return this.admin.pagamento(slug, id, usuario.id, body);
+  }
+
+  @Delete('desafios/:slug/participantes/:id')
+  @ApiOkResponse({
+    description: 'Remove uma inscrição não confirmada (libera a vaga; o número volta a ser o menor livre).',
+    schema: { example: { ok: true } },
+  })
+  @ApiConflictResponse({ description: 'PARTICIPANTE_NAO_REMOVIVEL: confirmado, embaixador ou com check-ins.' })
+  @ApiNotFoundResponse({ description: 'NAO_ENCONTRADO.' })
+  remover(@Param('slug') slug: string, @Param('id') id: string): Promise<{ ok: true }> {
+    return this.admin.remover(slug, id);
+  }
+
+  @Get('desafios/:slug/feedbacks')
+  @ApiOkResponse({
+    description: 'Feedbacks do desafio, mais recentes primeiro. `media` com 1 casa (null sem feedbacks).',
+    schema: {
+      example: {
+        feedbacks: [
+          { ...EXEMPLO_FEEDBACK, participanteId: 'ckx1', nome: 'Maria Souza Lima', instagram: 'maria.lima', vagaNumero: 2 },
+        ],
+        total: 1,
+        media: 5,
+      } satisfies AdminFeedbacksResposta,
+    },
+  })
+  feedbacks(@Param('slug') slug: string): Promise<AdminFeedbacksResposta> {
+    return this.admin.feedbacks(slug);
   }
 
   @Get('desafios/:slug/participantes/:id/dias/:n')

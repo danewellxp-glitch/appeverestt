@@ -19,6 +19,7 @@ const EXEMPLO: DesafioAtual = {
   instagramHandle: 'everest',
   hashtag: 'DESAFIO30EVEREST',
   timezone: 'America/Sao_Paulo',
+  inscricao: { valorCentavos: 5000 },
 };
 
 @ApiTags('desafios')
@@ -27,7 +28,10 @@ export class DesafiosController {
   constructor(private readonly desafios: DesafioService) {}
 
   @Get('atual')
-  @ApiOkResponse({ description: 'Desafio ativo (público).', schema: { example: EXEMPLO } })
+  @ApiOkResponse({
+    description: 'Desafio ativo (público). `inscricao` = valor do Pix; null quando o Pix não está configurado.',
+    schema: { example: EXEMPLO },
+  })
   atual(): Promise<DesafioAtual> {
     return this.desafios.atual();
   }

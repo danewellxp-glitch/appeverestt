@@ -40,6 +40,8 @@ describe('Desafio e inscrição (e2e)', () => {
       inscricoesAbertas: true,
       instagramHandle: 'everest_teste',
       hashtag: 'DESAFIO30EVEREST',
+      // PIX_COPIA_E_COLA do env de teste = payload demo de R$ 50,00
+      inscricao: { valorCentavos: 5000 },
     });
   });
 
@@ -70,16 +72,23 @@ describe('Desafio e inscrição (e2e)', () => {
     const { agente } = await novoUsuarioLogado(ctx.http);
     const r1 = await agente.post('/api/desafios/desafio-teste/inscricao');
     expect(r1.status).toBe(201);
-    expect(r1.body).toMatchObject({ criada: true, participacao: { vagaNumero: 1, ehEmbaixador: false } });
+    expect(r1.body).toMatchObject({
+      criada: true,
+      participacao: { vagaNumero: 1, ehEmbaixador: false, pagamentoStatus: 'PENDENTE' },
+    });
 
     expect((await request(ctx.http).get('/api/desafios/atual')).body.vagasDisponiveis).toBe(49);
 
     const r2 = await agente.post('/api/desafios/desafio-teste/inscricao');
     expect(r2.status).toBe(200);
-    expect(r2.body).toMatchObject({ criada: false, participacao: { vagaNumero: 1 } });
+    expect(r2.body).toMatchObject({ criada: false, participacao: { vagaNumero: 1, pagamentoStatus: 'PENDENTE' } });
 
     const me = await agente.get('/api/auth/me');
-    expect(me.body.participacao).toMatchObject({ desafioSlug: 'desafio-teste', vagaNumero: 1 });
+    expect(me.body.participacao).toMatchObject({
+      desafioSlug: 'desafio-teste',
+      vagaNumero: 1,
+      pagamentoStatus: 'PENDENTE',
+    });
   });
 
   it('concorrência: 60 inscrições em paralelo com 50 vagas → 50 sucessos, 10 VAGAS_ESGOTADAS', async () => {
@@ -145,7 +154,8 @@ describe('Desafio e inscrição (e2e)', () => {
     await criarDesafio(ctx.prisma, { totalVagas: 2, embaixadorOcupaVaga: true });
     const emb = await novoUsuarioLogado(ctx.http);
     const r = await inscrever(ctx.prisma, { slug: 'desafio-teste', usuarioId: emb.id, embaixador: true });
-    expect(r.participante).toMatchObject({ vagaNumero: 1, ehEmbaixador: true });
+    expect(r.participante).toMatchObject({ vagaNumero: 1, ehEmbaixador: true, pagamentoStatus: 'CONFIRMADO' });
+    expect(r.participante.pagamentoConfirmadoEm).not.toBeNull();
     expect((await request(ctx.http).get('/api/desafios/atual')).body.vagasDisponiveis).toBe(1);
   });
 
@@ -153,7 +163,7 @@ describe('Desafio e inscrição (e2e)', () => {
     await criarDesafio(ctx.prisma, { totalVagas: 1, embaixadorOcupaVaga: false });
     const emb = await novoUsuarioLogado(ctx.http);
     const r = await inscrever(ctx.prisma, { slug: 'desafio-teste', usuarioId: emb.id, embaixador: true });
-    expect(r.participante).toMatchObject({ vagaNumero: null, ehEmbaixador: true });
+    expect(r.participante).toMatchObject({ vagaNumero: null, ehEmbaixador: true, pagamentoStatus: 'CONFIRMADO' });
 
     const { agente } = await novoUsuarioLogado(ctx.http);
     const outro = await agente.post('/api/desafios/desafio-teste/inscricao');

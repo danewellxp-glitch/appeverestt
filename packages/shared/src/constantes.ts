@@ -22,6 +22,12 @@ export const LIMITES = {
   motivoInvalidacaoMax: 500,
   localMin: 2,
   localMax: 80,
+  feedbackTextoMin: 10,
+  feedbackTextoMax: 1000,
+  /** Limites do BR Code (Pix estático): nome do recebedor, cidade e txid. */
+  pixNomeMax: 25,
+  pixCidadeMax: 15,
+  pixTxidMax: 25,
 } as const;
 
 export const TOTAL_DIAS_PADRAO = 30;
@@ -44,6 +50,14 @@ export const CODIGOS_ERRO = [
   'FOTO_GRANDE_DEMAIS',
   'MUITAS_REQUISICOES',
   'PERFIL_INCOMPLETO',
+  /** 403: participante sem pagamento confirmado numa rota que exige o pagamento. */
+  'PAGAMENTO_PENDENTE',
+  /** 409: aviso de pagamento depois da confirmação. */
+  'PAGAMENTO_JA_CONFIRMADO',
+  /** 409: o admin tentou remover uma inscrição confirmada, do embaixador ou com check-ins. */
+  'PARTICIPANTE_NAO_REMOVIVEL',
+  /** 503: PIX_COPIA_E_COLA não configurado (só fora de produção). */
+  'PAGAMENTO_INDISPONIVEL',
   'ERRO_INTERNO',
 ] as const;
 export type CodigoErro = (typeof CODIGOS_ERRO)[number];

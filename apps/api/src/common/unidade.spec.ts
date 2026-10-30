@@ -1,5 +1,6 @@
-import { cadastroSchema } from '@everest/shared';
+import { cadastroSchema, crc16Pix, gerarPixEstatico } from '@everest/shared';
 import { validarEnv } from '../config/env';
+import { montarPix } from '../modules/pagamento/pix.service';
 import { chaveOriginal, chavesProcessadas } from '../modules/fotos/fotos.constantes';
 import { opcoesRedis } from '../redis/conexao';
 import { ErroApp } from './erros';
@@ -16,6 +17,16 @@ const ENV_OK = {
   S3_SECRET_ACCESS_KEY: 's',
   FIREBASE_PROJECT_ID: 'demo-everest',
 };
+
+/** Payload de demonstração (nunca os dados reais do embaixador). */
+const PIX_DEMO = gerarPixEstatico({
+  chave: 'pix@exemplo.dev',
+  nome: 'EVEREST DEMO',
+  cidade: 'SAO PAULO',
+  valor: 50,
+  txid: 'EVERESTDEMO',
+  descricao: 'DESAFIO 30 DIAS',
+});
 
 describe('validarEnv', () => {
   it('aceita env completo e aplica defaults', () => {
@@ -35,7 +46,26 @@ describe('validarEnv', () => {
     expect(() =>
       validarEnv({ ...prod, FIREBASE_SERVICE_ACCOUNT_BASE64: 'e30=', FIREBASE_AUTH_EMULATOR_HOST: '127.0.0.1:9099' }),
     ).toThrow(/FIREBASE_AUTH_EMULATOR_HOST/);
-    expect(validarEnv({ ...prod, FIREBASE_SERVICE_ACCOUNT_BASE64: 'e30=' }).NODE_ENV).toBe('production');
+    expect(
+      validarEnv({ ...prod, FIREBASE_SERVICE_ACCOUNT_BASE64: 'e30=', PIX_COPIA_E_COLA: PIX_DEMO }).NODE_ENV,
+    ).toBe('production');
+  });
+
+  it('PIX_COPIA_E_COLA: obrigatório em produção, opcional em dev, validado (CRC e valor) quando presente', () => {
+    const prod = { ...ENV_OK, NODE_ENV: 'production', FIREBASE_SERVICE_ACCOUNT_BASE64: 'e30=' };
+    expect(() => validarEnv(prod)).toThrow(/PIX_COPIA_E_COLA/);
+    expect(validarEnv(ENV_OK).PIX_COPIA_E_COLA).toBeUndefined();
+    expect(validarEnv({ ...ENV_OK, PIX_COPIA_E_COLA: '  ' }).PIX_COPIA_E_COLA).toBeUndefined();
+    expect(validarEnv({ ...ENV_OK, PIX_COPIA_E_COLA: PIX_DEMO }).PIX_COPIA_E_COLA).toBe(PIX_DEMO);
+
+    const crcErrado = PIX_DEMO.slice(0, -4) + (PIX_DEMO.endsWith('0000') ? '1111' : '0000');
+    expect(() => validarEnv({ ...ENV_OK, PIX_COPIA_E_COLA: crcErrado })).toThrow(/PIX_COPIA_E_COLA.*CRC/);
+    expect(() => validarEnv({ ...ENV_OK, PIX_COPIA_E_COLA: 'nao-e-pix' })).toThrow(/PIX_COPIA_E_COLA/);
+
+    // Sem a tag 54 (valor): BR Code válido, mas a inscrição precisa de valor.
+    const semValorCorpo = PIX_DEMO.slice(0, -4).replace('540550.00', '');
+    const semValor = semValorCorpo + crc16Pix(semValorCorpo);
+    expect(() => validarEnv({ ...ENV_OK, PIX_COPIA_E_COLA: semValor })).toThrow(/PIX_COPIA_E_COLA.*valor/);
   });
 
   it('falha rápido se faltar variável ou o segredo for curto', () => {
@@ -105,5 +135,19 @@ describe('opcoesRedis', () => {
 describe('opcoesRedis family', () => {
   it('respeita ?family=0', () => {
     expect(opcoesRedis('redis://h:6379?family=0')).toMatchObject({ family: 0 });
+  });
+});
+
+describe('montarPix', () => {
+  it('lê o payload demo (R$ 50,00) e devolve null sem env ou com payload inválido', () => {
+    expect(montarPix(PIX_DEMO)).toEqual({
+      copiaECola: PIX_DEMO,
+      chave: 'pix@exemplo.dev',
+      nomeRecebedor: 'EVEREST DEMO',
+      valorCentavos: 5000,
+    });
+    expect(montarPix(` ${PIX_DEMO} `)?.copiaECola).toBe(PIX_DEMO);
+    expect(montarPix(undefined)).toBeNull();
+    expect(montarPix('000201qualquer-coisa')).toBeNull();
   });
 });

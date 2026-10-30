@@ -1,3 +1,4 @@
+import { lerPix } from '@everest/shared';
 import { z } from 'zod';
 
 const booleano = z
@@ -50,6 +51,11 @@ export const envSchema = z
   FIREBASE_AUTH_EMULATOR_HOST: opcional,
   /** Mantém POST /auth/cadastro e /auth/login (senha local). Padrão: desligado (responde 404). */
   AUTH_SENHA_LEGADO: booleano.default(false),
+  /**
+   * BR Code ("copia e cola") do Pix fixo da inscrição (X12), com valor. Obrigatório em produção.
+   * Fora de produção pode faltar: GET /pagamento responde `pix: null` e POST /informar responde 503.
+   */
+  PIX_COPIA_E_COLA: opcional,
 })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && !env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
@@ -65,6 +71,29 @@ export const envSchema = z
         path: ['FIREBASE_AUTH_EMULATOR_HOST'],
         message: 'Não use o emulador em produção',
       });
+    }
+    if (env.NODE_ENV === 'production' && !env.PIX_COPIA_E_COLA) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['PIX_COPIA_E_COLA'],
+        message: 'Obrigatório em produção (o "copia e cola" do Pix da inscrição)',
+      });
+    }
+    if (env.PIX_COPIA_E_COLA) {
+      const pix = lerPix(env.PIX_COPIA_E_COLA);
+      if (!pix) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['PIX_COPIA_E_COLA'],
+          message: 'BR Code inválido (formato, chave Pix ou CRC não conferem)',
+        });
+      } else if (pix.valor === null) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['PIX_COPIA_E_COLA'],
+          message: 'O BR Code precisa trazer o valor da inscrição (tag 54)',
+        });
+      }
     }
   });
 

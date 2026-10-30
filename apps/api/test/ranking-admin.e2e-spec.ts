@@ -104,6 +104,12 @@ describe('Admin (e2e)', () => {
       agente.get(`/api/admin/desafios/desafio-teste/participantes/${participanteId}/dias/1`),
       agente.patch('/api/admin/dias/qualquer/invalidacao').send({ invalidado: false }),
       agente.patch('/api/admin/desafios/desafio-teste').send({ inscricoesAbertas: false }),
+      agente
+        .patch(`/api/admin/desafios/desafio-teste/participantes/${participanteId}/pagamento`)
+        .send({ status: 'CONFIRMADO' }),
+      agente.delete(`/api/admin/desafios/desafio-teste/participantes/${participanteId}`),
+      agente.get('/api/admin/desafios/desafio-teste/feedbacks'),
+      agente.get('/api/admin/desafios/desafio-teste/participantes.csv'),
     ];
     for (const r of await Promise.all(rotas)) {
       expect(r.status).toBe(403);

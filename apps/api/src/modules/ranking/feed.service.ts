@@ -27,8 +27,9 @@ export class FeedService {
 
     const t = infoTempo(desafio, agora);
     const diaAtual = t.status === 'EM_ANDAMENTO' ? t.diaAtual : null;
+    // Só pagamento CONFIRMADO (X12); `vagasOcupadas` continua contando toda vaga reservada.
     const filtroHoje = {
-      participante: { desafioId: desafio.id },
+      participante: { desafioId: desafio.id, pagamentoStatus: 'CONFIRMADO' as const },
       numeroDia: diaAtual ?? -1,
       concluido: true,
       invalidado: false,

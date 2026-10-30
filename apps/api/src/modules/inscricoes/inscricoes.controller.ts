@@ -19,6 +19,7 @@ const EXEMPLO: InscricaoResposta = {
     vagaNumero: 9,
     ehEmbaixador: false,
     dataInscricao: '2026-10-27T12:00:00.000Z',
+    pagamentoStatus: 'PENDENTE',
   },
 };
 
@@ -34,7 +35,12 @@ export class InscricoesController {
   ) {}
 
   @Post()
-  @ApiCreatedResponse({ description: 'Inscrição criada.', schema: { example: EXEMPLO } })
+  @ApiCreatedResponse({
+    description:
+      'Vaga reservada com pagamento PENDENTE (o acesso abre quando o embaixador confirmar o Pix). ' +
+      'A vaga é o menor número livre (remoções liberam números).',
+    schema: { example: EXEMPLO },
+  })
   @ApiOkResponse({ description: 'Já inscrito (idempotente).', schema: { example: { ...EXEMPLO, criada: false } } })
   @ApiForbiddenResponse({ description: 'PERFIL_INCOMPLETO: falta aceitar os termos ou preencher os dados de cadastro.' })
   async inscrever(
@@ -58,6 +64,7 @@ export class InscricoesController {
         vagaNumero: p.vagaNumero,
         ehEmbaixador: p.ehEmbaixador,
         dataInscricao: p.dataInscricao.toISOString(),
+        pagamentoStatus: p.pagamentoStatus,
       },
     };
   }

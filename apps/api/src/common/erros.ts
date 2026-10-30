@@ -18,6 +18,10 @@ const STATUS_PADRAO: Record<CodigoErro, HttpStatus> = {
   FOTO_GRANDE_DEMAIS: HttpStatus.PAYLOAD_TOO_LARGE,
   MUITAS_REQUISICOES: HttpStatus.TOO_MANY_REQUESTS,
   PERFIL_INCOMPLETO: HttpStatus.FORBIDDEN,
+  PAGAMENTO_PENDENTE: HttpStatus.FORBIDDEN,
+  PAGAMENTO_JA_CONFIRMADO: HttpStatus.CONFLICT,
+  PARTICIPANTE_NAO_REMOVIVEL: HttpStatus.CONFLICT,
+  PAGAMENTO_INDISPONIVEL: HttpStatus.SERVICE_UNAVAILABLE,
   ERRO_INTERNO: HttpStatus.INTERNAL_SERVER_ERROR,
 };
 
@@ -38,6 +42,11 @@ export const MENSAGENS_PADRAO: Record<CodigoErro, string> = {
   FOTO_GRANDE_DEMAIS: 'A foto é grande demais (máximo 5 MB).',
   MUITAS_REQUISICOES: 'Muitas tentativas. Aguarde um pouco e tente de novo.',
   PERFIL_INCOMPLETO: 'Complete seu cadastro para garantir a vaga.',
+  PAGAMENTO_PENDENTE: 'Seu acesso é liberado quando o embaixador confirmar o pagamento.',
+  PAGAMENTO_JA_CONFIRMADO: 'Seu pagamento já foi confirmado.',
+  PARTICIPANTE_NAO_REMOVIVEL:
+    'Só dá para remover inscrições não confirmadas, sem check-ins e que não sejam do embaixador.',
+  PAGAMENTO_INDISPONIVEL: 'O pagamento não está configurado neste ambiente.',
   ERRO_INTERNO: 'Algo deu errado. Tente novamente.',
 };
 

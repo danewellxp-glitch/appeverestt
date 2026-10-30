@@ -33,7 +33,7 @@ export class RankingService {
     private readonly cache: CacheService,
   ) {}
 
-  /** Ranking ordenado (Q4/Q5). Só "Nome S." — nunca e-mail. Cache de 60 s. */
+  /** Ranking ordenado (Q4/Q5). Só "Nome S." — nunca e-mail. Só pagamento CONFIRMADO (X12). Cache de 60 s. */
   async itens(desafio: Desafio, agora = new Date()): Promise<ItemRankingPosicionado[]> {
     const chave = chaveRanking(desafio.id);
     const emCache = await this.cache.obter<ItemRankingPosicionado[]>(chave);
@@ -45,14 +45,15 @@ export class RankingService {
       FROM "Participante" p
       JOIN "Usuario" u ON u.id = p."usuarioId"
       LEFT JOIN "DiaDesafio" d ON d."participanteId" = p.id
-      WHERE p."desafioId" = ${desafio.id}
+      WHERE p."desafioId" = ${desafio.id} AND p."pagamentoStatus" = 'CONFIRMADO'
       GROUP BY p.id, u.nome, u."fotoUrl", u."excluidoEm"`;
 
     const diasOk = await this.prisma.$queryRaw<{ participanteId: string; numeroDia: number }[]>`
       SELECT d."participanteId", d."numeroDia"
       FROM "DiaDesafio" d
       JOIN "Participante" p ON p.id = d."participanteId"
-      WHERE p."desafioId" = ${desafio.id} AND d.concluido AND NOT d.invalidado`;
+      WHERE p."desafioId" = ${desafio.id} AND p."pagamentoStatus" = 'CONFIRMADO'
+        AND d.concluido AND NOT d.invalidado`;
 
     const porParticipante = new Map<string, boolean[]>();
     for (const l of linhas) porParticipante.set(l.id, new Array<boolean>(desafio.totalDias).fill(false));

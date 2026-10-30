@@ -15,6 +15,8 @@ const USUARIOS_DEV = [
   { nome: 'Ana Clara Ribeiro', email: 'ana@everest.dev' },
   { nome: 'Carlos Eduardo Santos', email: 'carlos@everest.dev' },
   { nome: 'Beatriz Almeida', email: 'beatriz@everest.dev' },
+  { nome: 'Pedro Henrique Costa', email: 'pedro@everest.dev' },
+  { nome: 'Lucia Fernandes', email: 'lucia@everest.dev' },
 ] as const;
 
 function codigo(e: unknown): string {

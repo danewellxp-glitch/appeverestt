@@ -1,15 +1,17 @@
 import type { INestApplication } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
-import type { Desafio, Prisma } from '@prisma/client';
+import type { Desafio, Prisma, StatusPagamento } from '@prisma/client';
 import type { App } from 'supertest/types';
 import request from 'supertest';
 import Redis from 'ioredis';
 import { hojeNoFuso, somarDias } from '@everest/shared';
 import { AppModule } from '../src/app.module';
+import { menorVagaLivre } from '../src/modules/inscricoes/inscrever';
 import { configurarApp } from '../src/app.setup';
 import { VERIFICADOR_FIREBASE } from '../src/modules/auth/verificador-firebase';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { CacheService, chaveVagas, chavesDoRanking } from '../src/redis/redis.module';
 import { VerificadorFalso, tokenTeste } from './verificador-falso';
 
 export interface Contexto {
@@ -38,7 +40,7 @@ export async function criarApp(): Promise<Contexto> {
 
 export async function limparTudo(prisma: PrismaService): Promise<void> {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE "FotoProva", "DiaDesafio", "Participante", "Desafio", "Usuario" CASCADE',
+    'TRUNCATE TABLE "Feedback", "FotoProva", "DiaDesafio", "Participante", "Desafio", "Usuario" CASCADE',
   );
   const redis = new Redis(process.env.REDIS_URL ?? '');
   const todas = (
@@ -145,10 +147,30 @@ export async function esperar<T>(
   return ultimo;
 }
 
-/** Desafio ativo que começou há `diasAtras` dias + usuário inscrito (hoje = dia diasAtras+1). */
+/** Grava o status do pagamento direto no banco (como o admin faria) e limpa os caches afetados. */
+export async function definirPagamento(
+  ctx: Contexto,
+  participanteId: string,
+  status: StatusPagamento,
+): Promise<void> {
+  const p = await ctx.prisma.participante.update({
+    where: { id: participanteId },
+    data: {
+      pagamentoStatus: status,
+      pagamentoInformadoEm: status === 'PENDENTE' ? null : new Date(),
+      pagamentoConfirmadoEm: status === 'CONFIRMADO' ? new Date() : null,
+    },
+  });
+  await ctx.app.get(CacheService).apagar(chaveVagas(p.desafioId), ...chavesDoRanking(p.desafioId));
+}
+
+/**
+ * Desafio ativo que começou há `diasAtras` dias + usuário inscrito (hoje = dia diasAtras+1).
+ * O pagamento fica CONFIRMADO por padrão (as rotas de check-in, ranking e feed exigem).
+ */
 export async function cenarioInscrito(
   ctx: Contexto,
-  opcoes: { diasAtras?: number; nome?: string } = {},
+  opcoes: { diasAtras?: number; nome?: string; pagamento?: StatusPagamento } = {},
 ): Promise<{
   desafio: Desafio;
   agente: ReturnType<typeof request.agent>;
@@ -164,7 +186,10 @@ export async function cenarioInscrito(
   const r = await agente.post('/api/desafios/desafio-teste/inscricao');
   if (r.status !== 201) throw new Error(`inscrição falhou: ${JSON.stringify(r.body)}`);
   const corpo = r.body as { participacao: { participanteId: string } };
-  return { desafio, agente, usuarioId: id, participanteId: corpo.participacao.participanteId, hoje: diasAtras + 1 };
+  const participanteId = corpo.participacao.participanteId;
+  const pagamento = opcoes.pagamento ?? 'CONFIRMADO';
+  if (pagamento !== 'PENDENTE') await definirPagamento(ctx, participanteId, pagamento);
+  return { desafio, agente, usuarioId: id, participanteId, hoje: diasAtras + 1 };
 }
 
 export const CHECKIN_COMPLETO = { aguaMl: 3000, exercicio: true, paginasLidas: 10, storyPostado: true };
@@ -194,7 +219,7 @@ export async function fotosFalsas(prisma: PrismaService, participanteId: string,
   return dia.id;
 }
 
-/** Cria participante + dias concluídos direto no banco (para ranking/admin). */
+/** Cria participante (pagamento CONFIRMADO) + dias concluídos direto no banco (para ranking/admin). */
 export async function participanteComDias(
   prisma: PrismaService,
   desafioId: string,
@@ -216,12 +241,16 @@ export async function participanteComDias(
       uf: 'PR',
     },
   });
-  const ocupadas = await prisma.participante.count({ where: { desafioId, vagaNumero: { not: null } } });
+  const { totalVagas } = await prisma.desafio.findUniqueOrThrow({ where: { id: desafioId } });
+  const vagaNumero = extra.vagaNumero ?? (await menorVagaLivre(prisma, desafioId, totalVagas));
+  if (vagaNumero === null) throw new Error('participanteComDias: vagas esgotadas');
   const p = await prisma.participante.create({
     data: {
       desafioId,
       usuarioId: u.id,
-      vagaNumero: extra.vagaNumero ?? ocupadas + 1,
+      vagaNumero,
+      pagamentoStatus: 'CONFIRMADO',
+      pagamentoConfirmadoEm: new Date(),
       ...(extra.dataInscricao ? { dataInscricao: extra.dataInscricao } : {}),
     },
   });
