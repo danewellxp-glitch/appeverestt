@@ -1,6 +1,6 @@
 import { REQUISITOS, type Requisito } from '@everest/shared';
 import { Check } from 'lucide-react';
-import { BarraProgresso } from '../../components/ui/basicos';
+import { Barra } from '../../components/ui/Barra';
 
 const ROTULO_REQUISITO: Record<Requisito, string> = {
   AGUA: 'Água',
@@ -32,7 +32,7 @@ export function ResumoDia({ pendentes, concluido }: { pendentes: Requisito[]; co
           </p>
           <p className="rotulo">Checklist</p>
         </div>
-        <BarraProgresso valor={feitos} maximo={total} rotulo={`${feitos} de ${total} requisitos cumpridos`} />
+        <Barra valor={feitos} maximo={total} rotulo={`${feitos} de ${total} requisitos cumpridos`} />
         <ul className="flex flex-wrap gap-1.5" aria-label="Requisitos do dia">
           {REQUISITOS.map((r) => {
             const ok = !pendentes.includes(r);

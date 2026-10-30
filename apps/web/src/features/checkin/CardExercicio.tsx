@@ -1,6 +1,6 @@
 import { Dumbbell } from 'lucide-react';
 import { CardRequisito } from './CardRequisito';
-import { Interruptor } from './Interruptor';
+import { Interruptor } from '../../components/ui/Interruptor';
 
 export function CardExercicio({
   exercicio,

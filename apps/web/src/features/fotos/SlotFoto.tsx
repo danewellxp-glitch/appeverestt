@@ -2,7 +2,7 @@ import type { FotoDia, TipoFoto } from '@everest/shared';
 import { Camera, ImagePlus, Loader2, RefreshCw, Trash } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Botao } from '../../components/ui/Botao';
-import { BarraProgresso } from '../../components/ui/basicos';
+import { Barra } from '../../components/ui/Barra';
 import { ROTULO_TIPO_FOTO, fotoEhValida } from './fotosValidas';
 import type { EstadoFoto } from './useUploadFoto';
 
@@ -94,7 +94,7 @@ export function SlotFoto({
           {status && <p className={COR_TOM[status.tom]}>{status.texto}</p>}
         </div>
         {upload?.fase === 'enviando' && (
-          <BarraProgresso valor={upload.progresso} maximo={100} rotulo={`Envio da foto de ${rotulo}`} />
+          <Barra valor={upload.progresso} maximo={100} rotulo={`Envio da foto de ${rotulo}`} />
         )}
 
         {editavel && (

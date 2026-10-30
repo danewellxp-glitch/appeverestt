@@ -2,7 +2,7 @@ import { AtSign, Copy } from 'lucide-react';
 import { useId, useState } from 'react';
 import { Botao } from '../../components/ui/Botao';
 import { CardRequisito } from './CardRequisito';
-import { Interruptor } from './Interruptor';
+import { Interruptor } from '../../components/ui/Interruptor';
 
 type ResultadoCopia = 'copiado' | 'falhou' | null;
 

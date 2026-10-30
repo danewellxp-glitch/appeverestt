@@ -85,6 +85,7 @@ export function definirTema(p: PreferenciaTema): void {
   }
   const reduzir = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!reduzir && typeof document.startViewTransition === 'function') {
+    document.documentElement.dataset.nav = 'tema';
     document.startViewTransition(() => aplicar(p));
   } else {
     aplicar(p);

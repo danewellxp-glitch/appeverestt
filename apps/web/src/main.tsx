@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router';
 import { router } from './app/router';
+import { ToastProvider } from './components/ui/Toast';
 import { PwaGlobais } from './features/pwa/PwaGlobais';
 import { iniciarCapturaInstalacao } from './features/pwa/useInstallPrompt';
 import { definirAoNaoAutenticado } from './lib/api';
@@ -26,9 +27,11 @@ if (!raiz) throw new Error('Elemento #root não encontrado');
 createRoot(raiz).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      {/* Toast de nova versão / offline pronto + indicador de offline em todas as rotas. */}
-      <PwaGlobais />
+      {/* Toasts (um por vez) + o único aviso de "sem conexão", em todas as rotas. */}
+      <ToastProvider>
+        <RouterProvider router={router} />
+        <PwaGlobais />
+      </ToastProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

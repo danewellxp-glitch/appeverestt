@@ -99,6 +99,7 @@ export default defineConfig({
     },
   },
   test: {
+    environment: 'jsdom',
     // e2e/ é do Playwright (pnpm test:e2e), não do Vitest.
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
   },

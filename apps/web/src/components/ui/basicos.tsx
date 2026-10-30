@@ -65,30 +65,3 @@ export function Alerta({
 export function Rotulo({ children, className = '' }: { children: ReactNode; className?: string }) {
   return <p className={`rotulo ${className}`}>{children}</p>;
 }
-
-/** Barra de progresso acessível. */
-export function BarraProgresso({
-  valor,
-  maximo,
-  rotulo,
-  className = '',
-}: {
-  valor: number;
-  maximo: number;
-  rotulo: string;
-  className?: string;
-}) {
-  const pct = maximo > 0 ? Math.max(0, Math.min(100, (valor / maximo) * 100)) : 0;
-  return (
-    <div
-      role="progressbar"
-      aria-label={rotulo}
-      aria-valuemin={0}
-      aria-valuemax={maximo}
-      aria-valuenow={Math.min(valor, maximo)}
-      className={`h-2.5 w-full overflow-hidden rounded-full bg-superficie-2 ${className}`}
-    >
-      <div className="h-full rounded-full bg-vermelho transition-[width] duration-300" style={{ width: `${pct}%` }} />
-    </div>
-  );
-}

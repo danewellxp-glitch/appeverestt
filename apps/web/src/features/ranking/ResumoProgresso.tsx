@@ -1,7 +1,8 @@
 import type { MeuProgresso } from '@everest/shared';
 import { AlertTriangle, Check } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { BarraProgresso, Card } from '../../components/ui/basicos';
+import { Card } from '../../components/ui/basicos';
+import { Barra } from '../../components/ui/Barra';
 
 function Cartao({ rotulo, children }: { rotulo: string; children: ReactNode }) {
   return (
@@ -29,7 +30,7 @@ export function CartoesProgresso({ progresso }: { progresso: MeuProgresso }) {
       <Cartao rotulo="Evolução">
         <dd className="flex flex-col gap-2">
           <span className="text-3xl font-bold">{evolucao}%</span>
-          <BarraProgresso
+          <Barra
             valor={diasConcluidos}
             maximo={totalDias}
             rotulo={`Evolução: ${evolucao}% (${diasConcluidos} de ${totalDias} dias)`}

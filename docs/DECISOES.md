@@ -82,4 +82,7 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | 2026-10-30 | v2 R1.1 | WhatsApp guardado só com dígitos e DDD, sem +55 (`normalizarTelefone`); Instagram sem "@" e minúsculo | Formato único para busca, deduplicação e exportação |
 | 2026-10-30 | v2 R1.1 | Seed de dev preenche dados fictícios de cadastro (`dadosDev`) | Os usuários do seed precisam de perfil completo para os fluxos de dev; nunca roda em produção (Q9) |
 | 2026-10-30 | v2 R1.1 | **Transitório até a R5:** o front atual (cadastro legado → inscrição) recebe `PERFIL_INCOMPLETO`, porque ainda não tem a `/bem-vindo` | A R5 cria a tela; o Playwright smoke da Fase 12 também depende dela |
+| 2026-10-30 | v2 R4 | **Transitório até R5/R6/R9:** aba "Desafio" → `/desafio` redireciona para `/hoje`; `/hoje` mostra as abas; aba "Perfil" (`/perfil`) cai no 404 até a R9; logout só pela Entrada (`/`) e admin só pela URL `/admin` | O header saiu (seção 8.2) antes das telas novas existirem; cada fase seguinte remove um item desta lista |
+| 2026-10-30 | v2 R4 | Toast aceita `acao` e `duracao: Infinity` | Unifica o "Nova versão disponível · Atualizar" do PWA, que precisa ficar até a pessoa agir |
+| 2026-10-30 | v2 R4 | Cores fixas do `Avatar` com classes da paleta (`bg-*-700` + branco) | Avatar de iniciais é igual nos dois temas; todas as 8 cores passam 4,5:1 com texto branco |
 

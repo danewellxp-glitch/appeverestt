@@ -154,11 +154,11 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] **DoD:** Playwright headless (preview + API): `everest-tema` = vazio/claro/escuro/sistema × SO claro/escuro → `data-tema`, fundo, texto e theme-color corretos nos 8 casos; o script roda antes do `<link rel=stylesheet>` (sem flash); prints da Entrada nos dois temas conferidos; build ok
 
 ## R4: Primitivos de UI e movimento
-- [ ] Componentes das seções 8.1 e 8.2 (`Botao`, `CampoTexto`, `Avatar`, `PilhaAvatares`, `Contador`/`useContador`, `FolhaInferior`, `Toast`, `Segmentado`, `Interruptor`, `Barra`, `BarraAbas`, `BotaoVoltar`, `AppShell` sem header)
-- [ ] `src/lib/transicoes.ts` + CSS das View Transitions (seção 7.3) + `marcarDirecao` nos links
-- [ ] Toasts do PWA unificados no `ToastProvider`; um só aviso de offline
-- [ ] Testes: `Segmentado`, `FolhaInferior`, `useContador` com reduced motion; vitest do web com `environment: 'jsdom'`
-- [ ] **DoD:** `pnpm --filter web test` verde; build ok
+- [x] `Botao` (pílula, sem caixa alta, variantes `gradiente`/`google`/`perigo`, tamanhos md/sm, spinner que mantém a largura), `CampoTexto` (pílula, `alinhamento`, `prefixo`), `Avatar` + `PilhaAvatares`, `Contador`/`useContador`, `FolhaInferior`, `Toast`/`ToastProvider`/`useToast`, `Segmentado`, `Interruptor` (movido para `ui/`), `Barra` (substitui `BarraProgresso`), `BarraAbas` (substitui `BottomNav`), `BotaoVoltar` e `AppShell` sem header
+- [x] `src/lib/transicoes.ts` (`marcarDirecao`, `abrirComTransformacao`, `nomeTransicaoDoEstado`) + CSS das View Transitions (seção 7.3) + `marcarDirecao` na barra de abas e no voltar (os demais links ganham a direção nas fases das telas e na R10)
+- [x] Toasts do PWA (nova versão, pronto offline) no `ToastProvider`; um só aviso de offline (global; o da `/hoje` saiu)
+- [x] Testes: `Segmentado` (aria-pressed), `FolhaInferior` (foco inicial, Esc fecha e devolve o foco, foco preso), `useContador` (reduced motion = valor final); vitest do web com `environment: 'jsdom'`
+- [x] **DoD:** `pnpm --filter web test` 17/17; build ok. Conferido no Playwright (390×844, dois temas): indicador da aba segue a rota, abas somem fora das rotas de aba
 
 ## R5: Autenticação no front
 - [ ] `lib/firebase.ts`, `features/auth/firebaseAuth.ts`, `errosFirebase.ts` e `.env.example` do web (seção 5)

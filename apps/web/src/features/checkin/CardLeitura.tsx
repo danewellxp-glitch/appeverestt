@@ -2,7 +2,7 @@ import { LIMITES, METAS } from '@everest/shared';
 import { BookOpen } from 'lucide-react';
 import { useId, useState } from 'react';
 import { Botao } from '../../components/ui/Botao';
-import { BarraProgresso } from '../../components/ui/basicos';
+import { Barra } from '../../components/ui/Barra';
 import { CardRequisito } from './CardRequisito';
 import { limitar } from './formatos';
 
@@ -23,7 +23,7 @@ export function CardLeitura({
 
   return (
     <CardRequisito titulo="Leitura" icone={<BookOpen className="size-5" />} cumprido={paginas >= METAS.paginas}>
-      <BarraProgresso
+      <Barra
         valor={paginas}
         maximo={METAS.paginas}
         rotulo={`Leitura: ${paginas} de ${METAS.paginas} páginas`}

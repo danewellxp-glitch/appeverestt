@@ -51,8 +51,8 @@ function EsqueletoHoje() {
   );
 }
 
-/** Avisos de por que o dia está em modo leitura, offline ou invalidado. */
-function AvisosDia({ dia, online }: { dia: DiaDetalhe; online: boolean }) {
+/** Avisos de por que o dia está em modo leitura ou invalidado (offline: aviso global do ToastProvider). */
+function AvisosDia({ dia }: { dia: DiaDetalhe }) {
   return (
     <>
       {dia.invalidado && (
@@ -61,13 +61,7 @@ function AvisosDia({ dia, online }: { dia: DiaDetalhe; online: boolean }) {
           {dia.motivoInvalidacao ? ` Motivo: ${dia.motivoInvalidacao}` : ''} Ele não conta para o ranking.
         </Alerta>
       )}
-      {!dia.editavel ? (
-        <Alerta tipo="info">Dias anteriores ficam só para consulta.</Alerta>
-      ) : (
-        !online && (
-          <Alerta tipo="aviso">Você está offline. A edição volta quando a conexão voltar.</Alerta>
-        )
-      )}
+      {!dia.editavel && <Alerta tipo="info">Dias anteriores ficam só para consulta.</Alerta>}
     </>
   );
 }
@@ -100,7 +94,7 @@ function ConteudoDia({
 
   return (
     <div className="flex flex-col gap-4">
-      <AvisosDia dia={dia} online={online} />
+      <AvisosDia dia={dia} />
       <ResumoDia pendentes={pendentes} concluido={concluido} />
       {dia.editavel && (
         <IndicadorSalvamento

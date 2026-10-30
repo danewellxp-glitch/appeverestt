@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { createBrowserRouter } from 'react-router';
+import { Navigate, createBrowserRouter } from 'react-router';
 import { AppShell } from '../components/layout/AppShell';
 import { RotaAdmin, RotaInscrito, RotaProtegida } from '../features/auth/rotas';
 import Entrada from '../pages/Entrada';
@@ -32,6 +32,8 @@ export const router = createBrowserRouter([
             element: <RotaInscrito />,
             children: [
               { path: '/hoje', element: <Hoje /> },
+              // Transitório: a aba "Desafio" leva à home atual até a página /desafio existir (R6).
+              { path: '/desafio', element: <Navigate to="/hoje" replace /> },
               { path: '/progresso', element: <Progresso /> },
               { path: '/ranking', element: <Ranking /> },
             ],

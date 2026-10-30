@@ -3,7 +3,8 @@ import { ArrowRight, BookOpen, CalendarDays, Flag, LogOut, Shield } from 'lucide
 import { Link, useNavigate } from 'react-router';
 import { Watermark } from '../components/layout/Watermark';
 import { Botao } from '../components/ui/Botao';
-import { Alerta, BarraProgresso, Card, Skeleton } from '../components/ui/basicos';
+import { Alerta, Card, Skeleton } from '../components/ui/basicos';
+import { Barra } from '../components/ui/Barra';
 import { useLogout } from '../features/auth/useLogout';
 import { useInscrever } from '../features/desafio/useInscrever';
 import { BotaoBaixarApp } from '../features/pwa/BotaoBaixarApp';
@@ -88,7 +89,7 @@ function PainelVagas({ desafio }: { desafio: DesafioAtual }) {
         <span className="font-bold">de {desafio.totalVagas} vagas disponíveis</span>
       </p>
       <div className="flex flex-col gap-1.5">
-        <BarraProgresso valor={preenchidas} maximo={desafio.totalVagas} rotulo="Vagas preenchidas" />
+        <Barra valor={preenchidas} maximo={desafio.totalVagas} rotulo="Vagas preenchidas" />
         <p className="text-xs text-texto-2">
           {preenchidas} de {desafio.totalVagas} vagas preenchidas
         </p>

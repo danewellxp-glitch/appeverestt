@@ -2,7 +2,8 @@ import type { MeuProgresso } from '@everest/shared';
 import { Trophy } from 'lucide-react';
 import { Link } from 'react-router';
 import { GridDias } from '../../components/GridDias';
-import { BarraProgresso, Card, Rotulo } from '../../components/ui/basicos';
+import { Card, Rotulo } from '../../components/ui/basicos';
+import { Barra } from '../../components/ui/Barra';
 
 function Numero({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
@@ -36,7 +37,7 @@ export function TelaEncerrado({ progresso }: { progresso: MeuProgresso }) {
           <p className="rotulo">Evolução</p>
           <p className="text-2xl font-bold tabular-nums">{progresso.evolucao}%</p>
         </div>
-        <BarraProgresso valor={progresso.evolucao} maximo={100} rotulo={`Evolução: ${progresso.evolucao}%`} />
+        <Barra valor={progresso.evolucao} maximo={100} rotulo={`Evolução: ${progresso.evolucao}%`} />
       </Card>
 
       <section aria-label="Os 30 dias" className="flex flex-col gap-2">

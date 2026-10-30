@@ -1,7 +1,7 @@
 import { LIMITES, METAS } from '@everest/shared';
 import { Droplets } from 'lucide-react';
 import { Botao } from '../../components/ui/Botao';
-import { BarraProgresso } from '../../components/ui/basicos';
+import { Barra } from '../../components/ui/Barra';
 import { CardRequisito } from './CardRequisito';
 import { formatarNumero, limitar } from './formatos';
 
@@ -22,7 +22,7 @@ export function CardAgua({
         <span className="text-2xl font-bold text-texto">{formatarNumero(aguaMl)}</span> de{' '}
         {formatarNumero(METAS.aguaMl)} ml
       </p>
-      <BarraProgresso
+      <Barra
         valor={aguaMl}
         maximo={METAS.aguaMl}
         rotulo={`Água: ${formatarNumero(aguaMl)} de ${formatarNumero(METAS.aguaMl)} ml`}

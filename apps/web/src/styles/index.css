@@ -71,6 +71,7 @@
   --color-info-fundo: var(--info-fundo);
   --color-info-borda: var(--info-borda);
   --color-info-texto: var(--info-texto);
+  --color-scrim: var(--scrim);
   --font-sans: 'Onest Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Big Shoulders Display', 'Arial Narrow', Impact, sans-serif;
   --ease-saida: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -114,6 +115,7 @@
   --info-fundo: #e6f1fa;
   --info-borda: #9cc3e3;
   --info-texto: #0c3d66;
+  --scrim: rgb(20 17 17 / 0.45);
   color-scheme: light;
 }
 
@@ -148,6 +150,7 @@
   --info-fundo: #08202f;
   --info-borda: #075985;
   --info-texto: #e0f2fe;
+  --scrim: rgb(0 0 0 / 0.65);
   color-scheme: dark;
 }
 
@@ -209,10 +212,110 @@
   }
 }
 
-/* Troca de tema com crossfade (lib/tema.ts usa startViewTransition quando existe). */
-::view-transition-old(root),
+/* ---------- Movimento (docs/FRONTEND.md §7) ---------- */
+@keyframes sair {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes entrar-baixo {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+@keyframes sair-esquerda {
+  to {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+}
+@keyframes entrar-direita {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+}
+@keyframes sair-direita {
+  to {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+}
+@keyframes entrar-esquerda {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes folha-entrar {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes folha-sair {
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes toast-entrar {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+@keyframes shake {
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+/* View Transitions entre rotas (lib/transicoes.ts marca a direção em <html data-nav>). */
+::view-transition-group(*) {
+  animation-duration: 440ms;
+  animation-timing-function: var(--ease-saida);
+}
+::view-transition-old(root) {
+  animation: 170ms ease-in both sair;
+}
 ::view-transition-new(root) {
-  animation-duration: 300ms;
+  animation: 320ms var(--ease-saida) both entrar-baixo;
+}
+html[data-nav='avancar']::view-transition-old(root) {
+  animation-name: sair-esquerda;
+}
+html[data-nav='avancar']::view-transition-new(root) {
+  animation-name: entrar-direita;
+}
+html[data-nav='voltar']::view-transition-old(root) {
+  animation-name: sair-direita;
+}
+html[data-nav='voltar']::view-transition-new(root) {
+  animation-name: entrar-esquerda;
+}
+/* Troca de tema: crossfade simples de 300 ms. */
+html[data-nav='tema']::view-transition-old(root) {
+  animation: 300ms ease both sair;
+}
+html[data-nav='tema']::view-transition-new(root) {
+  animation: 300ms ease both fade-in;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
