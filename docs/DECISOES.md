@@ -90,4 +90,8 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | 2026-10-30 | v2 R5 | Aceite marcado em /criar-conta vai para a /bem-vindo via `sessionStorage` (`everest-aceite-pendente`), limpo depois do PATCH | Sobrevive ao redirect do Google e ao recarregar; não é dado sensível |
 | 2026-10-30 | v2 R5 | Todos passam pela /bem-vindo (inclusive quem criou conta por e-mail) | Dados de cadastro obrigatórios (Q7/X11); a spec foi atualizada na R1.1 |
 | 2026-10-30 | v2 R5 | `AUTH_SENHA_LEGADO=false` em dev; o ambiente do Playwright (Fase 12) ainda liga o legado até a R11 reescrever os testes com o emulador | O front não usa mais senha local |
+| 2026-10-30 | v2 R6 | **Transitório até a R7:** chips, "Seu dia" e CTA abrem `/hoje?dia=N` (`caminhoDoDia` em `features/desafio/navegacao.ts`, o único ponto a trocar) | A tela `/desafio/dia/:n` chega na R7 |
+| 2026-10-30 | v2 R6 | `useCheckin.alterar(fn, { imediato: true })` salva sem debounce | Toque único ("Marcar como postado") precisa refletir já no card "Seu dia"; o resto do check-in continua com 800 ms |
+| 2026-10-30 | v2 R6 | O nome do container transform é aplicado no contêiner do conteúdo do `AppShell` (via `location.state.vt`) | Vale para qualquer tela de destino sem mexer em cada página |
+| 2026-10-30 | v2 R6 | `useCheckin` também invalida o feed no sucesso | O servidor invalida o cache do feed junto com o ranking; o front acompanha |
 

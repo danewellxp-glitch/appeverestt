@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { useMe } from '../../lib/queries';
+import { nomeTransicaoDoEstado } from '../../lib/transicoes';
 import { Carregando } from '../ui/basicos';
 import { BarraAbas, ROTAS_COM_ABAS } from './BarraAbas';
 import { Watermark } from './Watermark';
@@ -11,7 +12,9 @@ import { Watermark } from './Watermark';
  */
 export function AppShell() {
   const { data: me } = useMe();
-  const { pathname } = useLocation();
+  const { pathname, state } = useLocation();
+  // Container transform: a tela de destino herda o nome do card tocado (abrir-dia, abrir-ranking).
+  const nomeTransicao = nomeTransicaoDoEstado(state);
   const comAbas = Boolean(me?.participacao) && ROTAS_COM_ABAS.includes(pathname);
 
   return (
@@ -20,9 +23,11 @@ export function AppShell() {
       <main
         className={`mx-auto max-w-md px-5 pt-[calc(env(safe-area-inset-top)+16px)] ${comAbas ? 'pb-[calc(env(safe-area-inset-bottom)+112px)]' : 'pb-10'}`}
       >
-        <Suspense fallback={<Carregando />}>
-          <Outlet />
-        </Suspense>
+        <div style={nomeTransicao ? { viewTransitionName: nomeTransicao } : undefined}>
+          <Suspense fallback={<Carregando />}>
+            <Outlet />
+          </Suspense>
+        </div>
       </main>
       <BarraAbas visivel={comAbas} />
     </div>

@@ -18,3 +18,12 @@ export function formatarDataCurta(iso: string): string {
     new Date(Date.UTC(a, m - 1, d, 12)),
   );
 }
+
+/** 'YYYY-MM-DD' → "qua, 19/11" (eyebrow do topo da home e do dia). */
+export function formatarDiaCurto(iso: string): string {
+  const [a, m, d] = iso.split('-').map(Number);
+  if (!a || !m || !d) return iso;
+  const data = new Date(Date.UTC(a, m - 1, d, 12));
+  const semana = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC', weekday: 'short' }).format(data).replace('.', '');
+  return `${semana}, ${formatarDataCurta(iso)}`;
+}

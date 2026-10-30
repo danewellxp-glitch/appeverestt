@@ -169,10 +169,10 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] **DoD** (Playwright + `pnpm emu` + `seed:firebase` + API + web dev): login de maria@everest.dev por e-mail → `/desafio`; Google no emulador cria conta → `/bem-vindo` (aceite desmarcado) → vaga nº 9 → `/desafio`; "Criar conta" por e-mail → `/bem-vindo` (aceite já marcado) → vaga nº 10; `/login?volta=…` → `/entrar?volta=…`; senha errada → "E-mail ou senha incorretos."; build: o SDK do Firebase fica nos chunks `index.esm-*` (auth 36,2 KB gzip + app 9,9 KB gzip), fora do chunk de entrada (que só tem o wrapper `lib/firebase.ts`)
 
 ## R6: Home `/desafio`
-- [ ] `FaixaDias`, `CarrosselDestaque`, `CardEscalada`, `CardStoryDoDia`, `CardSeuDia`, `CardsAtividade` e `CtaFixo`
-- [ ] `pages/Desafio.tsx` com os estados `NAO_INICIADO` / `EM_ANDAMENTO` / `ENCERRADO`, skeleton e erro
-- [ ] Container transform `abrir-dia` e `abrir-ranking`
-- [ ] **DoD:** roteiro manual 390×844 nos dois temas (6 passos da seção 12)
+- [x] `FaixaDias`, `CarrosselDestaque`, `CardEscalada`, `CardStoryDoDia`, `CardSeuDia`, `CardsAtividade` e `CtaFixo` (+ `useFeed`, `formatarDiaCurto`)
+- [x] `pages/Desafio.tsx` com os estados `NAO_INICIADO` (contagem no lugar do "Seu dia", sem CTA) / `EM_ANDAMENTO` / `ENCERRADO` (resumo final + "Ver ranking final"), skeleton e erro com "Tentar de novo"
+- [x] Container transform `abrir-dia` (card, chips e CTA) e `abrir-ranking` (card de atividade); a tela de destino herda o nome no `AppShell`; prefetch do chunk no pointerdown
+- [x] **DoD** (Playwright 390×844, claro e escuro, login real pelo emulador): 1) a faixa centraliza o dia atual (desvio 0 px); 2) dia futuro → shake + toast "O dia 6 abre em 2 dias, à meia-noite."; 3) "Seu dia" abre o check-in do dia; 4) card preto abre o ranking; 5) carrossel encaixa e os pontos acompanham (18/6 → 6/18 px); 6) "Marcar como postado" muda o "Seu dia" de 0 para 1 de 5 na hora
 
 ## R7: Check-in `/desafio/dia/:n`
 - [ ] `pages/Dia.tsx` (refatora `Hoje.tsx`), `useDiaSelecionado` lendo `useParams`, redirect de `:n` inválido

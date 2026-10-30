@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { Navigate, createBrowserRouter } from 'react-router';
+import { createBrowserRouter } from 'react-router';
 import { AppShell } from '../components/layout/AppShell';
 import {
   RedirecionarPreservandoBusca,
@@ -19,6 +19,7 @@ const RecuperarSenha = lazy(() => import('../pages/RecuperarSenha'));
 const BemVindo = lazy(() => import('../pages/BemVindo'));
 const Privacidade = lazy(() => import('../pages/Privacidade'));
 const Regras = lazy(() => import('../pages/Regras'));
+const Desafio = lazy(() => import('../pages/Desafio'));
 const Hoje = lazy(() => import('../pages/Hoje'));
 const Progresso = lazy(() => import('../pages/Progresso'));
 const Ranking = lazy(() => import('../pages/Ranking'));
@@ -55,8 +56,7 @@ export const router = createBrowserRouter([
                 element: <RotaInscrito />,
                 children: [
                   { path: '/hoje', element: <Hoje /> },
-                  // Transitório: a home /desafio chega na R6; até lá leva ao check-in de hoje.
-                  { path: '/desafio', element: <Navigate to="/hoje" replace /> },
+                  { path: '/desafio', element: <Desafio /> },
                   { path: '/progresso', element: <Progresso /> },
                   { path: '/ranking', element: <Ranking /> },
                 ],

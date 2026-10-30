@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import type {
   DesafioAtual,
   DiaDetalhe,
+  FeedResposta,
   MeResposta,
   MeuProgresso,
   RankingResposta,
@@ -15,6 +16,7 @@ export const chaves = {
   progresso: (slug: string) => ['progresso', slug] as const,
   dia: (slug: string, n: number) => ['dia', slug, n] as const,
   ranking: (slug: string) => ['ranking', slug] as const,
+  feed: (slug: string) => ['feed', slug] as const,
   adminParticipantes: (slug: string) => ['admin', 'participantes', slug] as const,
   adminParticipante: (slug: string, id: string) => ['admin', 'participante', slug, id] as const,
   adminDia: (slug: string, id: string, n: number) => ['admin', 'dia', slug, id, n] as const,
@@ -69,6 +71,15 @@ export function useRanking(slug: string | undefined) {
   return useQuery({
     queryKey: chaves.ranking(slug ?? ''),
     queryFn: ({ signal }) => api<RankingResposta>(`/desafios/${slug ?? ''}/ranking`, { signal }),
+    enabled: Boolean(slug),
+  });
+}
+
+/** Atividade do grupo no dia (inscrito ou admin). O servidor guarda 60 s em cache. */
+export function useFeed(slug: string | undefined) {
+  return useQuery({
+    queryKey: chaves.feed(slug ?? ''),
+    queryFn: ({ signal }) => api<FeedResposta>(`/desafios/${encodeURIComponent(slug ?? '')}/feed`, { signal }),
     enabled: Boolean(slug),
   });
 }

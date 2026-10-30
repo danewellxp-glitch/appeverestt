@@ -101,6 +101,7 @@ export function useCheckin(slug: string, dia: DiaDetalhe | undefined, podeEditar
     onSuccess: (servidor, vars) => {
       void qc.invalidateQueries({ queryKey: chaves.progresso(vars.slug) });
       void qc.invalidateQueries({ queryKey: chaves.ranking(vars.slug) });
+      void qc.invalidateQueries({ queryKey: chaves.feed(vars.slug) });
       // Se já existe edição mais nova, esta resposta está desatualizada: não regride o cache.
       if (vars.seq !== seqRef.current) return;
       qc.setQueryData(chaves.dia(vars.slug, vars.numeroDia), servidor);
@@ -152,7 +153,11 @@ export function useCheckin(slug: string, dia: DiaDetalhe | undefined, podeEditar
     rascunho && dia && rascunho.slug === slug && rascunho.numeroDia === dia.numeroDia ? rascunho : null;
   const valores: CheckinInput | null = rascunhoAtual?.valores ?? (dia ? valoresDoDia(dia) : null);
 
-  const alterar = (fn: (v: CheckinInput) => CheckinInput) => {
+  /**
+   * `imediato`: toques únicos (ex.: "Marcar como postado" na home) salvam na hora, sem debounce,
+   * para o update otimista refletir já nos outros cards.
+   */
+  const alterar = (fn: (v: CheckinInput) => CheckinInput, opcoes: { imediato?: boolean } = {}) => {
     if (!podeEditar || !dia || !valores) return;
     // Encadeia com a última alteração ainda não renderizada (cliques muito rápidos).
     const pendente = pendenteRef.current;
@@ -164,7 +169,8 @@ export function useCheckin(slug: string, dia: DiaDetalhe | undefined, podeEditar
     setRascunho({ slug, numeroDia: dia.numeroDia, valores: novos, seq: vars.seq });
     setStatus({ numeroDia: dia.numeroDia, estado: 'pendente', erro: null });
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
-    timerRef.current = window.setTimeout(descarregar, DEBOUNCE_MS);
+    if (opcoes.imediato) descarregar();
+    else timerRef.current = window.setTimeout(descarregar, DEBOUNCE_MS);
   };
 
   const tentarDeNovo = () => {
