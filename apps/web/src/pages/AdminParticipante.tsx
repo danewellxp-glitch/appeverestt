@@ -7,6 +7,7 @@ import { Alerta, Skeleton } from '../components/ui/basicos';
 import { Botao } from '../components/ui/Botao';
 import { useAdminParticipante, useSlugAdmin } from '../features/admin/consultas';
 import { PainelDia } from '../features/admin/PainelDia';
+import { SecaoDados, SecaoFeedback, SecaoPagamento } from '../features/admin/SecoesParticipante';
 import { SeloEmbaixador } from '../features/ranking/TabelaRanking';
 import { ehApiError } from '../lib/api';
 
@@ -109,7 +110,8 @@ export default function AdminParticipante() {
     );
   }
 
-  const { participante, progresso } = consulta.data;
+  const detalhe = consulta.data;
+  const { participante, progresso } = detalhe;
   const selecionado = diaDaUrl(params.get('dia'), progresso) ?? diaPadrao(progresso);
   const subtitulo = `${participante.vagaNumero !== null ? `Vaga nº ${participante.vagaNumero} · ` : ''}${participante.diasConcluidos} ${participante.diasConcluidos === 1 ? 'dia' : 'dias'}${participante.paraRevisar > 0 ? ` · ${participante.paraRevisar} para revisar` : ''}`;
 
@@ -128,9 +130,14 @@ export default function AdminParticipante() {
     <div className="flex flex-col gap-4">
       <Topo titulo={participante.nome} subtitulo={subtitulo} />
       <p className="-mt-2 flex flex-wrap items-center gap-2 text-sm break-all text-texto-2">
-        {participante.email}
+        {/* Conta excluída: o e-mail que a API devolve é técnico (removido+…@everest.invalid). */}
+        {participante.contaExcluida ? 'Conta excluída' : participante.email}
         {participante.ehEmbaixador && <SeloEmbaixador />}
       </p>
+
+      <SecaoDados detalhe={detalhe} />
+      {slug && <SecaoPagamento key={participante.participanteId} slug={slug} detalhe={detalhe} />}
+      <SecaoFeedback detalhe={detalhe} />
 
       <section
         aria-labelledby="titulo-dias"

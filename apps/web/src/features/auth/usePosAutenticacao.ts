@@ -6,15 +6,16 @@ import { api } from '../../lib/api';
 import { chaves } from '../../lib/queries';
 import { useInscrever } from '../desafio/useInscrever';
 import { mensagemGeral } from './formulario';
-import { destinoSeguro } from './sessao';
+import { destinoDaParticipacao, destinoSeguro } from './sessao';
 
 /**
  * Para onde ir quando já há sessão (logo depois de entrar, ou ao abrir /entrar já logado),
  * na ordem (docs/FRONTEND.md §5.4):
  *   perfil incompleto      → /bem-vindo (preservando acao/volta)
- *   ?acao=inscrever         → inscreve → /bem-vindo?etapa=vaga (revelação da vaga)
+ *   ?acao=inscrever         → inscreve → /pagamento (vaga reservada, pagamento pendente)
+ *                             ou /bem-vindo?etapa=vaga (já confirmado: revelação da vaga)
  *   ?volta=/rota            → volta (só caminhos internos)
- *   inscrito / não inscrito → /desafio / "/"
+ *   senão                   → destinoDaParticipacao: "/" (sem vaga), /pagamento ou /desafio
  * Roda uma vez por montagem.
  */
 export function usePosAutenticacao(me: MeResposta | null | undefined) {
@@ -47,14 +48,15 @@ export function usePosAutenticacao(me: MeResposta | null | undefined) {
             queryKey: chaves.desafioAtual,
             queryFn: ({ signal }) => api<DesafioAtual>('/desafios/atual', { signal }),
           });
-          await inscrever(desafio.slug);
-          void navegar('/bem-vindo?etapa=vaga', { replace: true });
+          const r = await inscrever(desafio.slug);
+          const confirmado = r.participacao.pagamentoStatus === 'CONFIRMADO';
+          void navegar(confirmado ? '/bem-vindo?etapa=vaga' : '/pagamento', { replace: true });
         } catch (e) {
           setErro(mensagemGeral(e));
         }
         return;
       }
-      const destino = destinoSeguro(volta) ?? (sessao.participacao ? '/desafio' : '/');
+      const destino = destinoSeguro(volta) ?? destinoDaParticipacao(sessao.participacao);
       void navegar(destino, { replace: true });
     }
 

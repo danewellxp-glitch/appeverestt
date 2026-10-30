@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ApiError } from '../../lib/api';
 import { traduzirErroAuth } from './errosFirebase';
 import { mascararTelefone } from './perfil';
-import { destinoSeguro } from './sessao';
+import { destinoDaParticipacao, destinoSeguro } from './sessao';
 
 describe('mascararTelefone', () => {
   it('formata enquanto digita (celular e fixo)', () => {
@@ -45,5 +45,25 @@ describe('destinoSeguro', () => {
     expect(destinoSeguro('/entrar')).toBeNull();
     expect(destinoSeguro('/bem-vindo?x=1')).toBeNull();
     expect(destinoSeguro('//evil.com')).toBeNull();
+  });
+
+  it('aceita a /pagamento como destino', () => {
+    expect(destinoSeguro('/pagamento')).toBe('/pagamento');
+  });
+});
+
+describe('destinoDaParticipacao', () => {
+  it('sem vaga vai para a capa', () => {
+    expect(destinoDaParticipacao(null)).toBe('/');
+    expect(destinoDaParticipacao(undefined)).toBe('/');
+  });
+
+  it('pagamento pendente ou informado vai para a /pagamento', () => {
+    expect(destinoDaParticipacao({ pagamentoStatus: 'PENDENTE' })).toBe('/pagamento');
+    expect(destinoDaParticipacao({ pagamentoStatus: 'INFORMADO' })).toBe('/pagamento');
+  });
+
+  it('pagamento confirmado vai para o desafio', () => {
+    expect(destinoDaParticipacao({ pagamentoStatus: 'CONFIRMADO' })).toBe('/desafio');
   });
 });

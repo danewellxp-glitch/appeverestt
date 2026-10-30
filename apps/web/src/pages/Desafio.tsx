@@ -9,6 +9,7 @@ import { CardEscalada, CardStoryDoDia, CarrosselDestaque } from '../features/des
 import { CardSeuDia } from '../features/desafio/CardSeuDia';
 import { CardsAtividade } from '../features/desafio/CardsAtividade';
 import { CtaFixo } from '../features/desafio/CtaFixo';
+import { CardFeedback } from '../features/feedback/CardFeedback';
 import { FaixaDias } from '../features/desafio/FaixaDias';
 import { caminhoDoDia, preCarregarDia } from '../features/desafio/navegacao';
 import { formatarDataCurta, formatarDiaCurto } from '../lib/datas';
@@ -216,6 +217,7 @@ export default function Desafio() {
           ) : (
             <Skeleton className="h-36 rounded-[28px]" />
           )}
+          <CardFeedback status={progresso.status} diaAtual={progresso.diaAtual} totalDias={progresso.totalDias} />
         </Secao>
       </Surgir>
 

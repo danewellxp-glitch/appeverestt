@@ -1,7 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   TIMEZONE_PADRAO,
   type AdminDiaDetalhe,
+  type AdminFeedbacksResposta,
   type AdminParticipanteDetalhe,
   type AdminParticipantesResposta,
   type AtualizarDesafioInput,
@@ -9,6 +10,7 @@ import {
   type ConferenciaResposta,
   type InvalidacaoInput,
   type InvalidacaoResposta,
+  type PagamentoAdminInput,
 } from '@everest/shared';
 import { api } from '../../lib/api';
 import { chaves, useDesafioAtual, useMe } from '../../lib/queries';
@@ -67,6 +69,61 @@ export function useAdminDia(slug: string | undefined, id: string | undefined, n:
     // URLs assinadas das fotos valem 10 min: renova antes disso
     staleTime: 60_000,
     refetchInterval: 8 * 60_000,
+  });
+}
+
+export function useAdminFeedbacks(slug: string | undefined) {
+  return useQuery({
+    queryKey: chaves.adminFeedbacks(slug ?? ''),
+    queryFn: ({ signal }) => api<AdminFeedbacksResposta>(`/admin/desafios/${slug ?? ''}/feedbacks`, { signal }),
+    enabled: Boolean(slug),
+  });
+}
+
+/** Caminho do CSV com os dados de todos (baixado por um <a download>, não pelo `api()`). */
+export function caminhoCsvParticipantes(slug: string): string {
+  return `/api/admin/desafios/${encodeURIComponent(slug)}/participantes.csv`;
+}
+
+/**
+ * Depois de mexer no pagamento ou remover alguém: telas do admin, vagas do desafio, ranking e
+ * feed (só confirmados contam). `refetch: false` só marca como desatualizado (sem buscar agora).
+ */
+async function invalidarAposPagamento(qc: QueryClient, refetch = true): Promise<void> {
+  const refetchType = refetch ? 'active' : 'none';
+  await Promise.all([
+    qc.invalidateQueries({ queryKey: ['admin'], refetchType }),
+    qc.invalidateQueries({ queryKey: chaves.desafioAtual }),
+    qc.invalidateQueries({ queryKey: ['ranking'] }),
+    qc.invalidateQueries({ queryKey: ['feed'] }),
+  ]);
+}
+
+/** PATCH .../participantes/:id/pagamento: confirma o Pix ou volta para pendente ("Não recebi"). */
+export function useAtualizarPagamento(slug: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ participanteId, ...input }: PagamentoAdminInput & { participanteId: string }) =>
+      api<unknown>(
+        `/admin/desafios/${slug ?? ''}/participantes/${encodeURIComponent(participanteId)}/pagamento`,
+        { method: 'PATCH', body: input },
+      ),
+    onSuccess: () => invalidarAposPagamento(qc),
+  });
+}
+
+/**
+ * DELETE .../participantes/:id: remove uma inscrição não paga (libera a vaga).
+ * Não rebusca agora: a tela do participante removido fecha logo em seguida (voltaria 404).
+ */
+export function useRemoverParticipante(slug: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (participanteId: string) =>
+      api<{ ok: true }>(`/admin/desafios/${slug ?? ''}/participantes/${encodeURIComponent(participanteId)}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: () => invalidarAposPagamento(qc, false),
   });
 }
 

@@ -5,8 +5,10 @@ import {
   Download,
   IdCard,
   LogOut,
+  MessageSquareHeart,
   Monitor,
   Moon,
+  QrCode,
   ShieldCheck,
   Sun,
   Trash2,
@@ -117,6 +119,7 @@ export default function Perfil() {
   if (!me) return <Carregando />;
   const u = me.usuario;
   const p = me.participacao;
+  const confirmado = p?.pagamentoStatus === 'CONFIRMADO';
 
   function salvarDados(dados: AtualizarPerfilInput) {
     setErroDados(null);
@@ -165,7 +168,8 @@ export default function Perfil() {
         <p className="text-sm break-all text-texto-2">{u.email}</p>
         {p && (
           <p className="rounded-full bg-superficie-2 px-3 py-1 text-xs font-semibold">
-            {p.vagaNumero !== null ? `Vaga nº ${p.vagaNumero} · ` : ''}inscrição em {DIA_MES.format(new Date(p.dataInscricao))}
+            {p.vagaNumero !== null ? `Vaga nº ${p.vagaNumero} · ` : ''}
+            {confirmado ? `inscrição em ${DIA_MES.format(new Date(p.dataInscricao))}` : 'pagamento pendente'}
           </p>
         )}
       </header>
@@ -190,8 +194,10 @@ export default function Perfil() {
       </section>
 
       <Lista titulo="Atalhos">
+        {p && !confirmado && <LinhaLink para="/pagamento" Icone={QrCode} rotulo="Pagamento pendente" />}
         <LinhaBotao Icone={IdCard} rotulo="Meus dados" haspopup aoClicar={() => setFolha('dados')} />
         {!instalacao.instalado && <LinhaBotao Icone={Download} rotulo="Instalar o app" haspopup aoClicar={() => setFolha('instalar')} />}
+        {confirmado && <LinhaLink para="/feedback" Icone={MessageSquareHeart} rotulo="Dar feedback" />}
         <LinhaLink para="/regras" Icone={BookOpen} rotulo="Regras" />
         <LinhaLink para="/privacidade" Icone={ShieldCheck} rotulo="Política de privacidade" />
         {u.papel === 'ADMIN' && <LinhaLink para="/admin" Icone={UserCog} rotulo="Painel do embaixador" />}

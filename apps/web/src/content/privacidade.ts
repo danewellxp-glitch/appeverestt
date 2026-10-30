@@ -37,9 +37,10 @@ export const privacidade: ConteudoPrivacidade = {
         'Foto do perfil do Google, se você entrar com Google.',
         'Seus check-ins diários: água, exercício, páginas lidas e se o story foi postado.',
         'As 3 fotos de prova de cada dia (água, treino e leitura).',
+        'Seu feedback, se você enviar: a nota, os dois textos e se autoriza a divulgação.',
       ],
       paragrafos: [
-        'O login é feito pelo Google Firebase: a sua senha fica com o Firebase e o app nunca a vê. Não pedimos CPF nem dados de pagamento. O desafio é só para maiores de 18 anos.',
+        'O login é feito pelo Google Firebase: a sua senha fica com o Firebase e o app nunca a vê. A inscrição é paga por Pix direto para o embaixador; não guardamos dados bancários, só a data em que você avisou e a confirmação. O desafio é só para maiores de 18 anos.',
       ],
     },
     {
@@ -47,6 +48,7 @@ export const privacidade: ConteudoPrivacidade = {
       itens: [
         'Cadastro: identificar você, conferir a participação e falar com você sobre o desafio.',
         'Check-ins e fotos: calcular o seu progresso, o ranking e a premiação.',
+        'Feedback: o embaixador lê para melhorar o desafio. O depoimento só é publicado (com o seu @) se você marcar a autorização.',
         'Marketing (novidades e ofertas da Everest por e-mail, WhatsApp e Instagram): só se você marcar a autorização. Você pode desligar quando quiser em Perfil.',
       ],
     },

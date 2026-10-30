@@ -1,9 +1,12 @@
+import { Download, MessageSquareHeart } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { BotaoVoltar } from '../components/layout/BotaoVoltar';
+import { LinkNav } from '../components/layout/LinkNav';
 import { Alerta, Skeleton } from '../components/ui/basicos';
 import { Botao } from '../components/ui/Botao';
 import { Contador } from '../components/ui/Contador';
-import { useAdminParticipantes, useSlugAdmin } from '../features/admin/consultas';
+import { caminhoCsvParticipantes, useAdminParticipantes, useSlugAdmin } from '../features/admin/consultas';
+import { FilaPagamentos } from '../features/admin/FilaPagamentos';
 import { ListaParticipantes } from '../features/admin/ListaParticipantes';
 import { ToggleInscricoes } from '../features/admin/ToggleInscricoes';
 import { useFeed } from '../lib/queries';
@@ -21,7 +24,10 @@ function Tile({ rotulo, destaque = false, children }: { rotulo: string; destaque
   );
 }
 
-/** /admin (docs/FRONTEND.md §9.11): números do dia, inscrições e a fila de conferência. */
+const CLASSE_ACAO =
+  'press inline-flex h-[42px] flex-1 items-center justify-center gap-2 rounded-full bg-superficie-2 px-3.5 text-sm font-semibold whitespace-nowrap hover:shadow-[inset_0_0_0_1px_var(--borda-campo)]';
+
+/** /admin (docs/FRONTEND.md §9.11): números do dia, pagamentos a confirmar, inscrições e a fila de conferência. */
 export default function Admin() {
   const { slug, carregando, erro, tentarDeNovo } = useSlugAdmin();
   const lista = useAdminParticipantes(slug);
@@ -29,6 +35,7 @@ export default function Admin() {
 
   const totalVagas = lista.data?.desafio.totalVagas ?? 0;
   const ocupadas = lista.data?.participantes.filter((p) => p.vagaNumero !== null).length ?? 0;
+  const totalFeedbacks = lista.data?.participantes.filter((p) => p.temFeedback).length ?? 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -57,8 +64,8 @@ export default function Admin() {
         </p>
       ) : carregando || lista.isPending ? (
         <div role="status" aria-label="Carregando participantes" className="flex flex-col gap-3">
-          <div className="grid grid-cols-3 gap-2">
-            {Array.from({ length: 3 }, (_, i) => (
+          <div className="grid grid-cols-2 gap-2">
+            {Array.from({ length: 4 }, (_, i) => (
               <Skeleton key={i} className="h-20 rounded-[22px]" />
             ))}
           </div>
@@ -80,7 +87,7 @@ export default function Admin() {
         </Alerta>
       ) : (
         <>
-          <section aria-label="Números do desafio" className="grid grid-cols-3 gap-2">
+          <section aria-label="Números do desafio" className="grid grid-cols-2 gap-2">
             <Tile rotulo="Vagas">
               <Contador valor={ocupadas} />
               <small className="text-base text-texto-2">/{totalVagas}</small>
@@ -91,9 +98,25 @@ export default function Admin() {
             <Tile rotulo="Para revisar" destaque={lista.data.totalParaRevisar > 0}>
               <Contador valor={lista.data.totalParaRevisar} />
             </Tile>
+            <Tile rotulo="Pagamentos" destaque={lista.data.totalPagamentosInformados > 0}>
+              <Contador valor={lista.data.totalPagamentosInformados} />
+            </Tile>
           </section>
 
+          <FilaPagamentos slug={lista.data.desafio.slug} participantes={lista.data.participantes} />
+
           <ToggleInscricoes slug={lista.data.desafio.slug} abertas={lista.data.desafio.inscricoesAbertas} />
+
+          <nav aria-label="Dados do desafio" className="flex flex-wrap gap-2">
+            <a href={caminhoCsvParticipantes(lista.data.desafio.slug)} download className={CLASSE_ACAO}>
+              <Download className="size-4" aria-hidden />
+              Baixar CSV (dados de todos)
+            </a>
+            <LinkNav to="/admin/feedbacks" className={CLASSE_ACAO}>
+              <MessageSquareHeart className="size-4" aria-hidden />
+              Feedbacks ({totalFeedbacks})
+            </LinkNav>
+          </nav>
 
           <section aria-labelledby="titulo-participantes" className="flex flex-col gap-3">
             <h2 id="titulo-participantes" className="mt-1.5 text-[13px] font-semibold tracking-[0.14em] text-texto-2 uppercase">

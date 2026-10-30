@@ -3,55 +3,47 @@ import { ArrowRight, BookOpen } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
 import { LinkNav } from '../components/layout/LinkNav';
+import { IconeMontanha, MontanhaMarca, Wordmark } from '../components/layout/Marca';
 import { Watermark } from '../components/layout/Watermark';
 import { Alerta, Skeleton } from '../components/ui/basicos';
 import { Barra } from '../components/ui/Barra';
 import { Botao } from '../components/ui/Botao';
 import { Contador } from '../components/ui/Contador';
+import { destinoDaParticipacao } from '../features/auth/sessao';
 import { useInscrever } from '../features/desafio/useInscrever';
 import { BotaoBaixarApp } from '../features/pwa/BotaoBaixarApp';
 import { ehApiError } from '../lib/api';
 import { formatarDataCurta } from '../lib/datas';
+import { formatarReais } from '../lib/moeda';
 import { preCarregarAuth } from '../lib/firebase';
 import { useDesafioAtual, useMe } from '../lib/queries';
+
+/** Link do topo e CTA para quem já tem vaga, conforme o pagamento. */
+function acaoDoInscrito(me: MeResposta): { para: string; rotulo: string } | null {
+  const p = me.participacao;
+  if (!p) return null;
+  const para = destinoDaParticipacao(p);
+  if (p.pagamentoStatus === 'CONFIRMADO') return { para, rotulo: 'Ir para o desafio' };
+  if (p.pagamentoStatus === 'INFORMADO') return { para, rotulo: 'Pagamento em análise' };
+  return { para, rotulo: 'Concluir pagamento' };
+}
 
 const CLASSE_CTA =
   'press inline-flex h-[54px] w-full items-center justify-center gap-2.5 rounded-full bg-vermelho px-5 font-semibold text-sobre-vermelho hover:bg-vermelho-escuro';
 
-/** Montanha da capa: três serras, pico com neve, trilha tracejada vermelha e bandeira. */
-function MontanhaCapa() {
-  return (
-    <svg viewBox="0 0 390 150" preserveAspectRatio="xMidYMax slice" aria-hidden className="block size-full">
-      <path className="fill-superficie-2" d="M0 150 L0 96 L52 70 L98 92 L150 48 L196 80 L240 54 L292 86 L340 60 L390 84 L390 150Z" />
-      <path className="fill-borda" d="M0 150 L0 118 L60 92 L104 112 L160 76 L206 104 L262 86 L320 108 L390 98 L390 150Z" />
-      <path className="fill-texto" d="M70 150 L168 40 L196 62 L214 30 L250 72 L312 150Z" />
-      <path className="fill-fundo" d="M214 30 L226 46 L218 44 L212 52 L204 44 L200 50 L196 62 L204 46Z" />
-      <path
-        className="stroke-vermelho"
-        d="M110 150 C 150 128 170 120 182 98 S 196 74 206 58 S 210 40 214 31"
-        fill="none"
-        strokeWidth={2}
-        strokeDasharray="3 5"
-        strokeLinecap="round"
-      />
-      <line className="stroke-texto" x1="214" y1="31" x2="214" y2="12" strokeWidth={1.5} />
-      <path className="fill-vermelho" d="M214 12 L230 16.5 L214 21Z" />
-    </svg>
-  );
-}
-
 function Topo({ me, mePendente }: { me: MeResposta | null; mePendente: boolean }) {
   const classeLink =
     'inline-flex min-h-11 items-center px-1 text-sm font-semibold underline decoration-vermelho underline-offset-4';
+  const inscrito = me ? acaoDoInscrito(me) : null;
   return (
     <header className="surgir flex items-center justify-between gap-3">
-      <span className="flex items-center gap-2 font-display text-xl font-black tracking-[0.12em]">
-        <img src="/logo.webp" alt="" width={28} height={28} className="size-7 object-contain" />
-        EVEREST
+      <span className="flex items-center gap-2 text-texto">
+        <IconeMontanha className="h-6 w-[53px] text-texto" />
+        <Wordmark className="h-4 aspect-[681/61]" />
       </span>
-      {mePendente ? null : me?.participacao ? (
-        <LinkNav to="/desafio" className={classeLink}>
-          Ir para o desafio
+      {mePendente ? null : inscrito ? (
+        <LinkNav to={inscrito.para} className={classeLink}>
+          {inscrito.rotulo}
         </LinkNav>
       ) : me ? (
         <LinkNav to="/perfil" className={classeLink}>
@@ -83,6 +75,11 @@ function CardVagas({ desafio }: { desafio: DesafioAtual }) {
         {preenchidas} de {desafio.totalVagas} vagas preenchidas
         {esgotado ? '. Fique de olho no próximo desafio.' : ''}
       </p>
+      {desafio.inscricao && (
+        <p className="border-t border-borda pt-2.5 text-sm">
+          Inscrição: <b className="tabular-nums">{formatarReais(desafio.inscricao.valorCentavos)}</b> via Pix
+        </p>
+      )}
     </section>
   );
 }
@@ -98,10 +95,11 @@ function AcaoPrincipal({
   aoEntrar: () => void;
   inscrevendo: boolean;
 }) {
-  if (me?.participacao) {
+  const inscrito = me ? acaoDoInscrito(me) : null;
+  if (inscrito) {
     return (
-      <LinkNav to="/desafio" className={CLASSE_CTA}>
-        Ir para o desafio
+      <LinkNav to={inscrito.para} className={CLASSE_CTA}>
+        {inscrito.rotulo}
         <ArrowRight className="size-5" aria-hidden />
       </LinkNav>
     );
@@ -154,7 +152,13 @@ export default function Entrada() {
       void navegar('/bem-vindo?acao=inscrever', { viewTransition: true });
       return;
     }
-    inscrever.mutate(slug, { onSuccess: () => void navegar('/bem-vindo?etapa=vaga', { viewTransition: true }) });
+    // Vaga reservada: quem ainda não pagou vai para o Pix; o embaixador (já confirmado) vê a vaga.
+    inscrever.mutate(slug, {
+      onSuccess: (r) =>
+        void navegar(r.participacao.pagamentoStatus === 'CONFIRMADO' ? '/bem-vindo?etapa=vaga' : '/pagamento', {
+          viewTransition: true,
+        }),
+    });
   }
 
   return (
@@ -164,7 +168,7 @@ export default function Entrada() {
         <Topo me={me} mePendente={mePendente} />
 
         <div className="surgir -mx-5 -mt-1 h-[150px]" style={{ '--i': 1 } as CSSProperties}>
-          <MontanhaCapa />
+          <MontanhaMarca className="h-[150px] w-full text-texto" />
         </div>
 
         <div className="surgir grid gap-3" style={{ '--i': 2 } as CSSProperties}>

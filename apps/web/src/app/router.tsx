@@ -27,6 +27,9 @@ const Ranking = lazy(() => import('../pages/Ranking'));
 const Perfil = lazy(() => import('../pages/Perfil'));
 const Admin = lazy(() => import('../pages/Admin'));
 const AdminParticipante = lazy(() => import('../pages/AdminParticipante'));
+const AdminFeedbacks = lazy(() => import('../pages/AdminFeedbacks'));
+const Pagamento = lazy(() => import('../pages/Pagamento'));
+const Feedback = lazy(() => import('../pages/Feedback'));
 const NaoEncontrada = lazy(() => import('../pages/NaoEncontrada'));
 
 export const router = createBrowserRouter([
@@ -56,6 +59,8 @@ export const router = createBrowserRouter([
           {
             element: <RotaPerfilCompleto />,
             children: [
+              // Fora do RotaInscrito (que manda para cá quem ainda não teve o pagamento confirmado).
+              { path: '/pagamento', element: <Pagamento /> },
               {
                 element: <RotaInscrito />,
                 children: [
@@ -65,6 +70,7 @@ export const router = createBrowserRouter([
                   { path: '/desafio/dia/:n', element: <Dia /> },
                   { path: '/progresso', element: <Progresso /> },
                   { path: '/ranking', element: <Ranking /> },
+                  { path: '/feedback', element: <Feedback /> },
                 ],
               },
             ],
@@ -74,6 +80,7 @@ export const router = createBrowserRouter([
             children: [
               { path: '/admin', element: <Admin /> },
               { path: '/admin/participantes/:id', element: <AdminParticipante /> },
+              { path: '/admin/feedbacks', element: <AdminFeedbacks /> },
             ],
           },
         ],

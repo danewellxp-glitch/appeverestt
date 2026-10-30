@@ -12,7 +12,7 @@ export default async function globalSetup(): Promise<void> {
 
   psql(
     NOME_BANCO,
-    'TRUNCATE TABLE "FotoProva", "DiaDesafio", "Participante", "Desafio", "Usuario" CASCADE',
+    'TRUNCATE TABLE "Feedback", "FotoProva", "DiaDesafio", "Participante", "Desafio", "Usuario" CASCADE',
   );
 
   // Cache de vagas e ranking (as filas do BullMQ ficam intactas).

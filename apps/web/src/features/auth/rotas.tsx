@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from 'react-router';
 import { Alerta, Carregando } from '../../components/ui/basicos';
 import { useMe } from '../../lib/queries';
 import { ErroAposEntrar } from './ErroAposEntrar';
+import { destinoDaParticipacao } from './sessao';
 import { usePosAutenticacao } from './usePosAutenticacao';
 
 function Falha() {
@@ -54,12 +55,16 @@ export function RotaPerfilCompleto() {
   return <Outlet />;
 }
 
-/** Exige inscrição no desafio ativo (use dentro de RotaProtegida). */
+/**
+ * Exige inscrição no desafio ativo com pagamento confirmado (use dentro de RotaProtegida).
+ * Sem vaga → "/"; vaga ainda não paga/confirmada → /pagamento (fica fora deste guard).
+ */
 export function RotaInscrito() {
   const { data: me, isPending, isError } = useMe();
   if (isPending) return <Carregando />;
   if (isError) return <Falha />;
-  if (!me?.participacao) return <Navigate to="/" replace />;
+  const destino = destinoDaParticipacao(me?.participacao);
+  if (destino !== '/desafio') return <Navigate to={destino} replace />;
   return <Outlet />;
 }
 

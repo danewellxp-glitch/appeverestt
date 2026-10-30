@@ -17,9 +17,12 @@ export const chaves = {
   dia: (slug: string, n: number) => ['dia', slug, n] as const,
   ranking: (slug: string) => ['ranking', slug] as const,
   feed: (slug: string) => ['feed', slug] as const,
+  pagamento: (slug: string) => ['pagamento', slug] as const,
+  feedback: (slug: string) => ['feedback', slug] as const,
   adminParticipantes: (slug: string) => ['admin', 'participantes', slug] as const,
   adminParticipante: (slug: string, id: string) => ['admin', 'participante', slug, id] as const,
   adminDia: (slug: string, id: string, n: number) => ['admin', 'dia', slug, id, n] as const,
+  adminFeedbacks: (slug: string) => ['admin', 'feedbacks', slug] as const,
 };
 
 /** Usuário logado (ou null se visitante). 401 aqui não é erro. */

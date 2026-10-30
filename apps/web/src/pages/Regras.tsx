@@ -7,6 +7,7 @@ import {
   ChartLine,
   Droplets,
   Dumbbell,
+  QrCode,
   ShieldCheck,
   Trophy,
   Users,
@@ -27,6 +28,7 @@ const ICONES: Record<IdRegra, LucideIcon> = {
   FOTOS: Camera,
   STORY: AtSign,
   VAGAS: Users,
+  PAGAMENTO: QrCode,
   PREMIO: Trophy,
   DESEMPATE: ChartLine,
   CONFERENCIA: ShieldCheck,
@@ -90,7 +92,7 @@ export default function Regras() {
       </Secao>
 
       <Secao titulo="Vagas e prêmio" i={2}>
-        <ListaRegras regras={regrasVagasEPremio(desafio?.totalVagas ?? null, totalDias)} />
+        <ListaRegras regras={regrasVagasEPremio(desafio?.totalVagas ?? null, totalDias, desafio?.inscricao?.valorCentavos ?? null)} />
       </Secao>
 
       <Secao titulo="Datas" i={3}>

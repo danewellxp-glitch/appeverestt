@@ -47,7 +47,8 @@ export function AppShell() {
   // Container transform: a tela de destino herda o nome do card tocado (abrir-dia, abrir-ranking).
   const nomeTransicao = nomeTransicaoDoEstado(state);
   useFocoNoTitulo(pathname);
-  const comAbas = Boolean(me?.participacao) && ROTAS_COM_ABAS.includes(pathname);
+  // Abas só para quem já teve o pagamento confirmado (pendente não acessa as telas das abas).
+  const comAbas = me?.participacao?.pagamentoStatus === 'CONFIRMADO' && ROTAS_COM_ABAS.includes(pathname);
 
   return (
     <div className="relative min-h-dvh">

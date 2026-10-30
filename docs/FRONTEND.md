@@ -885,10 +885,28 @@ Use estes textos exatamente. Eles já estão no protótipo.
 - [ ] Lighthouse mobile e tamanho dos chunks (seção 11)
 - **DoD:** números reportados no relatório.
 
-### R12: Produção
+### R12: Marca (logo oficial, pedido do dono em 2026-10-30)
+- [ ] `scripts/marca.cjs` gera as máscaras `public/marca/{montanha,everest,icone}.png` e o `public/logo.png` (ícones do PWA) a partir de `apps/web/design/logo-original.jpg`
+- [ ] `components/layout/Marca.tsx` (`IconeMontanha`, `MontanhaMarca`, `Wordmark`) na capa e na marca d'água, nos dois temas
+- **DoD:** screenshots da capa nos dois temas; `webkitMaskImage` aplicado; `TODO_DECISAO(LOGO)` removido.
+
+### R13: Backend do pagamento, feedback e painel
+- [ ] `Participante.pagamentoStatus` (PENDENTE → INFORMADO → CONFIRMADO), gate `PAGAMENTO_PENDENTE`, `GET /pagamento`, `POST /pagamento/informar`, `PIX_COPIA_E_COLA`
+- [ ] Admin: confirmar / "Não recebi" / remover inscrição não paga; dados de cadastro no detalhe; `GET …/feedbacks`; `GET …/participantes.csv`
+- [ ] `Feedback` (`GET`/`PUT /feedback`); menor vaga livre; seed com pendente e informado
+- **DoD:** api unit + e2e verdes (reportar totais).
+
+### R14: Telas de pagamento, feedback e painel + E2E
+- [ ] `/pagamento` (QR, copia e cola, relógio de 5 min, "Já fiz o pagamento", espera, revelação da vaga), guards e redirecionamentos
+- [ ] `/feedback`, card "Conte como foi", linhas no Perfil; painel com fila de pagamentos, filtro, CSV, detalhe e `/admin/feedbacks`
+- [ ] Playwright: smoke com pagamento, `admin-pagamento`, `feedback` e axe nas telas novas × 2 temas
+- **DoD:** suíte E2E 100% verde; `uqr` só no chunk da `/pagamento`.
+
+### R15: Produção (antiga R12)
 - [ ] Atualizar o `docs/DEPLOY.md` com a seção 5.5 (Console do Firebase, domínios autorizados, OAuth redirect, rewrite `/__/auth`, conta de serviço) e as variáveis novas
 - [ ] `scripts/verificar-producao.mjs`: checar que `/__/auth/handler` responde e que `/api/auth/sessao` existe
 - [ ] `pnpm check:launch` sem marcadores
+- [ ] Contas do dono (`docs/CONTAS.md`) e `PIX_COPIA_E_COLA` real na API
 - **DoD:** login com Google funcionando no **iPhone com o app instalado** (redirect) e no Android (popup) no domínio real.
 
 ---
@@ -903,7 +921,8 @@ Use estes textos exatamente. Eles já estão no protótipo.
 | Token roubado reaproveitado | `checkRevoked` + `auth_time` ≤ 5 min |
 | View Transitions com lazy + Suspense mostram o fallback no meio | Prefetch do chunk no `pointerdown`; fallback leve |
 | Classes de cor fixas quebram o tema claro | Varredura da R3 + axe nos dois temas na R11 |
-| Exclusão de conta libera vaga e quebra a numeração | Anonimizar; nunca apagar `Participante` (X5) |
+| Exclusão de conta libera vaga e quebra a numeração | Anonimizar; nunca apagar `Participante` (X5). A remoção de inscrição **não paga** (X12) libera o número, reaproveitado pela regra da menor vaga livre (X15) |
+| QR do Pix errado cobra a pessoa errada | `PIX_COPIA_E_COLA` validado no boot (CRC, chave, valor); conferir lendo o QR no app do banco antes de divulgar |
 
 ---
 

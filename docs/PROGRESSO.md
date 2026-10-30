@@ -98,7 +98,7 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [ ] Playwright smoke + axe
 - [ ] Contraste
 - [ ] Lighthouse + bundle < 200 KB gzip
-- [ ] Logo otimizada
+- [x] Logo otimizada (logo oficial na v2 R12)
 - [ ] **DoD:** e2e passando; números reportados
 
 ## FASE 13: Deploy
@@ -205,8 +205,28 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] Chunks: rota `/` baixa **157,3 KB de JS + 9,7 KB de CSS = 167 KB gzip** (< 200 KB) e **nenhum chunk do Firebase**; com fontes (61,8 KB) e imagens, 239 KB no total. Entrada `index` 84,0 KB gzip; Firebase só nas telas de login (`index.esm` 36,2 + 9,9 KB)
 - [x] **DoD:** números acima no relatório
 
-## R12: Produção
+## R12: Marca (logo oficial, pedido do dono em 2026-10-30)
+- [x] `scripts/marca.cjs` (sharp via apps/api) gera de `apps/web/design/logo-original.jpg`: `public/marca/montanha.png` (682×313, 16,4 KB), `everest.png` (681×61, 12,1 KB), `icone.png` (traço engrossado, 128×58, 3,1 KB) e `public/logo.png` 1024 (fundo preto); ícones do PWA regerados em fundo preto
+- [x] `components/layout/Marca.tsx` (`IconeMontanha`, `MontanhaMarca`, `Wordmark`) com o utilitário `mascara-marca` (`-webkit-mask` + `mask`); capa e topo da Entrada e marca d'água (`Watermark`) com a logo nova; sem preload de imagem no `index.html`; `logo.webp`, `otimizar-logo.cjs` e `gerar-logo-placeholder.cjs` removidos
+- [x] **DoD:** screenshots da capa nos dois temas conferidos; `webkitMaskImage`/`maskImage` aplicados; `TODO_DECISAO(LOGO)` removido (`check:placeholders` com 3 marcadores: Q2, Q8, `API_HOST_AQUI`)
+- [~] Pendência: favicon 48 px e ícone 64 px ficam pouco legíveis (traço fino); 180/192/512 ok
+
+## R13: Backend do pagamento Pix, feedback e painel
+- [x] Migration `20261030200000_pagamento_feedback` (enum `StatusPagamento`, campos no `Participante`, backfill CONFIRMADO, `Feedback` com cascade e CHECK 1–5)
+- [x] Gate `PAGAMENTO_PENDENTE` em `exigirParticipante` (dias, fotos, progresso, ranking, feed, feedback); ranking/feed só com confirmados; `PixService` + `PIX_COPIA_E_COLA` validado (`lerPix` no shared, obrigatório em produção)
+- [x] `GET /pagamento`, `POST /pagamento/informar`, `GET`/`PUT /feedback`; admin: PATCH pagamento (confirmar / "Não recebi"), DELETE de inscrição não paga (trava do desafio), `GET …/feedbacks`, `GET …/participantes.csv`, dados de cadastro no detalhe; menor vaga livre; `criar-admin` sem senha; seed com 1 pendente, 1 informado e 2 feedbacks
+- [x] **DoD:** shared 77, api unit 19 (2 suítes), api e2e 96 (11 suítes, 15 novos); typecheck, lint e build verdes
+
+## R14: Telas de pagamento e feedback, painel do admin e E2E
+- [x] `/pagamento` (QR com `uqr`, copia e cola, relógio de 5 min que só avisa, "Já fiz o pagamento", espera com consulta a cada 30/60 s, "Não localizamos seu pagamento", revelação da vaga); guards com `destinoDaParticipacao`; abas só para confirmados; capa com o valor e CTA por status
+- [x] `/feedback` (estrelas, dois textos, autorização), card "Conte como foi" (dia 28+ e fim), linhas no Perfil; regras e privacidade atualizadas
+- [x] Painel: fila "Pagamentos a confirmar", pílula e filtro de pagamento, "Baixar CSV", detalhe com Dados/Pagamento/Feedback/Remover inscrição, `/admin/feedbacks`
+- [x] Revisão adversarial: 4 achados corrigidos (cache do pagamento após remoção e reinscrição, CONFIRMADO antigo sobrescrevendo o `me`, feedback na política de privacidade, 500 → 404 em corrida no PATCH do admin)
+- [x] **DoD:** web 45 testes; Playwright **36/36** (smoke 2, admin-pagamento 1, feedback 1, a11y 32 = 19 telas × 2 temas sem nenhuma violação); entrada 84,5 kB gzip; `uqr` só no chunk `Pagamento` (8,2 kB gzip); precache 66 entradas
+
+## R15: Produção (antiga R12)
 - [ ] `docs/DEPLOY.md` com a seção 5.5 e as variáveis novas
 - [ ] `scripts/verificar-producao.mjs`: `/__/auth/handler` responde e `/api/auth/sessao` existe
 - [ ] `pnpm check:launch` sem marcadores
 - [ ] **DoD:** login com Google no iPhone com o app instalado (redirect) e no Android (popup) no domínio real
+- [ ] Contas do dono (`docs/CONTAS.md`) e `PIX_COPIA_E_COLA` real na API de produção

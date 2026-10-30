@@ -1,10 +1,15 @@
 // Smoke E2E (Frontend v2 R11), contra o emulador do Firebase Auth:
-// 1) visitante → criar conta → /bem-vindo (dados de cadastro) → vaga → check-in completo com as
-//    3 fotos → dia concluído → persistência → ranking → remover foto desfaz a conclusão;
+// 1) visitante → criar conta → /bem-vindo (dados de cadastro) → vaga reservada → /pagamento (Pix:
+//    QR, valor, relógio, copia e cola) → "Já fiz o pagamento" → o admin confirma → revelação da vaga →
+//    check-in completo com as 3 fotos → dia concluído → persistência → ranking → remover foto desfaz a conclusão;
 // 2) "Continuar com Google" (popup do emulador) → /bem-vindo.
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
-import { SENHA } from './ambiente';
+import { ENV_API, SENHA, URL_WEB } from './ambiente';
+import { confirmarPagamento, participanteIdDaPagina } from './api';
+
+/** Payload Pix de demonstração que a API E2E serve (ENV_API.PIX_COPIA_E_COLA). */
+const PIX_DEMO = ENV_API.PIX_COPIA_E_COLA ?? '';
 
 const FIXTURES = {
   Água: fileURLToPath(new URL('./fixtures/agua.jpg', import.meta.url)),
@@ -49,13 +54,16 @@ async function preencherDadosDeCadastro(page: Page, nomeCompleto: string): Promi
   if (!(await aceite.isChecked())) await aceite.check();
 }
 
-test('smoke: criar conta, vaga, check-in completo com fotos, ranking e remoção de foto', async ({ page }) => {
+test('smoke: criar conta, vaga, check-in completo com fotos, ranking e remoção de foto', async ({ page, context }) => {
   const email = `joana.smoke.${Date.now()}@e2e.dev`;
+  // "Copiar código Pix" usa a Clipboard API (o teste lê de volta o que foi copiado).
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: URL_WEB });
 
   // 1) Visitante vê as vagas na capa.
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('melhor');
   const preenchidasAntes = await vagasPreenchidas(page);
+  await expect(page.getByText(/Inscrição:\s*R\$\s*50,00\s*via Pix/)).toBeVisible();
 
   // 2) "Entrar no desafio" → criar conta (passo 1 de 2).
   await page.getByRole('button', { name: 'Entrar no desafio' }).click();
@@ -67,16 +75,43 @@ test('smoke: criar conta, vaga, check-in completo com fotos, ranking e remoção
   await form.getByRole('checkbox', { name: /Li e aceito/ }).check();
   await form.getByRole('button', { name: 'Criar conta' }).click();
 
-  // 3) /bem-vindo: dados de cadastro (Q7) → "Garantir minha vaga" → revelação do número.
+  // 3) /bem-vindo: dados de cadastro (Q7) → "Garantir minha vaga" → /pagamento (vaga reservada).
   await preencherDadosDeCadastro(page, 'Joana Smoke Silva');
   await page.getByRole('button', { name: 'Garantir minha vaga' }).click();
+  await expect(page).toHaveURL(/\/pagamento$/, { timeout: 20_000 });
+
+  // 4) Pix: QR, valor, relógio e o copia e cola.
+  await expect(page.getByRole('heading', { level: 1, name: 'Pagamento' })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('Passo 2 de 2')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: /^Vaga nº \d+ reservada para você$/ })).toBeVisible();
+  const qr = page.getByRole('img', { name: /QR code do Pix/ });
+  await expect(qr).toBeVisible();
+  await expect(qr.locator('svg')).toBeVisible();
+  await expect(page.getByText(/R\$\s*50,00/).first()).toBeVisible();
+  const relogio = page.getByRole('timer', { name: 'Tempo para pagar' });
+  await expect(relogio).toHaveText(/^(5:00|4:[0-5]\d)$/);
+  const codigo = page.getByRole('textbox', { name: 'Pix copia e cola' });
+  await expect(codigo).toHaveValue(PIX_DEMO);
+
+  await page.getByRole('button', { name: 'Copiar código Pix' }).click();
+  await expect(page.getByText('Código Pix copiado.')).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(PIX_DEMO);
+
+  // 5) "Já fiz o pagamento" → espera a conferência do embaixador.
+  await page.getByRole('button', { name: 'Já fiz o pagamento' }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Recebemos seu aviso' })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole('button', { name: 'Ver o QR de novo' })).toBeVisible();
+
+  // 6) O admin confirma (pela API); com o reload a tela revela o número da vaga.
+  await confirmarPagamento(await participanteIdDaPagina(page));
+  await page.reload();
   await expect(page.getByRole('heading', { level: 1, name: /^Sua vaga: número \d+ de 50$/ })).toBeVisible({
     timeout: 20_000,
   });
   await page.getByRole('link', { name: 'Ir para o desafio' }).click();
   await expect(page).toHaveURL(/\/desafio$/);
 
-  // 4) Home do desafio → check-in de hoje (dia 4).
+  // 7) Home do desafio → check-in de hoje (dia 4).
   await page.getByRole('button', { name: /Abrir check-in de hoje/ }).click();
   await expect(page).toHaveURL(/\/desafio\/dia\/4$/, { timeout: 20_000 });
 
@@ -96,7 +131,7 @@ test('smoke: criar conta, vaga, check-in completo com fotos, ranking e remoção
   await story.click();
   await expect(story).toHaveAttribute('aria-checked', 'true');
 
-  // 5) As 3 fotos de prova (fixtures), uma em cada slot.
+  // 8) As 3 fotos de prova (fixtures), uma em cada slot.
   for (const rotulo of ROTULOS_FOTO) {
     const slot = slotFoto(page, rotulo);
     await expect(slot.getByRole('button', { name: `${rotulo}: adicionar foto` })).toBeVisible();
@@ -104,11 +139,11 @@ test('smoke: criar conta, vaga, check-in completo com fotos, ranking e remoção
     await expect(slot.getByRole('button', { name: `Remover foto de ${rotulo}` })).toBeVisible({ timeout: 30_000 });
   }
 
-  // 6) O servidor confirma a conclusão.
+  // 9) O servidor confirma a conclusão.
   await expect(bannerConcluido(page)).toBeVisible({ timeout: 45_000 });
   await expect(page.getByText('5 de 5 requisitos')).toBeVisible();
 
-  // 7) Reload: tudo persistido.
+  // 10) Reload: tudo persistido.
   await page.reload();
   await expect(bannerConcluido(page)).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole('progressbar', { name: 'Água: 3.000 de 3.000 ml' })).toBeVisible();
@@ -119,7 +154,7 @@ test('smoke: criar conta, vaga, check-in completo com fotos, ranking e remoção
     await expect(slotFoto(page, rotulo).getByRole('img', { name: `Foto de prova: ${rotulo}` })).toBeVisible();
   }
 
-  // 8) Ranking: a participante aparece como "Você".
+  // 11) Ranking: a participante aparece como "Você".
   await page.goto('/ranking');
   await expect(page.getByRole('heading', { level: 1, name: 'Ranking' })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText('Você', { exact: true }).first()).toBeVisible({ timeout: 20_000 });
@@ -129,7 +164,7 @@ test('smoke: criar conta, vaga, check-in completo com fotos, ranking e remoção
   expect(await vagasPreenchidas(page)).toBe(preenchidasAntes + 1);
   await expect(page.getByRole('link', { name: 'Ir para o desafio' }).first()).toBeVisible();
 
-  // 9) Remover uma foto: o dia deixa de estar concluído.
+  // 12) Remover uma foto: o dia deixa de estar concluído.
   await page.goto('/desafio/dia/4');
   await expect(bannerConcluido(page)).toBeVisible({ timeout: 20_000 });
   const slotAgua = slotFoto(page, 'Água');

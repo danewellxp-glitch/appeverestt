@@ -734,7 +734,7 @@ GridDias(props: { dias: DiaResumo[]; selecionado?: number | null; aoSelecionar?:
   - `BotaoBaixarApp` tenta, nesta ordem: prompt nativo, `ModalInstrucoesIOS`, copiar `urlDoApp()` e mostrar o link.
   - `PwaGlobais` usa `useRegisterSW` e mostra os toasts "Nova versão disponível / Atualizar" e "App pronto para uso offline", o `IndicadorOffline` e um `registro.update()` a cada 1 h.
 - **`index.html`:** `lang="pt-BR"`, `viewport-fit=cover`, `theme-color #000000`, metas iOS e `apple-touch-icon-180x180.png`.
-- **Ícones:** gerados de `public/logo.png` por `pwa-assets.config.ts` e versionados em `public/`. A logo atual é provisória (`TODO_DECISAO(LOGO)`).
+- **Ícones:** gerados de `public/logo.png` por `pwa-assets.config.ts` e versionados em `public/`. Desde a v2 R12 a logo é a oficial (`node scripts/marca.cjs` gera `public/logo.png` e as máscaras de `public/marca/`).
 - **Riscos conhecidos:**
   - O offline global agora é só o `IndicadorOffline` (`features/pwa/PwaGlobais.tsx`), em todas as rotas. Em `/hoje`, o `AvisosDia` (`pages/Hoje.tsx`) mostra também um `Alerta` "Você está offline…", então ali o aviso ainda aparece duas vezes.
   - O `PwaGlobais` continua reservando o espaço da bottom nav (`bottom-[calc(env(safe-area-inset-bottom)+4.5rem)]`) mesmo onde ela não aparece.
@@ -1029,7 +1029,7 @@ Origem: `docs/DECISOES.md`. Todas estão como **ASSUMIDO 🚫** (bloqueiam o lan
 | **Q2** | Link de publicação | Sem valor; vai na env `VITE_APP_URL` | `features/pwa/BotaoBaixarApp.tsx` (`urlDoApp()`, com fallback para `location.origin`) tem `TODO_DECISAO(Q2)` |
 | **Q8** | Política de privacidade | Página `/privacidade` com texto provisório e checkbox obrigatório no cadastro | `src/content/privacidade.ts` (`pendencia: 'TODO_DECISAO(Q8)…'`, `avisoProvisorio`) |
 | **Q15** | Domínio | Sem valor; vai em env | Afeta `VITE_APP_URL`, `WEB_ORIGIN` na API (CSRF) e o rewrite de `apps/web/vercel.json`, que ainda tem `https://API_HOST_AQUI` |
-| **LOGO** | Logo final | Placeholder gerado por `scripts/gerar-logo-placeholder.cjs` | Substituir `apps/web/public/logo.png` e rodar `pnpm --filter web generate-pwa-assets`. Há `TODO_DECISAO(LOGO)` em `pwa-assets.config.ts` |
+| **LOGO** | Logo final | CONFIRMADA em 2026-10-30 (v2 R12) | Fonte em `apps/web/design/logo-original.jpg`; regerar com `node scripts/marca.cjs` + `pnpm --filter web generate-pwa-assets` |
 
 Outras pendências técnicas do front:
 - **Testes:** existem só 2 testes de hooks (`useCheckin`, `useFotosDia`; 9 casos). Não há testes de páginas ou componentes, nem `vitest.config.*` ou bloco `test` no Vite: o jsdom vem do pragma por arquivo. Playwright e `@axe-core/playwright` (FASE 12) ainda não estão instalados.

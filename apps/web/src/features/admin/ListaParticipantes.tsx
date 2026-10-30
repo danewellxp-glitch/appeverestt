@@ -1,10 +1,21 @@
-import type { AdminParticipante } from '@everest/shared';
+import type { AdminParticipante, StatusPagamento } from '@everest/shared';
 import { ChevronRight, Search } from 'lucide-react';
 import { useDeferredValue, useId, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Avatar } from '../../components/ui/Avatar';
+import { Segmentado } from '../../components/ui/Segmentado';
 import { marcarDirecao } from '../../lib/transicoes';
 import { SeloEmbaixador } from '../ranking/TabelaRanking';
+import { PilulaPagamento } from './PilulaPagamento';
+
+type FiltroPagamento = 'TODOS' | StatusPagamento;
+
+const OPCOES_FILTRO = [
+  { valor: 'TODOS', rotulo: 'Todos' },
+  { valor: 'INFORMADO', rotulo: 'A confirmar' },
+  { valor: 'PENDENTE', rotulo: 'Pendentes' },
+  { valor: 'CONFIRMADO', rotulo: 'Confirmados' },
+] as const satisfies readonly { valor: FiltroPagamento; rotulo: string }[];
 
 function normalizar(texto: string): string {
   return texto
@@ -24,21 +35,29 @@ export function ordenarParaRevisao(lista: readonly AdminParticipante[]): AdminPa
   );
 }
 
-/** Lista de participantes (admin) com busca sem acento por nome ou e-mail. */
+/** Lista de participantes (admin) com filtro de pagamento e busca sem acento por nome ou e-mail. */
 export function ListaParticipantes({ participantes }: { participantes: AdminParticipante[] }) {
   const idBusca = useId();
   const [busca, setBusca] = useState('');
+  const [filtro, setFiltro] = useState<FiltroPagamento>('TODOS');
   const buscaAdiada = useDeferredValue(busca);
 
   const filtrados = useMemo(() => {
     const termo = normalizar(buscaAdiada);
-    const ordenados = ordenarParaRevisao(participantes);
+    const ordenados = ordenarParaRevisao(participantes).filter(
+      (p) => filtro === 'TODOS' || p.pagamentoStatus === filtro,
+    );
     if (!termo) return ordenados;
-    return ordenados.filter((p) => normalizar(p.nome).includes(termo) || normalizar(p.email).includes(termo));
-  }, [participantes, buscaAdiada]);
+    // Conta excluída: a API devolve um e-mail técnico (removido+…@everest.invalid), que não entra na busca.
+    return ordenados.filter(
+      (p) => normalizar(p.nome).includes(termo) || (!p.contaExcluida && normalizar(p.email).includes(termo)),
+    );
+  }, [participantes, buscaAdiada, filtro]);
+  const filtrando = busca.trim() !== '' || filtro !== 'TODOS';
 
   return (
     <div className="flex flex-col gap-3">
+      <Segmentado opcoes={OPCOES_FILTRO} valor={filtro} aoMudar={setFiltro} rotulo="Filtrar por pagamento" />
       <label htmlFor={idBusca} className="sr-only">
         Buscar participante
       </label>
@@ -56,7 +75,7 @@ export function ListaParticipantes({ participantes }: { participantes: AdminPart
       </div>
 
       <p aria-live="polite" className="px-1 text-xs text-texto-2">
-        {busca.trim()
+        {filtrando
           ? `${filtrados.length} de ${participantes.length} participantes`
           : `${participantes.length} ${participantes.length === 1 ? 'participante' : 'participantes'}`}
       </p>
@@ -80,6 +99,7 @@ export function ListaParticipantes({ participantes }: { participantes: AdminPart
                   <span className="flex flex-wrap items-center gap-1.5 font-semibold">
                     <span className="truncate">{p.nome}</span>
                     {p.ehEmbaixador && <SeloEmbaixador />}
+                    <PilulaPagamento status={p.pagamentoStatus} />
                   </span>
                   <small className="text-xs text-texto-2">
                     {p.vagaNumero !== null ? `Vaga nº ${p.vagaNumero} · ` : ''}

@@ -20,6 +20,8 @@ export function useInscrever() {
       qc.setQueryData<MeResposta | null>(chaves.me, (atual) =>
         atual ? { ...atual, participacao: resposta.participacao } : atual,
       );
+      // Inscrição nova (ex.: depois de ser removida): o status antigo do pagamento não vale mais.
+      qc.removeQueries({ queryKey: chaves.pagamento(resposta.participacao.desafioSlug) });
       void qc.invalidateQueries({ queryKey: chaves.me });
       void qc.invalidateQueries({ queryKey: chaves.desafioAtual });
     },

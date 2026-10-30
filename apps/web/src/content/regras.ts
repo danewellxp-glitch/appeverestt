@@ -1,11 +1,22 @@
 // Textos de /regras (docs/FRONTEND.md §9.8, protótipo #regras). Números vêm de METAS (shared);
 // handle, hashtag, vagas e dias vêm do desafio atual (API).
 import { METAS } from '@everest/shared';
+import { formatarReais } from '../lib/moeda';
 
 const numero = new Intl.NumberFormat('pt-BR');
 const litros = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
 
-export type IdRegra = 'AGUA' | 'EXERCICIO' | 'LEITURA' | 'FOTOS' | 'STORY' | 'VAGAS' | 'PREMIO' | 'DESEMPATE' | 'CONFERENCIA';
+export type IdRegra =
+  | 'AGUA'
+  | 'EXERCICIO'
+  | 'LEITURA'
+  | 'FOTOS'
+  | 'STORY'
+  | 'VAGAS'
+  | 'PAGAMENTO'
+  | 'PREMIO'
+  | 'DESEMPATE'
+  | 'CONFERENCIA';
 
 export interface Regra {
   id: IdRegra;
@@ -36,15 +47,29 @@ export function regrasDiarias(instagram: string, hashtag: string): Regra[] {
   ];
 }
 
-/** "Vagas e prêmio". */
-export function regrasVagasEPremio(totalVagas: number | null, totalDias: number): Regra[] {
+/**
+ * "Vagas e prêmio". `valorCentavos` null (desafio não carregado ou Pix não configurado neste
+ * ambiente) omite a regra do pagamento, como a capa omite o preço.
+ */
+export function regrasVagasEPremio(totalVagas: number | null, totalDias: number, valorCentavos: number | null = null): Regra[] {
+  const pagamento: Regra[] =
+    valorCentavos === null
+      ? []
+      : [
+          {
+            id: 'PAGAMENTO',
+            titulo: 'Inscrição',
+            texto: `Inscrição de ${formatarReais(valorCentavos)} via Pix. O acesso é liberado depois que o pagamento é confirmado pelo embaixador.`,
+          },
+        ];
   return [
     {
       id: 'VAGAS',
       titulo: totalVagas === null ? 'Vagas limitadas' : `${numero.format(totalVagas)} vagas`,
       texto:
-        'Inscrição única por pessoa, por ordem de chegada. O embaixador ocupa uma das vagas e a vaga não volta para a fila.',
+        'Inscrição única por pessoa, por ordem de chegada. O embaixador ocupa uma das vagas. A vaga só volta para a fila se a inscrição não for paga.',
     },
+    ...pagamento,
     {
       id: 'PREMIO',
       titulo: 'Prêmio',

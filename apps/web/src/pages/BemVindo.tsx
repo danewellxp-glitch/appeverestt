@@ -1,59 +1,23 @@
 import type { AtualizarPerfilInput, DesafioAtual, MeResposta } from '@everest/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowRight } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
+import { useState } from 'react';
+import { Navigate, useSearchParams } from 'react-router';
 import { Avatar } from '../components/ui/Avatar';
 import { Alerta, Carregando, Skeleton } from '../components/ui/basicos';
-import { Contador } from '../components/ui/Contador';
+import { RevelacaoVaga } from '../features/desafio/RevelacaoVaga';
 import { useInscrever } from '../features/desafio/useInscrever';
 import { type CampoPerfil, CAMPOS_PERFIL, FormularioPerfil } from '../features/auth/FormularioPerfil';
 import { type ErrosCampos, errosDoServidor, mensagemGeral } from '../features/auth/formulario';
 import { lerAceitePendente, limparAceitePendente, useAtualizarPerfil } from '../features/auth/perfil';
-import { destinoSeguro } from '../features/auth/sessao';
+import { destinoDaParticipacao, destinoSeguro } from '../features/auth/sessao';
 import { api, ehApiError } from '../lib/api';
 import { chaves, useDesafioAtual, useMe } from '../lib/queries';
 import { LinkNav } from '../components/layout/LinkNav';
-import { marcarDirecao } from '../lib/transicoes';
 
 const ERROS_SEM_VAGA = ['VAGAS_ESGOTADAS', 'INSCRICOES_FECHADAS', 'DESAFIO_ENCERRADO', 'NAO_ENCONTRADO'] as const;
 
 function primeiroNome(nome: string): string {
   return nome.trim().split(/\s+/)[0] ?? nome;
-}
-
-/** Revelação animada do número da vaga ("Nº 37 de 50 vagas"). */
-function RevelacaoVaga({ vaga, totalVagas }: { vaga: number; totalVagas: number }) {
-  const titulo = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
-    titulo.current?.focus();
-  }, []);
-  return (
-    <section className="flex flex-col items-center gap-3 py-10 text-center">
-      <p className="rotulo">Sua vaga</p>
-      <h1
-        ref={titulo}
-        tabIndex={-1}
-        aria-label={`Sua vaga: número ${vaga} de ${totalVagas}`}
-        className="font-display text-[150px] leading-[0.8] font-black text-vermelho tabular-nums focus:outline-none"
-        style={{ animation: 'revelar 520ms cubic-bezier(.2,1.2,.3,1) both' }}
-      >
-        <small className="mr-1.5 align-top text-[40px] text-texto">Nº</small>
-        <Contador valor={vaga} />
-      </h1>
-      <p className="text-sm text-texto-2">de {totalVagas} vagas · inscrição confirmada</p>
-      <Link
-        to="/desafio"
-        replace
-        viewTransition
-        onClick={() => marcarDirecao('avancar')}
-        className="press mt-4 inline-flex h-[54px] w-full items-center justify-center gap-2.5 rounded-full border-2 border-transparent font-semibold [background:linear-gradient(var(--fundo),var(--fundo))_padding-box,linear-gradient(90deg,var(--vermelho),var(--laranja))_border-box]"
-      >
-        Ir para o desafio
-        <ArrowRight className="size-5" aria-hidden />
-      </Link>
-    </section>
-  );
 }
 
 function SemVaga({ mensagem }: { mensagem: string }) {
@@ -73,33 +37,43 @@ function SemVaga({ mensagem }: { mensagem: string }) {
 
 /**
  * Primeiro acesso (docs/FRONTEND.md §5.4 item 4, §9.3): nome completo, dados de cadastro, aceite e
- * marketing → PATCH /me → POST /inscricao → revelação da vaga. `?etapa=vaga` pula para a revelação.
+ * marketing → PATCH /me → POST /inscricao → /pagamento (vaga reservada, pagamento pendente) ou,
+ * para o embaixador (já confirmado), a revelação da vaga. `?etapa=vaga` mostra a revelação só
+ * para quem já teve o pagamento confirmado; quem ainda não pagou vai para a /pagamento.
  */
 export default function BemVindo() {
   const { data: me } = useMe();
   const [params] = useSearchParams();
-  const navegar = useNavigate();
   const qc = useQueryClient();
   const desafioQ = useDesafioAtual();
   const atualizar = useAtualizarPerfil();
   const inscrever = useInscrever();
   const [aceitePreMarcado] = useState(lerAceitePendente);
+  const etapaVaga = params.get('etapa') === 'vaga';
   const [vaga, setVaga] = useState<number | null>(() =>
-    params.get('etapa') === 'vaga' ? (me?.participacao?.vagaNumero ?? null) : null,
+    etapaVaga && me?.participacao?.pagamentoStatus === 'CONFIRMADO' ? me.participacao.vagaNumero : null,
   );
   const [errosServidor, setErrosServidor] = useState<ErrosCampos<CampoPerfil>>({});
   const [erroGeral, setErroGeral] = useState<string | null>(null);
   const [semVaga, setSemVaga] = useState<string | null>(null);
   // Enquanto envia, o cache do `me` muda (perfil completo, participação): não redirecionar no meio.
   const [enviando, setEnviando] = useState(false);
+  // Destino decidido no envio. Fica em estado (e não num navigate solto) para o redirecionamento
+  // "já está tudo certo" abaixo não disputar com ele quando o `enviando` volta a false.
+  const [destinoFinal, setDestinoFinal] = useState<string | null>(null);
   const volta = destinoSeguro(params.get('volta'));
 
   if (!me) return <Carregando />;
   const totalVagas = desafioQ.data?.totalVagas ?? 50;
   if (vaga !== null) return <RevelacaoVaga vaga={vaga} totalVagas={totalVagas} />;
+  if (destinoFinal) return <Navigate to={destinoFinal} replace />;
+  // Vaga ainda não paga: a revelação só vem depois da confirmação do embaixador.
+  if (etapaVaga && me.participacao && me.participacao.pagamentoStatus !== 'CONFIRMADO') {
+    return <Navigate to="/pagamento" replace />;
+  }
   // Já está tudo certo: nada a fazer aqui.
   if (!enviando && me.usuario.perfilCompleto && me.participacao) {
-    return <Navigate to={volta ?? '/desafio'} replace />;
+    return <Navigate to={volta ?? destinoDaParticipacao(me.participacao)} replace />;
   }
   if (semVaga) return <SemVaga mensagem={semVaga} />;
 
@@ -127,7 +101,7 @@ export default function BemVindo() {
     }
     // Já inscrito (dados novos da R1.1): só completa o perfil e segue.
     if (atual.participacao) {
-      void navegar(volta ?? '/desafio', { replace: true });
+      setDestinoFinal(volta ?? destinoDaParticipacao(atual.participacao));
       return;
     }
     try {
@@ -136,7 +110,9 @@ export default function BemVindo() {
         queryFn: ({ signal }) => api<DesafioAtual>('/desafios/atual', { signal }),
       });
       const r = await inscrever.mutateAsync(desafio.slug);
-      if (r.participacao.vagaNumero === null) void navegar('/desafio', { replace: true });
+      // Vaga reservada, pagamento pendente: a próxima etapa é o Pix (o `volta` fica para depois).
+      if (r.participacao.pagamentoStatus !== 'CONFIRMADO') setDestinoFinal('/pagamento');
+      else if (r.participacao.vagaNumero === null) setDestinoFinal('/desafio');
       else setVaga(r.participacao.vagaNumero);
     } catch (e) {
       if (ERROS_SEM_VAGA.some((c) => ehApiError(e, c))) setSemVaga(mensagemGeral(e));

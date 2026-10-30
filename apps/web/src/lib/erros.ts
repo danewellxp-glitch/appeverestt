@@ -18,6 +18,11 @@ export const MENSAGENS_ERRO: Record<CodigoErro | 'REDE', string> = {
   FOTO_GRANDE_DEMAIS: 'A foto é grande demais (máximo 5 MB).',
   MUITAS_REQUISICOES: 'Muitas tentativas seguidas. Espere um minuto e tente de novo.',
   PERFIL_INCOMPLETO: 'Complete seu cadastro para garantir a vaga.',
+  PAGAMENTO_PENDENTE: 'Seu acesso é liberado quando o embaixador confirmar o pagamento.',
+  PAGAMENTO_JA_CONFIRMADO: 'Seu pagamento já foi confirmado.',
+  PARTICIPANTE_NAO_REMOVIVEL:
+    'Só dá para remover inscrições não confirmadas, sem check-ins e que não sejam do embaixador.',
+  PAGAMENTO_INDISPONIVEL: 'O pagamento ainda não está disponível. Tente de novo mais tarde.',
   ERRO_INTERNO: 'Algo deu errado do nosso lado. Tente novamente.',
   REDE: 'Sem conexão. Verifique sua internet.',
 };
@@ -32,6 +37,7 @@ export function mensagemDoErro(codigo: CodigoErro | 'REDE', doServidor?: string)
     'DIA_NAO_EDITAVEL',
     'FOTO_INVALIDA',
     'NAO_ENCONTRADO',
+    'PARTICIPANTE_NAO_REMOVIVEL',
   ];
   if (doServidor && usarServidor.includes(codigo)) return doServidor;
   return MENSAGENS_ERRO[codigo];

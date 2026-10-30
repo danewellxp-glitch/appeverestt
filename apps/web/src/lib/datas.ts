@@ -27,3 +27,20 @@ export function formatarDiaCurto(iso: string): string {
   const semana = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC', weekday: 'short' }).format(data).replace('.', '');
   return `${semana}, ${formatarDataCurta(iso)}`;
 }
+
+const RELATIVO = new Intl.RelativeTimeFormat('pt-BR', { numeric: 'always' });
+
+/**
+ * ISO 8601 → "há 5 minutos", "há 2 horas", "há 3 dias" (menos de 1 minuto: "agora há pouco").
+ * `agora` é parâmetro para os testes serem determinísticos.
+ */
+export function tempoRelativo(iso: string, agora: number = Date.now()): string {
+  const momento = new Date(iso).getTime();
+  if (Number.isNaN(momento)) return '';
+  const minutos = Math.floor(Math.max(0, agora - momento) / 60_000);
+  if (minutos < 1) return 'agora há pouco';
+  if (minutos < 60) return RELATIVO.format(-minutos, 'minute');
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return RELATIVO.format(-horas, 'hour');
+  return RELATIVO.format(-Math.floor(horas / 24), 'day');
+}
