@@ -1,10 +1,22 @@
 import { z } from 'zod';
 import {
+  TIMEZONE_PADRAO,
   LIMITES,
   MIME_TYPES_FOTO,
   TAMANHO_MAX_FOTO_BYTES,
   TIPOS_FOTO,
 } from './constantes';
+import { hojeNoFuso } from './regras/diaAtual';
+import {
+  IDADE_MINIMA,
+  UFS,
+  ehDataValida,
+  ehInstagramValido,
+  ehNomeCompleto,
+  idadeEm,
+  normalizarInstagram,
+  normalizarTelefone,
+} from './regras/perfil';
 
 const emailSchema = z
   .string({ error: 'Informe o e-mail.' })
@@ -108,10 +120,54 @@ export const sessaoSchema = z.object({
 });
 export type SessaoInput = z.infer<typeof sessaoSchema>;
 
-/** PATCH /me: nome no ranking + aceite (completa o perfil). */
+const localSchema = (rotulo: string) =>
+  z
+    .string({ error: `Informe ${rotulo}.` })
+    .trim()
+    .min(LIMITES.localMin, { error: `Informe ${rotulo}.` })
+    .max(LIMITES.localMax, { error: `Use no máximo ${LIMITES.localMax} caracteres.` });
+
+/**
+ * PATCH /me: completa o perfil (Q7). Todos os dados são obrigatórios para garantir a vaga;
+ * o consentimento de marketing é separado e opcional (X9).
+ */
 export const atualizarPerfilSchema = z.object({
-  nome: nomeSchema,
+  nome: nomeSchema.refine(ehNomeCompleto, { error: 'Informe nome e sobrenome.' }),
+  instagram: z
+    .string({ error: 'Informe seu @ do Instagram.' })
+    .transform(normalizarInstagram)
+    .refine((v) => v.length > 0, { error: 'Informe seu @ do Instagram.' })
+    .refine(ehInstagramValido, { error: '@ inválido. Use letras, números, "." ou "_".' }),
+  dataNascimento: z
+    .string({ error: 'Informe a data de nascimento.' })
+    .trim()
+    .refine(ehDataValida, { error: 'Data de nascimento inválida.' })
+    .refine((v) => idadeEm(v, hojeNoFuso(new Date(), TIMEZONE_PADRAO)) >= IDADE_MINIMA, {
+      error: `O desafio é para maiores de ${IDADE_MINIMA} anos.`,
+    })
+    .refine((v) => idadeEm(v, hojeNoFuso(new Date(), TIMEZONE_PADRAO)) <= 120, {
+      error: 'Data de nascimento inválida.',
+    }),
+  whatsapp: z
+    .string({ error: 'Informe seu WhatsApp com DDD.' })
+    .transform((v, ctx) => {
+      const n = normalizarTelefone(v);
+      if (n === null) {
+        ctx.addIssue({ code: 'custom', message: 'WhatsApp inválido. Use DDD + número.' });
+        return z.NEVER;
+      }
+      return n;
+    }),
+  bairro: localSchema('o bairro'),
+  cidade: localSchema('a cidade'),
+  uf: z
+    .string({ error: 'Escolha o estado.' })
+    .trim()
+    .toUpperCase()
+    .pipe(z.enum(UFS, { error: 'Escolha o estado.' })),
   aceitouTermos: aceiteSchema,
+  /** Opcional e separado do aceite: receber novidades e ofertas (marketing). */
+  aceitouMarketing: z.boolean({ error: 'Valor inválido.' }).default(false),
 });
 export type AtualizarPerfilInput = z.infer<typeof atualizarPerfilSchema>;
 

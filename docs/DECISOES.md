@@ -11,7 +11,7 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | Q4 | Critério de "melhor evolução" | Mais dias concluídos e não invalidados; prêmio para o 1º do ranking no fim | `ordenarRanking` (shared) | ASSUMIDO |
 | Q5 | Desempate | 1) maior melhor sequência → 2) maior sequência atual → 3) inscrição mais antiga | `ordenarRanking` (shared) | ASSUMIDO |
 | Q6 | Datas | Início em `Desafio.dataInicio`; fim = início + 29 dias | banco | ASSUMIDO |
-| Q7 | Dados coletados | Nome, e-mail e senha. Sem telefone | — | ASSUMIDO |
+| Q7 | Dados coletados | Nome completo, e-mail, @ do Instagram, data de nascimento, WhatsApp, bairro, cidade e UF, **todos obrigatórios para se inscrever** (uso futuro em marketing, com consentimento à parte, X9). Login pelo Firebase (sem senha na API) | `atualizarPerfilSchema` (shared) + `Usuario` (banco); `docs/FRONTEND.md` §4.4 | CONFIRMADO |
 | Q8 🚫 | Política de privacidade | Página `/privacidade` com `TODO_DECISAO(Q8)` + checkbox obrigatório no cadastro | `apps/web/src/content/privacidade.ts` | ASSUMIDO |
 | Q9 | Participantes de exemplo | Só no seed de dev. Nunca em produção | — | ASSUMIDO |
 | Q10 | Modelo comercial | Gratuito | — | ASSUMIDO |
@@ -28,6 +28,9 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | X6 | Narrativa da escalada | Cada dia concluído sobe 295 m (`Math.round(dias / totalDias * 8848)`); cume = 8.848 m = prêmio. Dia perdido não desce | `@everest/shared` `regras/altitude.ts` | ASSUMIDO |
 | X7 | Tema padrão | Sistema (segue `prefers-color-scheme`); opções Claro / Escuro / Sistema no Perfil | `localStorage['everest-tema']` | ASSUMIDO |
 | X8 | Fila de conferência do embaixador | Dia concluído fica "aguardando conferência" até o admin aprovar (`PATCH /admin/dias/:diaId/conferencia`); qualquer edição do dia volta para a fila. Conferência não muda a contagem do ranking | `DiaDesafio.conferidoEm` / `conferidoPorId` | ASSUMIDO |
+| X9 | Consentimento de marketing | Checkbox **separado e opcional** na `/bem-vindo` (desmarcado por padrão); guarda a data (`aceitouMarketingEm`) e pode ser revogado no Perfil. Quem não marca participa normalmente | `PATCH /me` `aceitouMarketing` | CONFIRMADO |
+| X10 | Idade mínima | **18 anos** (menores exigiriam consentimento dos pais, LGPD art. 14) | `IDADE_MINIMA` (shared) | ASSUMIDO |
+| X11 | Inscrição exige perfil completo | Sem aceite + dados de cadastro, `POST /inscricao` responde `403 PERFIL_INCOMPLETO` (não gasta vaga) | `AuthService.exigirPerfilCompleto` | CONFIRMADO |
 | LOGO 🚫 | Logo final | Placeholder até receber `apps/web/public/logo.png` | `apps/web/public/logo.png` | ASSUMIDO |
 
 ## Decisões técnicas tomadas durante a construção
@@ -75,4 +78,8 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | 2026-10-30 | v2 R3 | `@font-face` declarados no `index.css` apontando para os `.woff2` latin dos pacotes @fontsource (em vez de importar o CSS do pacote) | Seção 11 pede subset latin: evita baixar/precachear cirílico, vietnamita etc. (4 arquivos, ~77 KB) |
 | 2026-10-30 | v2 R3 | Tokens de estado `erro-*`, `aviso-*`, `ok-*`, `info-*` + `vermelho-escuro` (hover) com valor por tema | Opção da seção 6.2: um token por papel evita pares `escuro:` espalhados. Só a medalha de bronze usa par `escuro:` (some na R8) |
 | 2026-10-30 | v2 R3 | `bg-white`/`text-white`/`bg-black/80` mantidos sobre fotos, véus e no botão dos interruptores | São iguais nos dois temas por desenho (scrim sobre imagem; botão branco do protótipo) |
+| 2026-10-30 | v2 R1.1 | Novo código de erro `PERFIL_INCOMPLETO` (403) | O front distingue "falta completar o cadastro" de "sem permissão" e manda para a `/bem-vindo` |
+| 2026-10-30 | v2 R1.1 | WhatsApp guardado só com dígitos e DDD, sem +55 (`normalizarTelefone`); Instagram sem "@" e minúsculo | Formato único para busca, deduplicação e exportação |
+| 2026-10-30 | v2 R1.1 | Seed de dev preenche dados fictícios de cadastro (`dadosDev`) | Os usuários do seed precisam de perfil completo para os fluxos de dev; nunca roda em produção (Q9) |
+| 2026-10-30 | v2 R1.1 | **Transitório até a R5:** o front atual (cadastro legado → inscrição) recebe `PERFIL_INCOMPLETO`, porque ainda não tem a `/bem-vindo` | A R5 cria a tela; o Playwright smoke da Fase 12 também depende dela |
 

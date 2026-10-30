@@ -31,7 +31,7 @@
 |---|---|---|
 | Login | E-mail + senha na API (argon2) | **Firebase Auth** (Google + e-mail/senha). A API troca o `idToken` pelo **mesmo cookie httpOnly** de hoje |
 | Recuperar senha | Fora do MVP (script) | `sendPasswordResetEmail` do Firebase |
-| Primeiro acesso | Cadastro já pede nome e aceite | Tela **`/bem-vindo`**: nome no ranking e aceite. Obrigatória para quem entrou com Google |
+| Primeiro acesso | Cadastro já pede nome e aceite | Tela **`/bem-vindo`**: nome completo, dados de cadastro (Instagram, nascimento, WhatsApp, bairro, cidade, UF), aceite e consentimento de marketing opcional. **Obrigatória para todos** antes da vaga (seção 4.4) |
 | Rotas | `/login`, `/cadastro`, `/hoje?dia=N` | `/entrar`, `/criar-conta`, `/recuperar-senha`, `/bem-vindo`, `/desafio`, `/desafio/dia/:n`, `/perfil`. As rotas antigas **redirecionam** |
 | Home do inscrito | `/hoje` (check-in direto) | **`/desafio`**: faixa dos 30 dias, carrossel de destaque, card "Seu dia", atividade do grupo e CTA fixo |
 | Check-in | Na `/hoje` | **`/desafio/dia/:n`**, que abre com animação a partir do card ou do dia tocado |
@@ -121,6 +121,13 @@ model Usuario {
   papel           Papel          @default(USUARIO)
   tokenVersao     Int            @default(0)
   aceitouTermosEm DateTime?                       // AGORA OPCIONAL: null = perfil incompleto
+  instagram          String?                      // NOVO (R1.1): sem "@", minúsculo
+  dataNascimento     DateTime? @db.Date           // NOVO (R1.1)
+  whatsapp           String?                      // NOVO (R1.1): só dígitos com DDD, sem +55
+  bairro             String?                      // NOVO (R1.1)
+  cidade             String?                      // NOVO (R1.1)
+  uf                 String?   @db.Char(2)        // NOVO (R1.1)
+  aceitouMarketingEm DateTime?                    // NOVO (R1.1): consentimento de marketing (X9); null = não/revogado
   excluidoEm      DateTime?                       // NOVO: conta excluída (anonimizada)
   criadoEm        DateTime       @default(now())
   participacoes   Participante[]
@@ -134,7 +141,7 @@ model DiaDesafio {
 ```
 
 - Faça a migration com `prisma migrate dev --name firebase_auth_conferencia`.
-- **Perfil completo:** `aceitouTermosEm != null && excluidoEm == null`.
+- **Perfil completo:** `aceitouTermosEm != null && excluidoEm == null` **e** nome com sobrenome **e** todos os dados de cadastro preenchidos (`instagram`, `dataNascimento`, `whatsapp`, `bairro`, `cidade`, `uf`). Ver seção 4.4.
 - **Regra da conferência:** qualquer `PUT /dias/:n`, confirmação de foto, exclusão de foto ou rejeição pelo worker zera `conferidoEm` e `conferidoPorId` daquele dia. Invalidar também zera; revalidar não marca como conferido.
 
 ### 4.2 Contrato novo e alterado
@@ -143,7 +150,8 @@ model DiaDesafio {
 |---|---|---|---|---|---|
 | POST | `/auth/sessao` | público, 10/min | `sessaoSchema`: `{ idToken: string }` (até 4096 caracteres) | `MeResposta` e grava o cookie `everest_sessao` (mesmas opções de hoje) | `NAO_AUTENTICADO` (token inválido, revogado ou com `auth_time` > 5 min), `EMAIL_EM_USO`, `VALIDACAO`, 429 |
 | GET | `/auth/me` | logado | — | `MeResposta` com **`usuario.fotoUrl`** e **`usuario.perfilCompleto`** | 401 |
-| PATCH | `/me` | logado | `atualizarPerfilSchema`: `{ nome (2–80), aceitouTermos: true }` | `MeResposta` | `VALIDACAO` |
+| PATCH | `/me` | logado | `atualizarPerfilSchema` (seção 4.4) | `MeResposta` | `VALIDACAO` (erros por campo) |
+| POST | `/desafios/:slug/inscricao` (alterado) | logado | — | igual | **novo:** `403 PERFIL_INCOMPLETO` se o perfil não estiver completo (não gasta vaga) |
 | DELETE | `/me` | logado | — | `{ ok: true }` e limpa o cookie | — |
 | GET | `/desafios/:slug/feed` | inscrito **ou** admin | — | `FeedResposta` (abaixo) | 403, 404 |
 | PATCH | `/admin/dias/:diaId/conferencia` | admin | `conferenciaSchema`: `{ conferido: boolean }` | `{ diaId, conferidoEm }` | 404; 409 `VALIDACAO` se o dia não estiver concluído ou estiver invalidado |
@@ -152,7 +160,12 @@ model DiaDesafio {
 
 ```ts
 // packages/shared/src/tipos.ts
-interface UsuarioMe { id; nome; email; papel; fotoUrl: string | null; perfilCompleto: boolean }
+interface UsuarioMe {
+  id; nome; email; papel; fotoUrl: string | null; perfilCompleto: boolean;
+  // R1.1: dados de cadastro (null até a /bem-vindo)
+  instagram: string | null; dataNascimento: string | null /* 'YYYY-MM-DD' */; whatsapp: string | null;
+  bairro: string | null; cidade: string | null; uf: string | null; aceitouMarketing: boolean;
+}
 interface FeedResposta {
   diaAtual: number | null;
   fecharamHoje: number;                                   // dias concluídos e não invalidados no diaAtual
@@ -174,9 +187,10 @@ interface FeedResposta {
 - **Verificador injetável.** Crie o provider `VERIFICADOR_FIREBASE` com a interface `VerificadorFirebase { verificar(idToken): Promise<DadosToken>; excluir(uid): Promise<void> }`.
   - A implementação real usa `firebase-admin`: `getAuth().verifyIdToken(idToken, true)` e `deleteUser`.
   - **Nos testes**, um `VerificadorFalso` aceita tokens no formato `teste:<uid>:<email>:<verificado>` e é usado no `overrideProvider`.
+- **Foto do Google:** gravada no 1º acesso e atualizada quando o token traz uma URL diferente; um login sem foto (e-mail/senha) não apaga a foto existente.
 - **`DELETE /me`**, numa transação:
   1. Apague os objetos de foto no storage e as `FotoProva` do usuário.
-  2. Anonimize o `Usuario`: `nome = 'Participante removido'`, `email = removido+<id>@everest.invalid`, `firebaseUid = null`, `fotoUrl = null`, `senhaHash = null`, `excluidoEm = now()`, `tokenVersao + 1`.
+  2. Anonimize o `Usuario`: `nome = 'Participante removido'`, `email = removido+<id>@everest.invalid`, `firebaseUid = null`, `fotoUrl = null`, `senhaHash = null`, **todos os dados de cadastro e `aceitouMarketingEm` = null**, `excluidoEm = now()`, `tokenVersao + 1`.
   3. **Mantenha o `Participante` e os `DiaDesafio`.** Apagá-los liberaria o `vagaNumero` e quebraria a numeração `count + 1` da inscrição (decisão X4 e nova X5).
   4. Depois do commit, chame `verificador.excluir(uid)` e invalide os caches de ranking, feed e vagas.
   5. O ranking mostra "Participante removido".
@@ -190,6 +204,25 @@ interface FeedResposta {
   - `FIREBASE_AUTH_EMULATOR_HOST` (opcional em dev; com ele, o admin SDK aceita tokens do emulador);
   - `AUTH_SENHA_LEGADO` (padrão `false`).
 - **Seed:** o script `pnpm --filter api seed:firebase` cria no emulador os mesmos usuários do seed (`admin@`, `maria@`… com senha `everest-dev-123` e `emailVerified: true`), usando `firebase-admin` com `FIREBASE_AUTH_EMULATOR_HOST`.
+
+### 4.4 Dados de cadastro e consentimento (R1.1: Q7, X9, X10, X11)
+
+Coletados na `/bem-vindo` e **obrigatórios para garantir a vaga** (a inscrição responde `403 PERFIL_INCOMPLETO` sem eles). O consentimento de marketing é **separado e opcional**.
+
+| Campo (`atualizarPerfilSchema`) | Regra | Guardado como | Mensagem de erro |
+|---|---|---|---|
+| `nome` | 2–80, **nome e sobrenome** | como digitado (trim) | Informe nome e sobrenome. |
+| `instagram` | tira o `@`, minúsculo; 1–30 de `a-z 0-9 . _`, sem ponto no início/fim nem `..` | `maria.souza` | @ inválido. Use letras, números, "." ou "_". |
+| `dataNascimento` | `YYYY-MM-DD` válida; **idade ≥ 18** (`IDADE_MINIMA`, X10) no fuso de SP; ≤ 120 anos | `@db.Date` | O desafio é para maiores de 18 anos. |
+| `whatsapp` | celular/fixo BR com DDD (aceita `+55`, parênteses, traços) | só dígitos, sem +55: `11987654321` | WhatsApp inválido. Use DDD + número. |
+| `bairro`, `cidade` | 2–80 | trim | Informe o bairro / a cidade. |
+| `uf` | uma das 27 UFs (`UFS`) | maiúsculo | Escolha o estado. |
+| `aceitouTermos` | `true` | `aceitouTermosEm` (mantém a 1ª data) | Aceite a política de privacidade para continuar. |
+| `aceitouMarketing` | boolean, padrão `false` | `aceitouMarketingEm` (data do 1º consentimento; `false` revoga) | — |
+
+- Helpers em `@everest/shared` (`regras/perfil.ts`): `UFS`, `IDADE_MINIMA`, `idadeEm`, `idadeHoje`, `ehDataValida`, `normalizarInstagram`, `ehInstagramValido`, `normalizarTelefone`, `ehNomeCompleto`. O front usa os mesmos para validar e formatar.
+- O `PATCH /me` também serve para **editar** os dados depois (tela `/perfil`): o front reenvia tudo com `aceitouTermos: true`.
+- Os dados de cadastro **não aparecem** no ranking, no feed nem em nenhuma rota de outro participante. Exportação para marketing (só de quem consentiu) fica para quando for pedida.
 
 ### 4.3 Testes novos (e2e)
 
@@ -284,7 +317,7 @@ export function obterAuth(): Promise<Auth> {
 | `auth/network-request-failed` | Sem conexão. Verifique sua internet. | alerta |
 | outros | Algo deu errado. Tente novamente. | alerta |
 
-**Validação local:** antes de chamar o Firebase, valide com zod usando `entrarSchema` (`email`, `senha` 8–72) e `criarContaSchema` (`nome`, `email`, `senha` 8–72, `aceitouTermos: true`), ambos em `@everest/shared`. O aceite marcado em `/criar-conta` é enviado logo depois no `PATCH /me`, então quem cria conta por e-mail **não passa** pela `/bem-vindo`, a não ser que o PATCH falhe.
+**Validação local:** antes de chamar o Firebase, valide com zod usando `entrarSchema` (`email`, `senha` 8–72) e `criarContaSchema` (`nome`, `email`, `senha` 8–72, `aceitouTermos: true`), ambos em `@everest/shared`. **Todos** passam pela `/bem-vindo` para preencher os dados de cadastro (seção 4.4); quem criou conta por e-mail chega lá com o nome preenchido e o aceite já marcado.
 
 ### 5.4 Fluxos
 
@@ -292,8 +325,7 @@ export function obterAuth(): Promise<Auth> {
    1. valida;
    2. `criarContaComEmail`;
    3. `trocarPorSessao`;
-   4. `PATCH /me { nome, aceitouTermos: true }`;
-   5. se veio com `?acao=inscrever` ou a pessoa não tem participação, `POST /inscricao` e navega para `/bem-vindo?etapa=vaga` (revelação da vaga); senão vai para `/desafio`.
+   4. navega para `/bem-vindo` (preservando `acao`/`volta`), com o nome e o aceite pré-preenchidos.
 2. **E-mail, login** (`/entrar`): `entrarComEmail`, depois `trocarPorSessao`. A partir daí, `usePosAutenticacao` decide:
    - perfil incompleto → `/bem-vindo`;
    - `acao=inscrever` → inscreve e vai para `/bem-vindo?etapa=vaga`;
@@ -303,9 +335,10 @@ export function obterAuth(): Promise<Auth> {
 3. **Google** (nas duas telas): `entrarComGoogle`, depois `trocarPorSessao`. No primeiro acesso, `perfilCompleto` é falso → `/bem-vindo`.
 4. **`/bem-vindo`:**
    1. mostra avatar (foto ou iniciais) e "Boas-vindas, {primeiro nome}";
-   2. campo "Nome no ranking" com prévia ao vivo `nomeExibicao(nome)`;
-   3. checkbox de aceite;
-   4. botão **"Garantir minha vaga"** → `PATCH /me` → `POST /inscricao` → revelação animada do número da vaga ("Nº 37 de 50 vagas") → "Ir para o desafio".
+   2. campo "Nome completo" com prévia ao vivo `nomeExibicao(nome)` ("Os outros participantes veem: Maria L.");
+   3. campos de cadastro (seção 4.4): "@ do Instagram" (prefixo `@` fixo), "Data de nascimento" (`type="date"`), "WhatsApp" (`type="tel"`, `inputMode="tel"`, máscara `(11) 98765-4321`), "Bairro", "Cidade" e "Estado" (`<select>` com as 27 UFs), com `autocomplete` adequado (`bday`, `tel-national`, `address-level3`, `address-level2`, `address-level1`);
+   4. checkbox de aceite (obrigatório) e, **separado**, o checkbox opcional de marketing (desmarcado por padrão);
+   5. botão **"Garantir minha vaga"** → `PATCH /me` → `POST /inscricao` → revelação animada do número da vaga ("Nº 37 de 50 vagas") → "Ir para o desafio".
    - Se as vagas acabaram (`VAGAS_ESGOTADAS`), mostra a mensagem e o botão "Voltar ao início", e a pessoa fica logada.
    - Com `?etapa=vaga`, pula direto para a revelação.
 5. **Logout** (`/perfil`): `POST /auth/logout`, depois a limpeza atual. Não precisa chamar `signOut` do Firebase, que já foi feito na troca.
@@ -612,11 +645,13 @@ export function abrirComTransformacao(el: HTMLElement, nome: string, navegar: ()
 - **Recuperar:** troca o formulário pelo card de confirmação "Confira seu e-mail" (texto neutro) e o botão "Voltar para o login".
 
 ### 9.3 `/bem-vindo`
-Segue a seção 5.4, item 4. Também precisa de:
+Segue a seção 5.4, item 4, e os campos da seção 4.4. **Diferença do protótipo:** o protótipo só tem nome e aceite; os campos de cadastro entram entre eles, no mesmo estilo de `CampoTexto` em pílula (label à esquerda), e o formulário rola dentro da tela. Também precisa de:
 - skeleton enquanto o `me` carrega;
 - erro de `PATCH` em alerta;
 - `VAGAS_ESGOTADAS` com a mensagem e o botão para a `/`;
-- quem já é inscrito e tem perfil completo é redirecionado para `/desafio`.
+- quem já é inscrito e tem perfil completo é redirecionado para `/desafio`;
+- quem já é inscrito mas tem perfil incompleto (dados novos da R1.1) preenche e volta para `/desafio` sem nova inscrição;
+- erros por campo vindos do servidor (`campos`) aparecem no campo certo; `PERFIL_INCOMPLETO` na inscrição volta o foco ao 1º campo vazio.
 
 ### 9.4 `/desafio` (home)
 - **Topo:** eyebrow "DIA {diaAtual} DE 30 · {dia da semana}, {dd/mm}", h1 "BORA, {PRIMEIRO NOME}." e o `Avatar` à direita (link para `/perfil`).
@@ -665,6 +700,7 @@ Segue a seção 5.4, item 4. Também precisa de:
 
 ### 9.9 `/perfil`
 - **Cabeçalho:** `Avatar xl`, nome, e-mail e a tag "Vaga nº N · inscrita em dd/mm" (só para inscritos).
+- **Card "Meus dados":** os campos da seção 4.4 editáveis (o mesmo formulário da `/bem-vindo`, botão "Salvar") e o switch **"Receber novidades e ofertas da Everest"** (consentimento de marketing; desligar revoga na hora).
 - **Card "Aparência":** `Segmentado` Claro / Escuro / Sistema + a nota "Sistema segue o modo do seu celular.".
 - **Lista:** Instalar o app (folha), Regras, Política de privacidade e Painel do embaixador (só ADMIN).
 - **Lista de conta:** Sair e "Excluir minha conta" (em `vermelho-texto`, abre a folha de confirmação).
@@ -672,6 +708,7 @@ Segue a seção 5.4, item 4. Também precisa de:
 ### 9.10 `/privacidade`
 - Mantém `content/privacidade.ts`, com o texto atualizado conforme o protótipo. O protótipo menciona: a foto do Google, os dados escondidos removidos das imagens, quem vê o quê, a retenção de 90 dias após o fim e o caminho para excluir a conta.
 - O aviso "Rascunho (Q8)" continua até o Anderson aprovar o texto.
+- **R1.1:** o texto precisa listar os dados de cadastro (seção 4.4), a finalidade de cada um, o uso para marketing **só com consentimento** (e como revogar no Perfil) e a idade mínima de 18 anos.
 
 ### 9.11 `/admin`
 - **Topo:** voltar → `/perfil` (ou `/desafio`), "EMBAIXADOR" / "PAINEL".
@@ -698,6 +735,9 @@ Use estes textos exatamente. Eles já estão no protótipo.
 | Entrada, lede | Construindo a sua melhor versão para 2027. Água, treino, leitura, prova do dia e story, todos os dias, por 30 dias. |
 | Auth, divisor | ou entre com · ou com e-mail |
 | Auth, aceite | Li e aceito a política de privacidade, incluindo o uso das minhas fotos de prova. |
+| Bem-vindo, marketing (opcional) | Quero receber novidades e ofertas da Everest por e-mail, WhatsApp e Instagram. Posso desistir quando quiser no meu perfil. |
+| Bem-vindo, idade | O desafio é para maiores de 18 anos. |
+| Bem-vindo, por que pedimos | Usamos esses dados para conferir sua participação e falar com você sobre o desafio. |
 | Erro do aceite | Aceite a política de privacidade para continuar. |
 | Recuperar, instrução | Informe o e-mail da conta. Enviamos um link para você criar uma senha nova. |
 | Recuperar, confirmação | Se existir uma conta com {email}, o link para criar uma senha nova já chegou. Ele vale por 1 hora. |

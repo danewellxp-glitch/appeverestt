@@ -1,11 +1,12 @@
 import { Controller, HttpStatus, Param, Post, Res, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiCreatedResponse, ApiForbiddenResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import type { InscricaoResposta } from '@everest/shared';
 import { UsuarioAtual } from '../../common/decorators/usuario-atual.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService, chavesDoRanking, chaveVagas } from '../../redis/redis.module';
+import { AuthService } from '../auth/auth.service';
 import type { UsuarioSessao } from '../auth/sessao';
 import { inscrever } from './inscrever';
 
@@ -29,16 +30,19 @@ export class InscricoesController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cache: CacheService,
+    private readonly auth: AuthService,
   ) {}
 
   @Post()
   @ApiCreatedResponse({ description: 'Inscrição criada.', schema: { example: EXEMPLO } })
   @ApiOkResponse({ description: 'Já inscrito (idempotente).', schema: { example: { ...EXEMPLO, criada: false } } })
+  @ApiForbiddenResponse({ description: 'PERFIL_INCOMPLETO: falta aceitar os termos ou preencher os dados de cadastro.' })
   async inscrever(
     @Param('slug') slug: string,
     @UsuarioAtual() usuario: UsuarioSessao,
     @Res({ passthrough: true }) res: Response,
   ): Promise<InscricaoResposta> {
+    await this.auth.exigirPerfilCompleto(usuario.id);
     const r = await inscrever(this.prisma, { slug, usuarioId: usuario.id });
     if (r.criada) {
       await this.cache.apagar(chaveVagas(r.desafioId), ...chavesDoRanking(r.desafioId));

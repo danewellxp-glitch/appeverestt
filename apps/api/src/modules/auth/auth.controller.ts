@@ -31,6 +31,13 @@ export const EXEMPLO_ME: MeResposta = {
     papel: 'USUARIO',
     fotoUrl: 'https://lh3.googleusercontent.com/a/...',
     perfilCompleto: true,
+    instagram: 'maria.souza',
+    dataNascimento: '1995-04-12',
+    whatsapp: '11987654321',
+    bairro: 'Pinheiros',
+    cidade: 'São Paulo',
+    uf: 'SP',
+    aceitouMarketing: true,
   },
   participacao: null,
 };

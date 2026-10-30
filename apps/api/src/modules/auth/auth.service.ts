@@ -5,6 +5,7 @@ import * as argon2 from 'argon2';
 import { randomBytes } from 'node:crypto';
 import {
   LIMITES,
+  ehNomeCompleto,
   type AtualizarPerfilInput,
   type CadastroInput,
   type LoginInput,
@@ -24,6 +25,21 @@ export const NOME_REMOVIDO = 'Participante removido';
 
 function ehP2002(e: unknown): boolean {
   return e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002';
+}
+
+type CamposPerfil = Pick<
+  Usuario,
+  'nome' | 'aceitouTermosEm' | 'excluidoEm' | 'instagram' | 'dataNascimento' | 'whatsapp' | 'bairro' | 'cidade' | 'uf'
+>;
+
+/** Perfil completo = aceitou os termos, tem nome e sobrenome e todos os dados de cadastro (Q7). */
+export function perfilEstaCompleto(u: CamposPerfil): boolean {
+  return (
+    u.excluidoEm === null &&
+    u.aceitouTermosEm !== null &&
+    ehNomeCompleto(u.nome) &&
+    Boolean(u.instagram && u.dataNascimento && u.whatsapp && u.bairro && u.cidade && u.uf)
+  );
 }
 
 function nomeInicial(d: DadosToken, email: string): string {
@@ -101,14 +117,33 @@ export class AuthService {
     });
   }
 
-  /** PATCH /me: nome no ranking + aceite dos termos (completa o perfil). */
+  /** PATCH /me: nome completo, dados de cadastro (Q7), aceite e consentimento de marketing (X9). */
   async atualizarPerfil(usuarioId: string, input: AtualizarPerfilInput): Promise<void> {
     const atual = await this.prisma.usuario.findUnique({ where: { id: usuarioId } });
     if (!atual || atual.excluidoEm) throw new ErroApp('NAO_AUTENTICADO');
+    const agora = new Date();
     await this.prisma.usuario.update({
       where: { id: usuarioId },
-      data: { nome: input.nome, aceitouTermosEm: atual.aceitouTermosEm ?? new Date() },
+      data: {
+        nome: input.nome,
+        instagram: input.instagram,
+        dataNascimento: new Date(`${input.dataNascimento}T00:00:00Z`),
+        whatsapp: input.whatsapp,
+        bairro: input.bairro,
+        cidade: input.cidade,
+        uf: input.uf,
+        aceitouTermosEm: atual.aceitouTermosEm ?? agora,
+        // Guarda quando consentiu; desmarcar revoga.
+        aceitouMarketingEm: input.aceitouMarketing ? (atual.aceitouMarketingEm ?? agora) : null,
+      },
     });
+  }
+
+  /** Inscrição exige perfil completo (aceite + dados de cadastro). */
+  async exigirPerfilCompleto(usuarioId: string): Promise<void> {
+    const u = await this.prisma.usuario.findUnique({ where: { id: usuarioId } });
+    if (!u || u.excluidoEm) throw new ErroApp('NAO_AUTENTICADO');
+    if (!perfilEstaCompleto(u)) throw new ErroApp('PERFIL_INCOMPLETO');
   }
 
   /**
@@ -135,6 +170,13 @@ export class AuthService {
           firebaseUid: null,
           fotoUrl: null,
           senhaHash: null,
+          instagram: null,
+          dataNascimento: null,
+          whatsapp: null,
+          bairro: null,
+          cidade: null,
+          uf: null,
+          aceitouMarketingEm: null,
           excluidoEm: new Date(),
           tokenVersao: { increment: 1 },
         },
@@ -200,18 +242,7 @@ export class AuthService {
   }
 
   async me(usuarioId: string): Promise<MeResposta> {
-    const u = await this.prisma.usuario.findUnique({
-      where: { id: usuarioId },
-      select: {
-        id: true,
-        nome: true,
-        email: true,
-        papel: true,
-        fotoUrl: true,
-        aceitouTermosEm: true,
-        excluidoEm: true,
-      },
-    });
+    const u = await this.prisma.usuario.findUnique({ where: { id: usuarioId } });
     if (!u || u.excluidoEm) throw new ErroApp('NAO_AUTENTICADO');
     const p = await this.prisma.participante.findFirst({
       where: { usuarioId, desafio: { ativo: true } },
@@ -234,7 +265,14 @@ export class AuthService {
         email: u.email,
         papel: u.papel,
         fotoUrl: u.fotoUrl,
-        perfilCompleto: u.aceitouTermosEm !== null,
+        perfilCompleto: perfilEstaCompleto(u),
+        instagram: u.instagram,
+        dataNascimento: u.dataNascimento ? u.dataNascimento.toISOString().slice(0, 10) : null,
+        whatsapp: u.whatsapp,
+        bairro: u.bairro,
+        cidade: u.cidade,
+        uf: u.uf,
+        aceitouMarketing: u.aceitouMarketingEm !== null,
       },
       participacao,
     };

@@ -22,8 +22,19 @@ export interface UsuarioMe {
   papel: Papel;
   /** Foto do Google (pode ser null). */
   fotoUrl: string | null;
-  /** Aceitou os termos e a conta não foi excluída. Falso = precisa passar pela /bem-vindo. */
+  /** Aceitou os termos e preencheu todos os dados obrigatórios. Falso = precisa passar pela /bem-vindo. */
   perfilCompleto: boolean;
+  /** Dados de cadastro (Q7). null enquanto não preenchidos. */
+  instagram: string | null;
+  /** 'YYYY-MM-DD' */
+  dataNascimento: string | null;
+  /** Só dígitos com DDD, sem +55 (ex.: '11987654321'). */
+  whatsapp: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  uf: string | null;
+  /** Consentimento separado para marketing (X9). */
+  aceitouMarketing: boolean;
 }
 
 export interface MeResposta {

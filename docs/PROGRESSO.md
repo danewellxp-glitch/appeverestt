@@ -138,6 +138,14 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] `regras/altitude.ts` + testes (seção 10); também `iniciais()` para avatar
 - [x] **DoD:** `pnpm --filter @everest/shared test` (61) e `build` ok; `pnpm typecheck` da raiz ok
 
+## R1.1: Lacunas da R1+R2 (pedido do usuário em 2026-10-30)
+- [x] Inscrição exige perfil completo no servidor: `403 PERFIL_INCOMPLETO` sem gastar vaga (X11)
+- [x] Foto do Google: verificador falso aceita foto; e2e cobre gravar, atualizar e não apagar num login sem foto
+- [x] Dados de cadastro (Q7): nome completo, @ do Instagram, data de nascimento (≥ 18, X10), WhatsApp, bairro, cidade, UF; migration `dados_cadastro`; `PATCH /me` + `me` com os campos; `DELETE /me` apaga tudo
+- [x] Consentimento de marketing separado e opcional (`aceitouMarketingEm`, revogável) (X9)
+- [x] Shared: `regras/perfil.ts` + testes; spec da `/bem-vindo` e do `/perfil` atualizada em `docs/FRONTEND.md` §4.4, §5.4, §9.3, §9.9, §9.10, §10
+- [x] **DoD:** shared 69, api unit 8, api e2e 80 (9 suítes), web 9, typecheck/lint/build verdes
+
 ## R3: Tema, tokens e fontes
 - [x] Fontes instaladas (`@fontsource-variable/onest`, `@fontsource/big-shoulders-display` 700/800/900), só subset latin; preload do peso 900 injetado no build
 - [x] `index.css` com os tokens dos dois temas + `@custom-variant escuro` + utilitários `rotulo`, `press` e `surgir` (+ tokens de estado `erro-*`, `aviso-*`, `ok-*`, `info-*`, `vermelho-escuro`, `borda-campo`)

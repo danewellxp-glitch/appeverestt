@@ -75,11 +75,24 @@ async function enviar(chave: string, corpo: Buffer): Promise<void> {
   );
 }
 
+/** Dados de cadastro fictícios (Q7) para o perfil ficar completo em dev. Nunca em produção (Q9). */
+function dadosDev(email: string) {
+  const usuario = (email.split('@')[0] ?? 'dev').replace(/[^a-z0-9._]/g, '');
+  return {
+    instagram: `${usuario}.everest_dev`,
+    dataNascimento: new Date('1992-06-15T00:00:00Z'),
+    whatsapp: '11900000000',
+    bairro: 'Vila Mariana',
+    cidade: 'São Paulo',
+    uf: 'SP',
+  };
+}
+
 async function garantirUsuario(nome: string, email: string, senhaHash: string, admin = false) {
   return prisma.usuario.upsert({
     where: { email },
-    update: { nome, ...(admin ? { papel: 'ADMIN' as const } : {}) },
-    create: { nome, email, senhaHash, papel: admin ? 'ADMIN' : 'USUARIO', aceitouTermosEm: new Date() },
+    update: { nome, ...dadosDev(email), ...(admin ? { papel: 'ADMIN' as const } : {}) },
+    create: { nome, email, senhaHash, papel: admin ? 'ADMIN' : 'USUARIO', aceitouTermosEm: new Date(), ...dadosDev(email) },
   });
 }
 

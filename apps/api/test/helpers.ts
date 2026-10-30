@@ -98,6 +98,22 @@ export async function sessaoFirebase(
   return { agente, email, id: corpo.usuario.id, uid };
 }
 
+/** Dados de cadastro válidos para o PATCH /me (sem o nome). */
+export const DADOS_PERFIL = {
+  instagram: '@pessoa.teste',
+  dataNascimento: '1995-04-12',
+  whatsapp: '(11) 98765-4321',
+  bairro: 'Pinheiros',
+  cidade: 'São Paulo',
+  uf: 'SP',
+  aceitouTermos: true,
+} as const;
+
+/** Nome com sobrenome (o perfil exige nome completo). */
+function nomeCompleto(nome: string): string {
+  return nome.trim().includes(' ') ? nome : `${nome} Teste`;
+}
+
 /** Entra pelo Firebase (falso) e completa o perfil: agente supertest com o cookie de sessão. */
 export async function novoUsuarioLogado(
   http: App,
@@ -105,7 +121,7 @@ export async function novoUsuarioLogado(
   email = emailUnico(),
 ): Promise<{ agente: ReturnType<typeof request.agent>; email: string; id: string; uid: string }> {
   const sessao = await sessaoFirebase(http, email, { nome });
-  const r = await sessao.agente.patch('/api/me').send({ nome, aceitouTermos: true });
+  const r = await sessao.agente.patch('/api/me').send({ nome: nomeCompleto(nome), ...DADOS_PERFIL });
   if (r.status !== 200) throw new Error(`PATCH /me falhou: ${r.status} ${JSON.stringify(r.body)}`);
   return sessao;
 }
@@ -187,7 +203,18 @@ export async function participanteComDias(
   extra: { dataInscricao?: Date; vagaNumero?: number } = {},
 ): Promise<string> {
   const u = await prisma.usuario.create({
-    data: { nome, email: emailUnico('rank'), senhaHash: 'x', aceitouTermosEm: new Date() },
+    data: {
+      nome,
+      email: emailUnico('rank'),
+      senhaHash: 'x',
+      aceitouTermosEm: new Date(),
+      instagram: 'rank.teste',
+      dataNascimento: new Date('1990-01-01T00:00:00Z'),
+      whatsapp: '11987654321',
+      bairro: 'Centro',
+      cidade: 'Curitiba',
+      uf: 'PR',
+    },
   });
   const ocupadas = await prisma.participante.count({ where: { desafioId, vagaNumero: { not: null } } });
   const p = await prisma.participante.create({

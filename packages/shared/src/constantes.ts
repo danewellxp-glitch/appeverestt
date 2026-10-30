@@ -20,6 +20,8 @@ export const LIMITES = {
   senhaMin: 8,
   senhaMax: 72,
   motivoInvalidacaoMax: 500,
+  localMin: 2,
+  localMax: 80,
 } as const;
 
 export const TOTAL_DIAS_PADRAO = 30;
@@ -41,6 +43,7 @@ export const CODIGOS_ERRO = [
   'FOTO_INVALIDA',
   'FOTO_GRANDE_DEMAIS',
   'MUITAS_REQUISICOES',
+  'PERFIL_INCOMPLETO',
   'ERRO_INTERNO',
 ] as const;
 export type CodigoErro = (typeof CODIGOS_ERRO)[number];

@@ -17,6 +17,7 @@ const STATUS_PADRAO: Record<CodigoErro, HttpStatus> = {
   FOTO_INVALIDA: HttpStatus.UNPROCESSABLE_ENTITY,
   FOTO_GRANDE_DEMAIS: HttpStatus.PAYLOAD_TOO_LARGE,
   MUITAS_REQUISICOES: HttpStatus.TOO_MANY_REQUESTS,
+  PERFIL_INCOMPLETO: HttpStatus.FORBIDDEN,
   ERRO_INTERNO: HttpStatus.INTERNAL_SERVER_ERROR,
 };
 
@@ -36,6 +37,7 @@ export const MENSAGENS_PADRAO: Record<CodigoErro, string> = {
   FOTO_INVALIDA: 'A foto enviada é inválida.',
   FOTO_GRANDE_DEMAIS: 'A foto é grande demais (máximo 5 MB).',
   MUITAS_REQUISICOES: 'Muitas tentativas. Aguarde um pouco e tente de novo.',
+  PERFIL_INCOMPLETO: 'Complete seu cadastro para garantir a vaga.',
   ERRO_INTERNO: 'Algo deu errado. Tente novamente.',
 };
 

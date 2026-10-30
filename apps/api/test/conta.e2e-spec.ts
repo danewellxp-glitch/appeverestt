@@ -56,7 +56,19 @@ describe('Excluir conta — DELETE /me (e2e)', () => {
 
     // Usuário anonimizado; participante e dias continuam (vaga ocupada).
     const u = await ctx.prisma.usuario.findUniqueOrThrow({ where: { id: eu.usuarioId } });
-    expect(u).toMatchObject({ nome: 'Participante removido', firebaseUid: null, fotoUrl: null, senhaHash: null });
+    expect(u).toMatchObject({
+      nome: 'Participante removido',
+      firebaseUid: null,
+      fotoUrl: null,
+      senhaHash: null,
+      instagram: null,
+      dataNascimento: null,
+      whatsapp: null,
+      bairro: null,
+      cidade: null,
+      uf: null,
+      aceitouMarketingEm: null,
+    });
     expect(u.email).toBe(`removido+${eu.usuarioId}@everest.invalid`);
     expect(u.excluidoEm).not.toBeNull();
     const p = await ctx.prisma.participante.findUniqueOrThrow({ where: { id: eu.participanteId } });

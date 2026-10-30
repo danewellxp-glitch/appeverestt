@@ -22,8 +22,23 @@ export class MeController {
   ) {}
 
   @Patch()
-  @ApiZodBody(atualizarPerfilSchema, { nome: 'Maria Souza', aceitouTermos: true })
-  @ApiOkResponse({ description: 'Nome no ranking + aceite: completa o perfil.', schema: { example: EXEMPLO_ME } })
+  @ApiZodBody(atualizarPerfilSchema, {
+    nome: 'Maria Souza Lima',
+    instagram: '@maria.souza',
+    dataNascimento: '1995-04-12',
+    whatsapp: '(11) 98765-4321',
+    bairro: 'Pinheiros',
+    cidade: 'São Paulo',
+    uf: 'SP',
+    aceitouTermos: true,
+    aceitouMarketing: true,
+  })
+  @ApiOkResponse({
+    description:
+      'Completa o perfil: nome completo, dados de cadastro (obrigatórios para a inscrição), aceite dos termos ' +
+      'e o consentimento de marketing (opcional; false revoga).',
+    schema: { example: EXEMPLO_ME },
+  })
   async atualizar(
     @Body(new ZodValidationPipe(atualizarPerfilSchema)) body: AtualizarPerfilInput,
     @UsuarioAtual() usuario: UsuarioSessao,

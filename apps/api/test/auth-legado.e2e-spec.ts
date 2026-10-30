@@ -25,13 +25,13 @@ describe('Auth legado por senha (AUTH_SENHA_LEGADO=true) (e2e)', () => {
     return { agente, r };
   }
 
-  it('cadastro abre sessão com perfil completo', async () => {
+  it('cadastro abre sessão; o perfil fica incompleto até os dados de cadastro (Q7)', async () => {
     const email = helpers.emailUnico('legado');
     const { agente, r } = await cadastrar('Maria Souza', email);
     expect(r.status).toBe(201);
     expect(String(r.headers['set-cookie'])).toContain('everest_sessao=');
     const me = await agente.get('/api/auth/me');
-    expect(me.body.usuario).toMatchObject({ email, perfilCompleto: true, fotoUrl: null });
+    expect(me.body.usuario).toMatchObject({ email, perfilCompleto: false, fotoUrl: null });
   });
 
   it('e-mail duplicado → EMAIL_EM_USO (inclusive com caixa diferente)', async () => {

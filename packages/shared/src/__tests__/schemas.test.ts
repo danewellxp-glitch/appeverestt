@@ -92,11 +92,12 @@ describe('schemas do Frontend v2', () => {
     expect(sessaoSchema.safeParse({ idToken: 'x'.repeat(4097) }).success).toBe(false);
   });
 
-  it('atualizarPerfilSchema exige nome e aceite', () => {
-    expect(atualizarPerfilSchema.safeParse({ nome: ' Maria ', aceitouTermos: true }).data?.nome).toBe('Maria');
-    const sem = atualizarPerfilSchema.safeParse({ nome: 'Maria', aceitouTermos: false });
+  it('atualizarPerfilSchema exige o aceite', () => {
+    const sem = atualizarPerfilSchema.safeParse({ aceitouTermos: false });
     expect(sem.success).toBe(false);
-    expect(sem.error?.issues[0]?.message).toBe('Aceite a política de privacidade para continuar.');
+    expect(sem.error?.issues.find((i) => i.path[0] === 'aceitouTermos')?.message).toBe(
+      'Aceite a política de privacidade para continuar.',
+    );
   });
 
   it('entrarSchema e criarContaSchema: senha de 8 a 72', () => {

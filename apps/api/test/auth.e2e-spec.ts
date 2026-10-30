@@ -1,5 +1,6 @@
 import request from 'supertest';
 import {
+  DADOS_PERFIL,
   type Contexto,
   criarApp,
   emailUnico,
@@ -42,6 +43,13 @@ describe('Auth via Firebase (e2e)', () => {
         papel: 'USUARIO',
         fotoUrl: null,
         perfilCompleto: false,
+        instagram: null,
+        dataNascimento: null,
+        whatsapp: null,
+        bairro: null,
+        cidade: null,
+        uf: null,
+        aceitouMarketing: false,
       },
       participacao: null,
     });
@@ -108,16 +116,77 @@ describe('Auth via Firebase (e2e)', () => {
     expect(vazio.body.codigo).toBe('VALIDACAO');
   });
 
-  it('PATCH /me com aceite → perfilCompleto e nome novo; sem aceite → VALIDACAO', async () => {
+  it('PATCH /me com todos os dados → perfilCompleto, dados normalizados no me', async () => {
     const { agente } = await sessaoFirebase(ctx.http, emailUnico('perfil'));
-    const sem = await agente.patch('/api/me').send({ nome: 'Maria', aceitouTermos: false });
+    expect((await agente.get('/api/auth/me')).body.usuario).toMatchObject({
+      perfilCompleto: false,
+      instagram: null,
+      dataNascimento: null,
+      aceitouMarketing: false,
+    });
+    const ok = await agente.patch('/api/me').send({ ...DADOS_PERFIL, nome: '  Maria Souza Lima ', uf: 'sp' });
+    expect(ok.status).toBe(200);
+    expect(ok.body.usuario).toMatchObject({
+      nome: 'Maria Souza Lima',
+      perfilCompleto: true,
+      instagram: 'pessoa.teste',
+      dataNascimento: '1995-04-12',
+      whatsapp: '11987654321',
+      bairro: 'Pinheiros',
+      cidade: 'São Paulo',
+      uf: 'SP',
+      aceitouMarketing: false,
+    });
+  });
+
+  it('PATCH /me: sem aceite, sem sobrenome, faltando dados ou menor de 18 → VALIDACAO por campo', async () => {
+    const { agente } = await sessaoFirebase(ctx.http, emailUnico('perfil-erro'));
+    const sem = await agente.patch('/api/me').send({ ...DADOS_PERFIL, nome: 'Maria Souza', aceitouTermos: false });
     expect(sem.status).toBe(400);
-    expect(sem.body.codigo).toBe('VALIDACAO');
     expect(sem.body.campos).toHaveProperty('aceitouTermos');
 
-    const ok = await agente.patch('/api/me').send({ nome: '  Maria Souza Lima ', aceitouTermos: true });
-    expect(ok.status).toBe(200);
-    expect(ok.body.usuario).toMatchObject({ nome: 'Maria Souza Lima', perfilCompleto: true });
+    const faltando = await agente.patch('/api/me').send({ nome: 'Maria', aceitouTermos: true });
+    expect(faltando.status).toBe(400);
+    expect(Object.keys(faltando.body.campos).sort()).toEqual(
+      ['bairro', 'cidade', 'dataNascimento', 'instagram', 'nome', 'uf', 'whatsapp'].sort(),
+    );
+
+    const ano = new Date().getUTCFullYear() - 10;
+    const menor = await agente.patch('/api/me').send({ ...DADOS_PERFIL, nome: 'Maria Souza', dataNascimento: `${ano}-01-01` });
+    expect(menor.status).toBe(400);
+    expect(menor.body.campos.dataNascimento).toBe('O desafio é para maiores de 18 anos.');
+    expect((await agente.get('/api/auth/me')).body.usuario.perfilCompleto).toBe(false);
+  });
+
+  it('consentimento de marketing: opcional, gravado com data e revogável', async () => {
+    const { agente, id } = await sessaoFirebase(ctx.http, emailUnico('mkt'));
+    await agente.patch('/api/me').send({ ...DADOS_PERFIL, nome: 'Maria Souza', aceitouMarketing: true });
+    const quando = (await ctx.prisma.usuario.findUniqueOrThrow({ where: { id } })).aceitouMarketingEm;
+    expect(quando).not.toBeNull();
+    expect((await agente.get('/api/auth/me')).body.usuario.aceitouMarketing).toBe(true);
+
+    // Salvar de novo com true não muda a data do consentimento.
+    await agente.patch('/api/me').send({ ...DADOS_PERFIL, nome: 'Maria Souza', aceitouMarketing: true });
+    expect((await ctx.prisma.usuario.findUniqueOrThrow({ where: { id } })).aceitouMarketingEm).toEqual(quando);
+
+    const revoga = await agente.patch('/api/me').send({ ...DADOS_PERFIL, nome: 'Maria Souza', aceitouMarketing: false });
+    expect(revoga.body.usuario.aceitouMarketing).toBe(false);
+    expect((await ctx.prisma.usuario.findUniqueOrThrow({ where: { id } })).aceitouMarketingEm).toBeNull();
+  });
+
+  it('foto do Google: grava no 1º acesso, atualiza quando muda e não apaga num login sem foto', async () => {
+    const uid = uidUnico();
+    const email = emailUnico('google');
+    const entrar = (foto?: string) =>
+      request.agent(ctx.http).post('/api/auth/sessao').send({ idToken: tokenTeste(uid, email, { nome: 'Gabi Google', foto }) });
+
+    const a = await entrar('https://lh3.googleusercontent.com/a/foto-1');
+    expect(a.body.usuario.fotoUrl).toBe('https://lh3.googleusercontent.com/a/foto-1');
+    const b = await entrar('https://lh3.googleusercontent.com/a/foto-2');
+    expect(b.body.usuario.fotoUrl).toBe('https://lh3.googleusercontent.com/a/foto-2');
+    const semFoto = await entrar();
+    expect(semFoto.body.usuario.fotoUrl).toBe('https://lh3.googleusercontent.com/a/foto-2');
+    expect(semFoto.body.usuario.id).toBe(a.body.usuario.id);
   });
 
   it('PATCH /me sem sessão → 401', async () => {

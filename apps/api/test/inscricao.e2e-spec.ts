@@ -1,12 +1,14 @@
 import request from 'supertest';
 import { inscrever } from '../src/modules/inscricoes/inscrever';
 import {
+  DADOS_PERFIL,
   type Contexto,
   criarApp,
   criarDesafio,
   emailUnico,
   limparTudo,
   novoUsuarioLogado,
+  sessaoFirebase,
 } from './helpers';
 
 describe('Desafio e inscrição (e2e)', () => {
@@ -45,6 +47,19 @@ describe('Desafio e inscrição (e2e)', () => {
     await criarDesafio(ctx.prisma);
     const r = await request(ctx.http).post('/api/desafios/desafio-teste/inscricao');
     expect(r.status).toBe(401);
+  });
+
+  it('perfil incompleto (sem aceite ou sem dados de cadastro) → 403 PERFIL_INCOMPLETO, sem gastar vaga', async () => {
+    await criarDesafio(ctx.prisma, { totalVagas: 50 });
+    const { agente } = await sessaoFirebase(ctx.http, emailUnico('incompleto'), { nome: 'Gabi Google' });
+    const r = await agente.post('/api/desafios/desafio-teste/inscricao');
+    expect(r.status).toBe(403);
+    expect(r.body.codigo).toBe('PERFIL_INCOMPLETO');
+    expect(await ctx.prisma.participante.count()).toBe(0);
+
+    // Completa o perfil e consegue a vaga.
+    await agente.patch('/api/me').send({ ...DADOS_PERFIL, nome: 'Gabi Google' });
+    expect((await agente.post('/api/desafios/desafio-teste/inscricao')).status).toBe(201);
   });
 
   it('inscrição cria vaga 1, atualiza o contador (cache invalidado) e é idempotente', async () => {

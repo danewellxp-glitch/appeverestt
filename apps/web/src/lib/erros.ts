@@ -17,6 +17,7 @@ export const MENSAGENS_ERRO: Record<CodigoErro | 'REDE', string> = {
   FOTO_INVALIDA: 'Não conseguimos usar essa foto. Tente outra.',
   FOTO_GRANDE_DEMAIS: 'A foto é grande demais (máximo 5 MB).',
   MUITAS_REQUISICOES: 'Muitas tentativas seguidas. Espere um minuto e tente de novo.',
+  PERFIL_INCOMPLETO: 'Complete seu cadastro para garantir a vaga.',
   ERRO_INTERNO: 'Algo deu errado do nosso lado. Tente novamente.',
   REDE: 'Sem conexão. Verifique sua internet.',
 };

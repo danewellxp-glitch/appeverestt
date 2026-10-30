@@ -41,6 +41,17 @@ model Usuario {
   tokenVersao     Int            @default(0)
   /// null = perfil incompleto (precisa passar pela /bem-vindo)
   aceitouTermosEm DateTime?
+  /// Dados de cadastro (Q7): obrigatórios para se inscrever; null até a /bem-vindo
+  /// usuário do Instagram, sem "@", minúsculo
+  instagram          String?
+  dataNascimento     DateTime? @db.Date
+  /// só dígitos com DDD, sem +55
+  whatsapp           String?
+  bairro             String?
+  cidade             String?
+  uf                 String?   @db.Char(2)
+  /// consentimento separado para marketing (X9); null = não aceitou ou revogou
+  aceitouMarketingEm DateTime?
   /// conta excluída (dados anonimizados; a vaga continua ocupada — X5)
   excluidoEm      DateTime?
   criadoEm        DateTime       @default(now())
