@@ -7,6 +7,12 @@ export const PORTA_WEB = 4174;
 export const URL_API = `http://localhost:${PORTA_API}`;
 export const URL_WEB = `http://localhost:${PORTA_WEB}`;
 
+/** Emulador do Firebase Auth (`pnpm emu`, firebase.json): projeto demo, sem conta real. */
+export const PROJETO_FIREBASE = 'demo-everest';
+export const HOST_EMULADOR = '127.0.0.1:9099';
+export const URL_EMULADOR = `http://${HOST_EMULADOR}`;
+export const CHAVE_API_FIREBASE = 'demo-key';
+
 export const NOME_BANCO = 'everest_e2e';
 export const DATABASE_URL = `postgresql://everest:everest@localhost:5432/${NOME_BANCO}?schema=public`;
 export const REDIS_DB = 3;
@@ -28,10 +34,33 @@ export const ENV_API: Record<string, string> = {
   PERMITIR_EDITAR_DIAS_ANTERIORES: 'false',
   // Muitos cadastros seguidos: sem rate limit.
   THROTTLE_ATIVO: 'false',
-  FIREBASE_PROJECT_ID: 'demo-everest',
-  // O front ainda usa /auth/cadastro e /auth/login até a R5 do Frontend v2.
-  AUTH_SENHA_LEGADO: 'true',
+  FIREBASE_PROJECT_ID: PROJETO_FIREBASE,
+  // A API aceita os idTokens do emulador (o login é todo pelo Firebase desde a R5).
+  FIREBASE_AUTH_EMULATOR_HOST: HOST_EMULADOR,
+  AUTH_SENHA_LEGADO: 'false',
 };
+
+/** Variáveis do build do front E2E (VITE_* do ambiente têm prioridade sobre o .env local). */
+export const ENV_WEB: Record<string, string> = {
+  VITE_API_PROXY: URL_API,
+  VITE_APP_URL: URL_WEB,
+  VITE_FIREBASE_API_KEY: CHAVE_API_FIREBASE,
+  VITE_FIREBASE_AUTH_DOMAIN: 'localhost',
+  VITE_FIREBASE_PROJECT_ID: PROJETO_FIREBASE,
+  VITE_FIREBASE_APP_ID: 'demo-app',
+  VITE_FIREBASE_EMULADOR: URL_EMULADOR,
+};
+
+/** Dados de cadastro válidos (Q7) para completar o perfil pela API nos testes. */
+export const DADOS_PERFIL = {
+  instagram: 'pessoa.e2e',
+  dataNascimento: '1994-03-21',
+  whatsapp: '11987654321',
+  bairro: 'Pinheiros',
+  cidade: 'São Paulo',
+  uf: 'SP',
+  aceitouTermos: true,
+} as const;
 
 /** Desafio ativo criado pelo global-setup: começou há 3 dias (hoje = dia 4). */
 export const DESAFIO = {

@@ -1,8 +1,9 @@
 import { defineConfig } from '@playwright/test';
-import { ENV_API, PORTA_WEB, URL_API, URL_WEB } from './e2e/ambiente';
+import { ENV_API, ENV_WEB, PORTA_WEB, URL_API, URL_EMULADOR, URL_WEB } from './e2e/ambiente';
 
-// E2E da Fase 12: viewport de celular, pilha isolada (API E2E na 3001 + build servido na 4174).
-// Pré-requisitos: `docker compose up -d` e `pnpm --filter api build` (apps/api/dist).
+// E2E (Fase 12 / Frontend v2 R11): viewport de celular, pilha isolada (emulador do Firebase Auth na
+// 9099, API E2E na 3001 e build servido na 4174). Pré-requisitos: `docker compose up -d`, Java (emulador)
+// e `pnpm --filter api build` (apps/api/dist).
 // Rodar: pnpm --filter web test:e2e
 export default defineConfig({
   testDir: './e2e',
@@ -31,6 +32,15 @@ export default defineConfig({
   },
   webServer: [
     {
+      // Emulador do Firebase Auth (login por e-mail e "Google" de mentira). Reaproveita um já aberto.
+      command: 'pnpm -w emu',
+      url: URL_EMULADOR,
+      reuseExistingServer: true,
+      timeout: 120_000,
+      stdout: 'ignore',
+      stderr: 'pipe',
+    },
+    {
       command: 'node e2e/iniciar-api.mjs',
       url: `${URL_API}/api/health`,
       env: ENV_API,
@@ -44,7 +54,7 @@ export default defineConfig({
       // Build separado (não mexe no dist/ do dia a dia) servido pelo preview, com o proxy /api na API E2E.
       command: `pnpm exec vite build --outDir node_modules/.e2e-dist --emptyOutDir && pnpm exec vite preview --outDir node_modules/.e2e-dist --port ${PORTA_WEB} --strictPort`,
       url: URL_WEB,
-      env: { VITE_API_PROXY: URL_API },
+      env: ENV_WEB,
       reuseExistingServer: false,
       timeout: 240_000,
       stdout: 'ignore',

@@ -167,9 +167,9 @@ export default function Desafio() {
             to="/perfil"
             viewTransition
             onClick={() => marcarDirecao('aba')}
-            aria-label="Abrir perfil"
             className="press shrink-0 rounded-full"
           >
+            <span className="sr-only">Abrir perfil</span>
             <Avatar nome={me.usuario.nome} fotoUrl={me.usuario.fotoUrl} />
           </Link>
         </header>

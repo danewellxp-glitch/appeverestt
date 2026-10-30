@@ -1,10 +1,12 @@
 // Roda uma vez, depois que os webServers (API E2E + front) estão no ar:
-// zera o banco E2E e o cache, cria o desafio ativo (começou há 3 dias) e o admin.
+// zera o banco E2E, o cache e as contas do emulador, cria o desafio ativo (começou há 3 dias) e o admin
+// (no banco e no emulador, com e-mail verificado: no primeiro login a API vincula as duas contas).
 import { hojeNoFuso, somarDias } from '@everest/shared';
 import { ADMIN, DATABASE_URL, DESAFIO, ENV_API, NOME_BANCO, REDIS_DB } from './ambiente';
+import { criarContaEmulador, limparEmulador } from './firebase-emulador';
 import { binarioApi, psql, redisCli } from './infra';
 
-export default function globalSetup(): void {
+export default async function globalSetup(): Promise<void> {
   if (!DATABASE_URL.includes(`/${NOME_BANCO}?`))
     throw new Error('global-setup: banco E2E inválido');
 
@@ -57,4 +59,7 @@ export default function globalSetup(): void {
     ],
     env,
   );
+
+  await limparEmulador();
+  await criarContaEmulador({ email: ADMIN.email, senha: ADMIN.senha, nome: ADMIN.nome, verificado: true });
 }

@@ -51,10 +51,10 @@ export function CardSeuDia({ dia }: { dia: DiaDetalhe }) {
           void navegar(caminhoDoDia(dia.numeroDia), { viewTransition: true, state: { vt: 'abrir-dia' } }),
         );
       }}
-      aria-label={`Abrir check-in de hoje, ${feitos} de ${total} requisitos`}
       className="press relative grid w-full gap-3 rounded-[28px] bg-superficie p-[18px] text-left shadow-[inset_0_0_0_1px_var(--borda)]"
     >
-      <span className="flex items-baseline justify-between pr-12">
+      <span className="sr-only">Abrir check-in de hoje, {feitos} de {total} requisitos.</span>
+      <span aria-hidden className="flex items-baseline justify-between pr-12">
         <span className="rotulo">Hoje · dia {dia.numeroDia}</span>
         <span className="text-[17px] font-bold">
           {feitos} de {total}

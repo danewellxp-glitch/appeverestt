@@ -21,9 +21,9 @@ export function CardsAtividade({ feed }: { feed: FeedResposta }) {
             void navegar('/ranking', { viewTransition: true, state: { vt: 'abrir-ranking' } }),
           )
         }
-        aria-label={`Abrir ranking. ${feed.fecharamHoje} ${feed.fecharamHoje === 1 ? 'pessoa fechou' : 'pessoas fecharam'} o dia hoje.`}
         className="press relative grid min-w-0 content-start gap-2 rounded-[28px] bg-pop p-4 text-left text-pop-texto"
       >
+        <span className="sr-only">Abrir ranking.</span>
         <Contador valor={feed.fecharamHoje} className="font-display text-[52px] leading-[0.9] font-extrabold" />
         <span className="text-[13px]">{feed.fecharamHoje === 1 ? 'pessoa fechou o dia hoje' : 'pessoas fecharam o dia hoje'}</span>
         {feed.avataresHoje.length > 0 && (

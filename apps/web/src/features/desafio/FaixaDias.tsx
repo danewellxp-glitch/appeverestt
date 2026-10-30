@@ -106,7 +106,6 @@ export function FaixaDias({ progresso, diasParaInicio }: { progresso: MeuProgres
             <li key={d.numeroDia} className="shrink-0 snap-center" data-atual={d.numeroDia === progresso.diaAtual}>
               <button
                 type="button"
-                aria-label={`Dia ${d.numeroDia}, ${DESCRICAO[estado]}`}
                 aria-disabled={estado === 'futuro' || undefined}
                 onPointerDown={estado === 'futuro' ? undefined : preCarregarDia}
                 onClick={(e) => tocar(d, estado, e.currentTarget)}
@@ -118,7 +117,9 @@ export function FaixaDias({ progresso, diasParaInicio }: { progresso: MeuProgres
                 >
                   {marcaSuperior(estado)}
                 </small>
+                <span className="sr-only">Dia </span>
                 {d.numeroDia}
+                <span className="sr-only">, {DESCRICAO[estado]}</span>
               </button>
             </li>
           );

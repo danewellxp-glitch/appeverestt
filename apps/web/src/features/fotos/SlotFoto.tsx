@@ -71,7 +71,7 @@ export function SlotFoto({
     const conteudo = (
       <>
         <Icone className="size-5 text-vermelho-texto" aria-hidden />
-        <span className="text-[13px] font-semibold">{rotulo}</span>
+        <span className="text-[13px] font-semibold">{rotulo}</span>{' '}
         <small className={`text-[11px] font-medium ${recusada ? 'text-vermelho-texto' : 'text-texto-2'}`}>
           {recusada ? 'Foto recusada · trocar' : editavel ? 'Adicionar foto' : 'Sem foto'}
         </small>
@@ -85,7 +85,7 @@ export function SlotFoto({
             type="button"
             onClick={escolher}
             disabled={ocupado}
-            aria-label={recusada ? `Foto de ${rotulo} recusada. Enviar outra` : `Adicionar foto de ${rotulo}`}
+            aria-label={recusada ? `${rotulo}: foto recusada, trocar` : `${rotulo}: adicionar foto`}
             className={`press grid size-full place-content-center justify-items-center gap-1 rounded-[18px] border-[1.5px] border-dashed bg-superficie-2 text-center ${recusada ? 'border-vermelho-texto' : 'border-borda-campo'}`}
           >
             {conteudo}

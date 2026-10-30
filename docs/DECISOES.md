@@ -107,4 +107,7 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | 2026-10-30 | v2 R10 | Entrada (`/`) refeita nesta fase | A spec marca a Entrada como "refazer" (§3, §9.1), mas nenhuma fase a listava; é a primeira tela e a R11 roda axe/Lighthouse nela |
 | 2026-10-30 | v2 R10 | `WEB_ORIGIN` de dev inclui `http://localhost:4173` (`.env` e `.env.example`) | O preview do build (PWA) faz POST para a API; sem isso, a checagem de Origin devolvia 403 |
 | 2026-10-30 | v2 R10 | Precache do SW passou de 39 para 55 entradas (~1 MB) com os chunks do Firebase e das telas novas | Funciona offline como antes; avaliar na R11 (Lighthouse) se vale excluir os chunks do Firebase do precache |
+| 2026-10-30 | v2 R11 | E2E roda contra o emulador do Firebase Auth (webServer `pnpm -w emu`, `AUTH_SENHA_LEGADO=false`); o global-setup limpa as contas do emulador e cria o admin com e-mail verificado | Testa o login real (e-mail e Google) sem conta do Firebase; o legado de senha não é mais usado em nenhum teste de tela |
+| 2026-10-30 | v2 R11 | Nomes acessíveis passam a começar pelo texto visível (WCAG 2.5.3): "+1 página", "+5 páginas", "Água: adicionar foto"; cards clicáveis usam texto `sr-only` em vez de `aria-label` | O axe acusava "label-content-name-mismatch" (sério); quem usa comando de voz fala o que vê |
+| 2026-10-30 | v2 R11 | Lighthouse substituído por medição com Playwright (FCP/LCP/CLS e bytes por tipo) | O pacote `lighthouse` não está no projeto; instalar fica para quando o usuário aprovar (R12 pode rodar no domínio real) |
 

@@ -199,10 +199,11 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] **DoD** (Playwright no `build + preview`): manifest "Everest Desafio" standalone com 3 ícones, SW ativo, 55 entradas no cache e 0 de `/api`; `startViewTransition` chamado em 5 de 5 navegações por toque (abas, link e voltar); com `delete Document.prototype.startViewTransition` a navegação segue instantânea e sem erro; foco cai no `h1` ("Progresso") depois de trocar de aba
 
 ## R11: Qualidade
-- [ ] Playwright com o emulador do Firebase: smoke criar conta → bem-vindo → vaga → check-in com 3 fotos → dia concluído → ranking; smoke Google → bem-vindo
-- [ ] axe nas 14 telas × 2 temas: zero violações sérias ou críticas
-- [ ] Lighthouse mobile e tamanho dos chunks (seção 11)
-- [ ] **DoD:** números reportados no relatório
+- [x] Playwright com o emulador do Firebase (`e2e/firebase-emulador.ts`, emulador como webServer, admin criado no emulador com e-mail verificado): smoke criar conta → bem-vindo (dados de cadastro) → vaga → check-in com 3 fotos → dia concluído → reload → ranking ("Você") → remover foto desfaz; smoke "Continuar com Google" (popup do emulador) → /bem-vindo com o nome preenchido. **2/2 passam**
+- [x] axe em 15 telas × 2 temas (Entrada, Entrar, Criar conta, Recuperar senha, Regras, Privacidade, 404, Bem-vindo, Desafio, Dia, Progresso, Ranking, Perfil, Admin, Admin participante): **28/28 testes, zero violações sérias ou críticas**. Corrigido: contraste do texto com opacidade no card vermelho (3,81:1 → branco puro) e "label in name" (avatar do perfil, card "Seu dia", card do ranking, chips da faixa de dias, +1/+5 páginas, slots de foto)
+- [~] Lighthouse mobile **não rodado** (o pacote `lighthouse` não está instalado; instalar depende de aprovação). Medido com Playwright no `build + preview` (CPU 4×, rede 1,6 Mbps / 150 ms, sem cache, 3 rodadas): **FCP = LCP 1,7–1,8 s, CLS ≤ 0,017**
+- [x] Chunks: rota `/` baixa **157,3 KB de JS + 9,7 KB de CSS = 167 KB gzip** (< 200 KB) e **nenhum chunk do Firebase**; com fontes (61,8 KB) e imagens, 239 KB no total. Entrada `index` 84,0 KB gzip; Firebase só nas telas de login (`index.esm` 36,2 + 9,9 KB)
+- [x] **DoD:** números acima no relatório
 
 ## R12: Produção
 - [ ] `docs/DEPLOY.md` com a seção 5.5 e as variáveis novas

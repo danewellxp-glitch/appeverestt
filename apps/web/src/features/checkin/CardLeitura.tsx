@@ -53,7 +53,7 @@ export function CardLeitura({
         </div>
         {editavel && (
           <div className="flex gap-1.5">
-            <Botao tamanho="sm" variante="secundario" aria-controls={idSaida} onClick={() => somar(1)} aria-label="Mais uma página">
+            <Botao tamanho="sm" variante="secundario" aria-controls={idSaida} onClick={() => somar(1)} aria-label="+1 página">
               +1
             </Botao>
             <Botao
@@ -61,7 +61,7 @@ export function CardLeitura({
               variante="secundario"
               aria-controls={idSaida}
               onClick={() => somar(5)}
-              aria-label="Mais cinco páginas"
+              aria-label="+5 páginas"
             >
               +5
             </Botao>

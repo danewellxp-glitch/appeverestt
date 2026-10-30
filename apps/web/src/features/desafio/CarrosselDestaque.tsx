@@ -46,11 +46,11 @@ export function CardEscalada({ diasConcluidos, totalDias }: { diasConcluidos: nu
       aria-label="Sua escalada"
       className="relative flex min-h-[196px] w-full shrink-0 snap-start flex-col gap-1.5 overflow-hidden rounded-[30px] bg-vermelho p-5 text-sobre-vermelho"
     >
-      <p className="text-[11px] font-semibold tracking-[0.16em] uppercase opacity-85">Sua escalada</p>
+      <p className="text-[11px] font-semibold tracking-[0.16em] uppercase">Sua escalada</p>
       <p className="font-display text-[48px] leading-[0.88] font-black uppercase">
         <Contador valor={altitude} /> m
       </p>
-      <p className="text-[13px] opacity-90">
+      <p className="text-[13px]">
         de {FORMATO.format(ALTITUDE_CUME)} m até o cume · {diasConcluidos}{' '}
         {diasConcluidos === 1 ? 'dia concluído' : 'dias concluídos'}
       </p>
