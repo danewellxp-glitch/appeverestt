@@ -25,10 +25,10 @@ export function Carregando({ texto = 'Carregando…' }: { texto?: string }) {
 type TipoAlerta = 'erro' | 'aviso' | 'info' | 'sucesso';
 
 const ESTILO_ALERTA: Record<TipoAlerta, string> = {
-  erro: 'border-red-900 bg-red-950/60 text-red-100',
-  aviso: 'border-amber-900 bg-amber-950/50 text-amber-100',
+  erro: 'border-erro-borda bg-erro-fundo text-erro-texto',
+  aviso: 'border-aviso-borda bg-aviso-fundo text-aviso-texto',
   info: 'border-borda bg-superficie-2 text-texto',
-  sucesso: 'border-green-900 bg-green-950/50 text-green-100',
+  sucesso: 'border-ok-borda bg-ok-fundo text-ok-texto',
 };
 
 const ICONE: Record<TipoAlerta, ReactNode> = {

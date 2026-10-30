@@ -63,7 +63,7 @@ const ITENS_LEGENDA: { rotulo: string; amostra: ReactNode }[] = [
   {
     rotulo: 'Concluído',
     amostra: (
-      <span className="flex size-6 items-center justify-center rounded-md bg-vermelho text-white">
+      <span className="flex size-6 items-center justify-center rounded-md bg-vermelho text-sobre-vermelho">
         <Check className="size-3.5" aria-hidden />
       </span>
     ),
@@ -76,7 +76,7 @@ const ITENS_LEGENDA: { rotulo: string; amostra: ReactNode }[] = [
   {
     rotulo: 'Invalidado',
     amostra: (
-      <span className="flex size-6 items-center justify-center rounded-md border border-amber-700 bg-amber-950/60 text-amber-100">
+      <span className="flex size-6 items-center justify-center rounded-md border border-aviso-borda bg-aviso-fundo text-aviso-texto">
         <AlertTriangle className="size-3.5" aria-hidden />
       </span>
     ),

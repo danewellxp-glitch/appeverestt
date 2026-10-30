@@ -1,31 +1,169 @@
 @import 'tailwindcss';
 
-@theme {
-  --color-fundo: #000000;
-  --color-superficie: #0a0a0a;
-  --color-superficie-2: #171717;
-  --color-borda: #262626;
-  /* Contorno de campos e trilho de interruptor desligado: ≥ 3:1 sobre fundo/superfícies (WCAG 1.4.11). */
-  --color-borda-campo: #737373;
-  --color-texto: #ffffff;
-  --color-texto-2: #a3a3a3;
-  /* #dc2626 só como fundo de botão/barras ou em títulos grandes (contraste ~4,3:1 sobre preto). */
-  --color-vermelho: #dc2626;
-  /* Texto vermelho pequeno: #ef4444 (~5,6:1 sobre preto, passa AA). */
-  --color-vermelho-texto: #ef4444;
-  --color-sucesso: #22c55e;
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+/*
+ * Fontes auto-hospedadas (pacotes @fontsource), só o subconjunto latin (cobre o pt-BR).
+ * Declaradas aqui em vez de importar o CSS do pacote para não baixar/precachear cirílico,
+ * vietnamita etc. O peso 900 da Big Shoulders recebe <link rel="preload"> no build (vite.config.ts).
+ */
+@font-face {
+  font-family: 'Onest Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../../node_modules/@fontsource-variable/onest/files/onest-latin-wght-normal.woff2')
+    format('woff2-variations');
+}
+@font-face {
+  font-family: 'Big Shoulders Display';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('../../node_modules/@fontsource/big-shoulders-display/files/big-shoulders-display-latin-700-normal.woff2')
+    format('woff2');
+}
+@font-face {
+  font-family: 'Big Shoulders Display';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 800;
+  src: url('../../node_modules/@fontsource/big-shoulders-display/files/big-shoulders-display-latin-800-normal.woff2')
+    format('woff2');
+}
+@font-face {
+  font-family: 'Big Shoulders Display';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 900;
+  src: url('../../node_modules/@fontsource/big-shoulders-display/files/big-shoulders-display-latin-900-normal.woff2')
+    format('woff2');
+}
+
+/* Variante `escuro:` (o tema vem de <html data-tema>, não da media query). */
+@custom-variant escuro (&:where([data-tema='escuro'], [data-tema='escuro'] *));
+
+@theme inline {
+  --color-fundo: var(--fundo);
+  --color-superficie: var(--superficie);
+  --color-superficie-2: var(--superficie-2);
+  --color-borda: var(--borda);
+  --color-borda-campo: var(--borda-campo);
+  --color-texto: var(--texto);
+  --color-texto-2: var(--texto-2);
+  --color-vermelho: var(--vermelho);
+  --color-vermelho-escuro: var(--vermelho-escuro);
+  --color-vermelho-texto: var(--vermelho-texto);
+  --color-laranja: var(--laranja);
+  --color-sobre-vermelho: var(--sobre-vermelho);
+  --color-pop: var(--pop);
+  --color-pop-texto: var(--pop-texto);
+  --color-pop-texto-2: var(--pop-texto-2);
+  --color-pop-trilho: var(--pop-trilho);
+  --color-sucesso: var(--sucesso);
+  --color-erro-fundo: var(--erro-fundo);
+  --color-erro-borda: var(--erro-borda);
+  --color-erro-texto: var(--erro-texto);
+  --color-aviso-fundo: var(--aviso-fundo);
+  --color-aviso-borda: var(--aviso-borda);
+  --color-aviso-texto: var(--aviso-texto);
+  --color-ok-fundo: var(--ok-fundo);
+  --color-ok-borda: var(--ok-borda);
+  --color-ok-texto: var(--ok-texto);
+  --color-info-fundo: var(--info-fundo);
+  --color-info-borda: var(--info-borda);
+  --color-info-texto: var(--info-texto);
+  --font-sans: 'Onest Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Big Shoulders Display', 'Arial Narrow', Impact, sans-serif;
+  --ease-saida: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-mola: cubic-bezier(0.3, 0.7, 0.4, 1.5);
+}
+
+/*
+ * CLARO (padrão). Contrastes conferidos (WCAG AA):
+ * - texto-2 sobre fundo ≈ 6,6:1; vermelho-texto (#c21d1d) sobre branco ≈ 6,0:1;
+ * - branco sobre vermelho (#dc2626) ≈ 4,8:1 (só fundo de botão/barra e títulos ≥ 24 px);
+ * - borda-campo ≥ 3:1 sobre superficie e superficie-2 (WCAG 1.4.11);
+ * - pares erro/aviso/ok/info: texto sobre o próprio fundo ≥ 7:1.
+ */
+:root {
+  --fundo: #f7f6f6;
+  --superficie: #ffffff;
+  --superficie-2: #efecec;
+  --borda: #e1dcdc;
+  --borda-campo: #857b7b;
+  --texto: #141111;
+  --texto-2: #5e5757;
+  --vermelho: #dc2626;
+  --vermelho-escuro: #b91c1c;
+  --vermelho-texto: #c21d1d;
+  --laranja: #f97316;
+  --sobre-vermelho: #ffffff;
+  --pop: #141111;
+  --pop-texto: #ffffff;
+  --pop-texto-2: #b8b0b0;
+  --pop-trilho: #3a3131;
+  --sucesso: #15803d;
+  --erro-fundo: #fdeaea;
+  --erro-borda: #f1b0b0;
+  --erro-texto: #8a1515;
+  --aviso-fundo: #fdf1dc;
+  --aviso-borda: #e8b768;
+  --aviso-texto: #6e3b00;
+  --ok-fundo: #e6f4ea;
+  --ok-borda: #9fd3ae;
+  --ok-texto: #14532d;
+  --info-fundo: #e6f1fa;
+  --info-borda: #9cc3e3;
+  --info-texto: #0c3d66;
+  color-scheme: light;
+}
+
+/* ESCURO. vermelho-texto (#f05252) sobre preto ≈ 6,0:1; texto-2 sobre preto ≈ 7,9:1. */
+:root[data-tema='escuro'] {
+  --fundo: #000000;
+  --superficie: #110e0e;
+  --superficie-2: #1e1919;
+  --borda: #2d2626;
+  --borda-campo: #7d7474;
+  --texto: #ffffff;
+  --texto-2: #a9a1a1;
+  --vermelho: #dc2626;
+  --vermelho-escuro: #b91c1c;
+  --vermelho-texto: #f05252;
+  --laranja: #fb7a2d;
+  --sobre-vermelho: #ffffff;
+  --pop: #f4f1f1;
+  --pop-texto: #141111;
+  --pop-texto-2: #5e5757;
+  --pop-trilho: #dcd5d5;
+  --sucesso: #22c55e;
+  --erro-fundo: #2b0c0c;
+  --erro-borda: #7f1d1d;
+  --erro-texto: #fee2e2;
+  --aviso-fundo: #2a1a06;
+  --aviso-borda: #78350f;
+  --aviso-texto: #fef3c7;
+  --ok-fundo: #072014;
+  --ok-borda: #14532d;
+  --ok-texto: #dcfce7;
+  --info-fundo: #08202f;
+  --info-borda: #075985;
+  --info-texto: #e0f2fe;
+  color-scheme: dark;
 }
 
 @layer base {
   html {
-    color-scheme: dark;
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
   }
   body {
     @apply bg-fundo text-texto font-sans antialiased;
     min-height: 100dvh;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
   }
   /* Foco sempre visível (teclado). */
   :focus-visible {
@@ -47,8 +185,34 @@
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
+/* Eyebrow: "DIA 17 DE 30 · QUA, 19/11". */
 @utility rotulo {
-  @apply text-xs font-semibold uppercase tracking-widest text-texto-2;
+  @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-texto-2;
+}
+/* Toque com mola em botões e cards. */
+@utility press {
+  transition: transform 220ms var(--ease-mola);
+  &:active:not(:disabled) {
+    transform: scale(0.965);
+  }
+}
+/* Entrada em cascata: style={{ '--i': n }} define a ordem (delay 70 + i×40 ms). */
+@utility surgir {
+  animation: surgir 440ms var(--ease-saida) backwards;
+  animation-delay: calc(70ms + var(--i, 0) * 40ms);
+}
+
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+/* Troca de tema com crossfade (lib/tema.ts usa startViewTransition quando existe). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 300ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -56,6 +220,7 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
 }

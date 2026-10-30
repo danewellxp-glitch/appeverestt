@@ -142,7 +142,7 @@ export default function Regras() {
         <ol className="flex flex-col gap-2">
           {regras.desempate.criterios.map((criterio, i) => (
             <li key={criterio} className="flex items-start gap-3">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-vermelho text-sm font-black text-white">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-vermelho text-sm font-black text-sobre-vermelho">
                 {i + 1}
               </span>
               <span className="pt-0.5 text-texto">{criterio}</span>
@@ -173,7 +173,7 @@ export default function Regras() {
       {!me?.participacao && (
         <Link
           to="/"
-          className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-vermelho px-4 text-base font-black uppercase tracking-wide text-white hover:bg-red-700"
+          className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-vermelho px-4 text-base font-black uppercase tracking-wide text-sobre-vermelho hover:bg-vermelho-escuro"
         >
           Quero participar
           <ArrowRight className="size-5" aria-hidden />

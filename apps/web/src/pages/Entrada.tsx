@@ -12,7 +12,7 @@ import { formatarData } from '../lib/datas';
 import { useDesafioAtual, useMe } from '../lib/queries';
 
 const CLASSE_LINK_PRIMARIO =
-  'inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-vermelho px-4 py-3 text-base font-black uppercase tracking-wide text-white hover:bg-red-700';
+  'inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-vermelho px-4 py-3 text-base font-black uppercase tracking-wide text-sobre-vermelho hover:bg-vermelho-escuro';
 
 function primeiroNome(nome: string): string {
   return nome.trim().split(/\s+/)[0] ?? nome;

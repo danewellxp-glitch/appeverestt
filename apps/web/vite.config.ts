@@ -1,16 +1,44 @@
 /// <reference types="vitest/config" />
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // Destino do proxy /api (dev e preview). Os testes E2E (Playwright) apontam para a API de teste.
 const API_PROXY = process.env.VITE_API_PROXY ?? 'http://localhost:3000';
 
+/**
+ * Preload só do peso 900 da Big Shoulders (títulos grandes, acima da dobra). O nome do arquivo
+ * tem hash, então o <link> é injetado no build a partir do bundle.
+ */
+function preloadFonteTitulo(): Plugin {
+  return {
+    name: 'everest:preload-fonte-titulo',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(_html, ctx) {
+        const arquivo = Object.keys(ctx.bundle ?? {}).find((nome) =>
+          /big-shoulders-display-latin-900-normal-[\w-]+\.woff2$/.test(nome),
+        );
+        if (!arquivo) return [];
+        return [
+          {
+            tag: 'link',
+            attrs: { rel: 'preload', as: 'font', type: 'font/woff2', href: `/${arquivo}`, crossorigin: '' },
+            injectTo: 'head',
+          },
+        ];
+      },
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    preloadFonteTitulo(),
     VitePWA({
       // Nova versão só ativa quando o usuário toca em "Atualizar" (features/pwa/PwaGlobais).
       registerType: 'prompt',

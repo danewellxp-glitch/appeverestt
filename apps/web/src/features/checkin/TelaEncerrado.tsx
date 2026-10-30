@@ -46,7 +46,7 @@ export function TelaEncerrado({ progresso }: { progresso: MeuProgresso }) {
 
       <Link
         to="/ranking"
-        className="inline-flex min-h-11 items-center justify-center rounded-xl bg-vermelho px-4 py-2.5 text-sm font-bold uppercase tracking-wide text-white hover:bg-red-700"
+        className="inline-flex min-h-11 items-center justify-center rounded-xl bg-vermelho px-4 py-2.5 text-sm font-bold uppercase tracking-wide text-sobre-vermelho hover:bg-vermelho-escuro"
       >
         Ver o ranking final
       </Link>

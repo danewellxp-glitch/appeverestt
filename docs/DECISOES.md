@@ -72,4 +72,7 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | 2026-10-30 | v2 R1 | Token do verificador falso: `teste:<uid>:<email>:<verificado>[:<segundos desde o login>[:<nome>]]` | Os 2 campos opcionais testam o `auth_time` > 5 min e o nome vindo do Google |
 | 2026-10-30 | v2 R1 | Aprovar dia não concluído responde **409** com código `VALIDACAO` (`ErroApp` ganhou status opcional) | Contrato da seção 4.2 |
 | 2026-10-30 | v2 R1 | `GridDias` (web atual) mostra `AGUARDANDO_CONFERENCIA` como concluído + ponto âmbar | O token `laranja` só chega na R3; sem isso o grid do admin não compilava |
+| 2026-10-30 | v2 R3 | `@font-face` declarados no `index.css` apontando para os `.woff2` latin dos pacotes @fontsource (em vez de importar o CSS do pacote) | Seção 11 pede subset latin: evita baixar/precachear cirílico, vietnamita etc. (4 arquivos, ~77 KB) |
+| 2026-10-30 | v2 R3 | Tokens de estado `erro-*`, `aviso-*`, `ok-*`, `info-*` + `vermelho-escuro` (hover) com valor por tema | Opção da seção 6.2: um token por papel evita pares `escuro:` espalhados. Só a medalha de bronze usa par `escuro:` (some na R8) |
+| 2026-10-30 | v2 R3 | `bg-white`/`text-white`/`bg-black/80` mantidos sobre fotos, véus e no botão dos interruptores | São iguais nos dois temas por desenho (scrim sobre imagem; botão branco do protótipo) |
 

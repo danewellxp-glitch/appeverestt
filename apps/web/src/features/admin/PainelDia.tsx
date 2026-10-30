@@ -23,9 +23,9 @@ const NOME_REQUISITO: Record<Requisito, string> = {
 
 function SeloSituacao({ dia }: { dia: AdminDiaDetalhe }) {
   const [rotulo, estilo] = dia.invalidado
-    ? ['Invalidado', 'border-amber-700 bg-amber-950 text-amber-100']
+    ? ['Invalidado', 'border-aviso-borda bg-aviso-fundo text-aviso-texto']
     : dia.concluido
-      ? ['Concluído', 'border-green-800 bg-green-950 text-green-100']
+      ? ['Concluído', 'border-ok-borda bg-ok-fundo text-ok-texto']
       : dia.editavel
         ? ['Em andamento', 'border-borda bg-superficie-2 text-texto']
         : ['Não concluído', 'border-borda bg-superficie-2 text-texto-2'];
@@ -238,7 +238,7 @@ function AcoesInvalidacao({
           )}
 
           {etapa === 'confirmar' && (
-            <div className="flex flex-col gap-3 rounded-xl border border-amber-800 bg-amber-950/40 p-3">
+            <div className="flex flex-col gap-3 rounded-xl border border-aviso-borda bg-aviso-fundo p-3">
               <p className="text-sm">
                 Invalidar o <strong>dia {dia.numeroDia}</strong> de{' '}
                 <strong>{nomeParticipante}</strong>? O dia deixa de contar no ranking e na

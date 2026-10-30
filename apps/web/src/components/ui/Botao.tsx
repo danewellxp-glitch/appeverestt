@@ -5,7 +5,7 @@ type Variante = 'primario' | 'secundario' | 'fantasma';
 
 const ESTILOS: Record<Variante, string> = {
   // vermelho #dc2626 só como fundo, com texto branco (~4,8:1)
-  primario: 'bg-vermelho text-white hover:bg-red-700 disabled:bg-superficie-2 disabled:text-texto-2',
+  primario: 'bg-vermelho text-sobre-vermelho hover:bg-vermelho-escuro disabled:bg-superficie-2 disabled:text-texto-2',
   secundario:
     'border border-borda bg-superficie-2 text-texto hover:border-texto-2 disabled:text-texto-2 disabled:hover:border-borda',
   fantasma: 'text-texto hover:bg-superficie-2 disabled:text-texto-2',

@@ -20,7 +20,7 @@ export function ResumoDia({ pendentes, concluido }: { pendentes: Requisito[]; co
   return (
     <div className="flex flex-col gap-3">
       {concluido && (
-        <div role="status" className="rounded-2xl bg-vermelho px-4 py-5 text-center text-white">
+        <div role="status" className="rounded-2xl bg-vermelho px-4 py-5 text-center text-sobre-vermelho">
           <p className="text-2xl font-bold">Dia concluído! 🔥</p>
           <p className="mt-1 text-sm">Os 5 requisitos estão cumpridos. Amanhã tem mais.</p>
         </div>
@@ -39,7 +39,7 @@ export function ResumoDia({ pendentes, concluido }: { pendentes: Requisito[]; co
             return (
               <li
                 key={r}
-                className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${ok ? 'border-green-900 bg-green-950/50 text-green-100' : 'border-borda text-texto-2'}`}
+                className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${ok ? 'border-ok-borda bg-ok-fundo text-ok-texto' : 'border-borda text-texto-2'}`}
               >
                 {ok && <Check className="size-3.5" aria-hidden />}
                 {ROTULO_REQUISITO[r]}

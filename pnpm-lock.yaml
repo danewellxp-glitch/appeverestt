@@ -156,6 +156,12 @@ importers:
       '@everest/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@fontsource-variable/onest':
+        specifier: ^5.3.1
+        version: 5.3.1
+      '@fontsource/big-shoulders-display':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@tanstack/react-query':
         specifier: ^5.105.0
         version: 5.105.0(@types/react@19.3.0)(react@19.3.1)
@@ -1310,6 +1316,12 @@ packages:
   '@firebase/util@1.15.3':
     resolution: {integrity: sha512-c/z/gaIlaaLZEuGbE6sLUuJ61tskg1JghvhcNQzW948ASBinbVBBRnZTC4b4yt4LaEtJQkYlyzqLHcutFwEIvA==}
     engines: {node: '>=20.0.0'}
+
+  '@fontsource-variable/onest@5.3.1':
+    resolution: {integrity: sha512-xaaw6G4HDB2/RczsWLD/2bnib4ykmQlTlBUN3GOEOiyErilZukQWVJG95h9zwAy0i8KY+QzDa+COPfqhI72Acw==}
+
+  '@fontsource/big-shoulders-display@5.3.0':
+    resolution: {integrity: sha512-d4+Tcsq/WfoKeqWfB6wFdeNDsSYYnilJbSNNpf5w53MlWrGHAc9YvkAjC6id6PgFDiGaFKsXfP0RFAQtpt0bog==}
 
   '@google-cloud/cloud-sql-connector@1.12.1':
     resolution: {integrity: sha512-Vilc4J0L+rU+4yjxZpBFn8+bvPoibfcnP4cAAFUsON/GiT0p9qwqLKh7J2q4DaG8WnAgesfn/F2Hb+CkEZn3VA==}
@@ -8856,6 +8868,10 @@ snapshots:
   '@firebase/util@1.15.3':
     dependencies:
       tslib: 2.8.1
+
+  '@fontsource-variable/onest@5.3.1': {}
+
+  '@fontsource/big-shoulders-display@5.3.0': {}
 
   '@google-cloud/cloud-sql-connector@1.12.1':
     dependencies:

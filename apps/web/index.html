@@ -4,6 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
+    <!-- Tema antes de qualquer CSS (sem piscar). Mesma lógica de src/lib/tema.ts. -->
+    <script>
+      (function () {
+        var d = document.documentElement;
+        try {
+          var p = localStorage.getItem('everest-tema');
+          if (p !== 'claro' && p !== 'escuro') p = 'sistema';
+          var e = p === 'escuro' || (p === 'sistema' && matchMedia('(prefers-color-scheme: dark)').matches);
+          d.dataset.tema = e ? 'escuro' : 'claro';
+          d.dataset.temaPref = p;
+        } catch (_) {
+          d.dataset.tema = 'escuro';
+          d.dataset.temaPref = 'sistema';
+        }
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute('content', d.dataset.tema === 'escuro' ? '#000000' : '#f7f6f6');
+      })();
+    </script>
     <meta name="description" content="Desafio 30 Dias Everest — construindo a sua melhor versão." />
     <!-- PWA / iOS -->
     <meta name="mobile-web-app-capable" content="yes" />

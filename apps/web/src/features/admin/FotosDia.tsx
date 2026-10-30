@@ -9,8 +9,8 @@ const NOME_TIPO: Record<TipoFoto, string> = {
 
 const STATUS: Record<StatusFoto, { rotulo: string; estilo: string }> = {
   PENDENTE: { rotulo: 'Pendente', estilo: 'border-borda bg-superficie-2 text-texto-2' },
-  ENVIADA: { rotulo: 'Enviada', estilo: 'border-sky-800 bg-sky-950 text-sky-100' },
-  CONFIRMADA: { rotulo: 'Confirmada', estilo: 'border-green-800 bg-green-950 text-green-100' },
+  ENVIADA: { rotulo: 'Enviada', estilo: 'border-info-borda bg-info-fundo text-info-texto' },
+  CONFIRMADA: { rotulo: 'Confirmada', estilo: 'border-ok-borda bg-ok-fundo text-ok-texto' },
   REJEITADA: {
     rotulo: 'Rejeitada',
     estilo: 'border-vermelho-texto bg-superficie-2 text-vermelho-texto',

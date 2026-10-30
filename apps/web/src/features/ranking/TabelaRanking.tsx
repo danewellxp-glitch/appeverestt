@@ -10,11 +10,11 @@ function estiloPosicao(posicao: number): string {
     'inline-flex min-w-9 items-center justify-center rounded-lg px-2 py-1 text-sm font-bold tabular-nums';
   switch (posicao) {
     case 1:
-      return `${base} border border-amber-500 bg-amber-950 text-amber-200`;
+      return `${base} border border-aviso-borda bg-aviso-fundo text-aviso-texto`;
     case 2:
-      return `${base} border border-zinc-400 bg-zinc-800 text-zinc-100`;
+      return `${base} border border-borda-campo bg-superficie-2 text-texto`;
     case 3:
-      return `${base} border border-orange-700 bg-orange-950 text-orange-200`;
+      return `${base} border border-orange-400 bg-orange-100 text-orange-900 escuro:border-orange-700 escuro:bg-orange-950 escuro:text-orange-200`;
     default:
       return `${base} text-texto-2`;
   }
@@ -28,7 +28,7 @@ export function idLinhaRanking(participanteId: string): string {
 
 export function SeloEmbaixador() {
   return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-amber-700 bg-amber-950/60 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-100">
+    <span className="inline-flex items-center gap-1 rounded-md border border-aviso-borda bg-aviso-fundo px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-aviso-texto">
       <Shield className="size-3" aria-hidden />
       Embaixador
     </span>

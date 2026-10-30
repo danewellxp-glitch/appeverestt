@@ -14,7 +14,7 @@ function IndicadorOffline() {
   const online = useOnline();
   if (online) return null;
   return (
-    <div className={`${CLASSE_TOAST} min-h-11 border-amber-900 bg-amber-950 text-amber-100`}>
+    <div className={`${CLASSE_TOAST} min-h-11 border-aviso-borda bg-aviso-fundo text-aviso-texto`}>
       <WifiOff className="size-4 shrink-0" aria-hidden />
       <span>Você está offline. A edição volta quando a conexão voltar.</span>
     </div>
@@ -60,7 +60,7 @@ function ToastsServiceWorker() {
             // Ativa o SW novo; a página recarrega quando ele assume o controle.
             void updateServiceWorker(true);
           }}
-          className="min-h-11 rounded-xl bg-vermelho px-4 text-xs font-bold uppercase tracking-wide text-white hover:bg-red-700 disabled:bg-superficie disabled:text-texto-2"
+          className="min-h-11 rounded-xl bg-vermelho px-4 text-xs font-bold uppercase tracking-wide text-sobre-vermelho hover:bg-vermelho-escuro disabled:bg-superficie disabled:text-texto-2"
         >
           {atualizando ? 'Atualizando…' : 'Atualizar'}
         </button>

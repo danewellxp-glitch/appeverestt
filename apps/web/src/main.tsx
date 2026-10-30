@@ -8,6 +8,7 @@ import { iniciarCapturaInstalacao } from './features/pwa/useInstallPrompt';
 import { definirAoNaoAutenticado } from './lib/api';
 import { chaves } from './lib/queries';
 import { queryClient } from './lib/queryClient';
+import { iniciarTema } from './lib/tema';
 import './styles/index.css';
 
 // Em qualquer 401 inesperado: limpa o estado de auth; RotaProtegida leva ao /login.
@@ -17,6 +18,7 @@ definirAoNaoAutenticado(() => {
 
 // O `beforeinstallprompt` pode chegar antes do botão "Baixar o app" montar.
 iniciarCapturaInstalacao();
+iniciarTema();
 
 const raiz = document.getElementById('root');
 if (!raiz) throw new Error('Elemento #root não encontrado');

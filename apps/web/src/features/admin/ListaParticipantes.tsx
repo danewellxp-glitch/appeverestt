@@ -93,7 +93,7 @@ export function ListaParticipantes({
                       {totalDias} concluídos
                     </span>
                     {p.diasInvalidados > 0 ? (
-                      <span className="inline-flex items-center gap-1 text-amber-200">
+                      <span className="inline-flex items-center gap-1 text-aviso-texto">
                         <AlertTriangle className="size-3" aria-hidden />
                         {p.diasInvalidados} {p.diasInvalidados === 1 ? 'invalidado' : 'invalidados'}
                       </span>

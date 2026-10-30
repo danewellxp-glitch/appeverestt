@@ -17,7 +17,7 @@ export function CardRequisito({
   const id = useId();
   return (
     <section aria-labelledby={id}>
-      <Card className={`flex flex-col gap-3 ${cumprido ? 'border-green-900' : ''}`}>
+      <Card className={`flex flex-col gap-3 ${cumprido ? 'border-ok-borda' : ''}`}>
         <div className="flex items-center justify-between gap-3">
           <h2 id={id} className="flex items-center gap-2 text-lg font-bold">
             <span className="text-texto-2" aria-hidden>

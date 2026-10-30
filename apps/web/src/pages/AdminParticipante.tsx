@@ -127,7 +127,7 @@ export default function AdminParticipante() {
           Inscrição em {formatarDataHora(participante.dataInscricao)}
         </p>
         {participante.diasInvalidados > 0 && (
-          <p className="text-sm text-amber-200">
+          <p className="text-sm text-aviso-texto">
             {participante.diasInvalidados}{' '}
             {participante.diasInvalidados === 1 ? 'dia invalidado' : 'dias invalidados'}
           </p>

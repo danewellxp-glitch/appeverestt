@@ -139,11 +139,11 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] **DoD:** `pnpm --filter @everest/shared test` (61) e `build` ok; `pnpm typecheck` da raiz ok
 
 ## R3: Tema, tokens e fontes
-- [ ] Fontes instaladas e importadas (seções 2 e 6.2)
-- [ ] `index.css` com os tokens dos dois temas + `@custom-variant escuro` + utilitários `rotulo`, `press` e `surgir`
-- [ ] Script inline do tema no `index.html` + `useTema` + `<meta name="theme-color">` dinâmico
-- [ ] Revisão de todas as classes `red-950`/`amber-*`/`green-*`/`bg-white`/`text-white` para os dois temas
-- [ ] **DoD:** trocar `localStorage['everest-tema']` e recarregar muda tudo, sem flash; build ok
+- [x] Fontes instaladas (`@fontsource-variable/onest`, `@fontsource/big-shoulders-display` 700/800/900), só subset latin; preload do peso 900 injetado no build
+- [x] `index.css` com os tokens dos dois temas + `@custom-variant escuro` + utilitários `rotulo`, `press` e `surgir` (+ tokens de estado `erro-*`, `aviso-*`, `ok-*`, `info-*`, `vermelho-escuro`, `borda-campo`)
+- [x] Script inline do tema no `index.html` (antes do CSS) + `lib/tema.ts` (`useTema`, `definirTema`, `iniciarTema`) + `<meta name="theme-color">` dinâmico
+- [x] Revisão de todas as classes `red-*`/`amber-*`/`green-*`/`sky-*`/`zinc-*`/`bg-white`/`text-white`: viraram tokens; sobraram só branco/preto sobre foto ou véu e o botão branco dos interruptores (iguais nos dois temas)
+- [x] **DoD:** Playwright headless (preview + API): `everest-tema` = vazio/claro/escuro/sistema × SO claro/escuro → `data-tema`, fundo, texto e theme-color corretos nos 8 casos; o script roda antes do `<link rel=stylesheet>` (sem flash); prints da Entrada nos dois temas conferidos; build ok
 
 ## R4: Primitivos de UI e movimento
 - [ ] Componentes das seções 8.1 e 8.2 (`Botao`, `CampoTexto`, `Avatar`, `PilhaAvatares`, `Contador`/`useContador`, `FolhaInferior`, `Toast`, `Segmentado`, `Interruptor`, `Barra`, `BarraAbas`, `BotaoVoltar`, `AppShell` sem header)

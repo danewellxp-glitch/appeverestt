@@ -13,13 +13,13 @@ const DESCRICAO: Record<DiaResumo['situacao'], string> = {
 
 function estilo(d: DiaResumo, selecionado: boolean): string {
   const base = 'relative flex aspect-square min-h-11 flex-col items-center justify-center rounded-xl text-sm font-bold transition-colors';
-  const anel = selecionado ? ' ring-2 ring-white ring-offset-2 ring-offset-fundo' : '';
+  const anel = selecionado ? ' ring-2 ring-texto ring-offset-2 ring-offset-fundo' : '';
   switch (d.situacao) {
     case 'CONCLUIDO':
     case 'AGUARDANDO_CONFERENCIA':
-      return `${base} bg-vermelho text-white${anel}`;
+      return `${base} bg-vermelho text-sobre-vermelho${anel}`;
     case 'INVALIDADO':
-      return `${base} border border-amber-700 bg-amber-950/60 text-amber-100${anel}`;
+      return `${base} border border-aviso-borda bg-aviso-fundo text-aviso-texto${anel}`;
     case 'HOJE':
       return `${base} border-2 border-vermelho-texto bg-superficie-2 text-texto${anel}`;
     case 'NAO_CONCLUIDO':
@@ -52,7 +52,7 @@ export function GridDias({
         const conteudo = (
           <>
             {d.situacao === 'AGUARDANDO_CONFERENCIA' && (
-              <span aria-hidden className="absolute right-1 top-1 size-2 rounded-full bg-amber-400" />
+              <span aria-hidden className="absolute right-1 top-1 size-2 rounded-full bg-laranja" />
             )}
             {d.situacao === 'CONCLUIDO' || d.situacao === 'AGUARDANDO_CONFERENCIA' ? (
               <Check className="size-4" aria-hidden />
