@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 // Procura marcadores que não podem ir para produção.
-// Uso: node scripts/check-placeholders.mjs [--strict]
+// Uso: node scripts/check-placeholders.mjs [--strict] [--contabo]
+// --contabo: deploy em servidor próprio (docker-compose.prod.yml); o vercel.json não é usado e fica de fora.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const raiz = fileURLToPath(new URL('..', import.meta.url));
 const strict = process.argv.includes('--strict');
+const contabo = process.argv.includes('--contabo');
 const MARCADORES = ['[LINK_DO_APP]', '@[SEU_@]', 'TODO_DECISAO', 'API_HOST_AQUI'];
 const EXTENSOES_TEXTO = new Set([
   '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json', '.html', '.css', '.md', '.txt', '.svg', '.webmanifest',
@@ -23,7 +25,7 @@ function alvos() {
   }
   lista.push(join(raiz, 'apps', 'web', 'index.html'));
   lista.push(join(raiz, 'apps', 'web', 'public'));
-  lista.push(join(raiz, 'apps', 'web', 'vercel.json'));
+  if (!contabo) lista.push(join(raiz, 'apps', 'web', 'vercel.json'));
   lista.push(join(raiz, 'apps', 'web', 'pwa-assets.config.ts'));
   return lista.filter((p) => existsSync(p));
 }

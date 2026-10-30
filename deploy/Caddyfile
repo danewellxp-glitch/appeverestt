@@ -1,0 +1,65 @@
+# Caddy do servidor próprio (Contabo). Configurado só por variáveis de ambiente
+# (deploy/env.producao.example):
+#
+#   SITE_APP       app.seudominio.com.br        → HTTPS automático (Let's Encrypt)
+#                  http://app.seudominio.com.br → só HTTP, atrás de um proxy que já existe no servidor
+#   SITE_ARQUIVOS  idem, para o subdomínio das fotos (MinIO)
+#   ACME_EMAIL     e-mail para avisos do Let's Encrypt
+#   FIREBASE_PROJECT_ID  projeto do Firebase (proxy /__/auth)
+
+{
+	email {$ACME_EMAIL}
+	servers {
+		# Atrás do proxy do servidor (modo "proxy existente"): confia no X-Forwarded-* vindo de redes privadas.
+		trusted_proxies static private_ranges
+	}
+}
+
+(seguranca) {
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		Permissions-Policy "camera=(self), microphone=(), geolocation=(), payment=(), usb=()"
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+}
+
+{$SITE_APP} {
+	import seguranca
+	encode zstd gzip
+
+	# API (mesma origem: o cookie de sessão é primário, funciona no Safari/iOS).
+	handle /api/* {
+		reverse_proxy api:3000
+	}
+
+	# Handler de login do Firebase no domínio do app (authDomain = domínio do app).
+	handle /__/* {
+		reverse_proxy https://{$FIREBASE_PROJECT_ID}.firebaseapp.com {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+	# App (SPA + PWA).
+	handle {
+		root * /srv
+		@imutavel path /assets/*
+		header @imutavel Cache-Control "public, max-age=31536000, immutable"
+		@semCache path / /index.html /sw.js /registerSW.js /manifest.webmanifest
+		header @semCache Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+# Fotos de prova: o celular envia e lê direto do MinIO com URLs assinadas (10 min).
+# O Host original é repassado (a assinatura S3 depende dele).
+{$SITE_ARQUIVOS} {
+	import seguranca
+	request_body {
+		max_size 12MB
+	}
+	reverse_proxy minio:9000
+}

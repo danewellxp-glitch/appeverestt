@@ -33,30 +33,34 @@ function ehNaoEncontrado(e: unknown): boolean {
 export class StorageService {
   readonly bucket: string;
   private readonly s3: S3Client;
+  /** Assina as URLs que o navegador usa (endereço público do storage). */
+  private readonly assinador: S3Client;
 
   constructor(config: AppConfig) {
     this.bucket = config.get('S3_BUCKET');
-    this.s3 = criarClienteS3({
-      endpoint: config.get('S3_ENDPOINT'),
+    const base = {
       region: config.get('S3_REGION'),
       bucket: this.bucket,
       accessKeyId: config.get('S3_ACCESS_KEY_ID'),
       secretAccessKey: config.get('S3_SECRET_ACCESS_KEY'),
       forcePathStyle: config.get('S3_FORCE_PATH_STYLE'),
-    });
+    };
+    this.s3 = criarClienteS3({ ...base, endpoint: config.get('S3_ENDPOINT') });
+    const publico = config.get('S3_PUBLIC_ENDPOINT');
+    this.assinador = publico ? criarClienteS3({ ...base, endpoint: publico }) : this.s3;
   }
 
   /** URL de PUT direto do navegador. A assinatura inclui o Content-Type. */
   urlUpload(chave: string, contentType: string, ttl = TTL_URL_ASSINADA_S): Promise<string> {
     return getSignedUrl(
-      this.s3,
+      this.assinador,
       new PutObjectCommand({ Bucket: this.bucket, Key: chave, ContentType: contentType }),
       { expiresIn: ttl, signableHeaders: new Set(['content-type']) },
     );
   }
 
   urlLeitura(chave: string, ttl = TTL_URL_ASSINADA_S): Promise<string> {
-    return getSignedUrl(this.s3, new GetObjectCommand({ Bucket: this.bucket, Key: chave }), {
+    return getSignedUrl(this.assinador, new GetObjectCommand({ Bucket: this.bucket, Key: chave }), {
       expiresIn: ttl,
     });
   }

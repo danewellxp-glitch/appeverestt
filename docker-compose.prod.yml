@@ -1,0 +1,143 @@
+# Produção em servidor próprio (Contabo): tudo num host só.
+#   cp deploy/env.producao.example .env   (preencha; o .env da raiz fica fora do git)
+#   docker compose -f docker-compose.prod.yml up -d --build
+# Guia completo: docs/DEPLOY-CONTABO.md
+#
+# Só o container "web" (Caddy) recebe tráfego de fora. Banco, Redis, MinIO e API ficam
+# na rede interna do compose, sem porta publicada.
+name: everest-prod
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: everest
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: everest
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U everest -d everest']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    # Fila do BullMQ: persistência em disco e nunca descartar chaves.
+    command: ['redis-server', '--appendonly', 'yes', '--maxmemory-policy', 'noeviction']
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  # Fotos de prova (S3 compatível). A MinIO parou de publicar imagens oficiais em 2025;
+  # usamos a build congelada da Bitnami. Para trocar por Cloudflare R2, veja docs/DEPLOY-CONTABO.md.
+  minio:
+    image: bitnamilegacy/minio:2025.5.24
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?defina MINIO_ROOT_USER no .env}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?defina MINIO_ROOT_PASSWORD no .env}
+      MINIO_API_CORS_ALLOW_ORIGIN: https://${DOMINIO_APP:?defina DOMINIO_APP no .env}
+      MINIO_BROWSER: 'off'
+    volumes:
+      - miniodata:/bitnami/minio/data
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:9000/minio/health/live']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  minio-init:
+    image: bitnamilegacy/minio-client:2025.5.21
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 \"$$MINIO_ROOT_USER\" \"$$MINIO_ROOT_PASSWORD\" &&
+      mc mb --ignore-existing local/everest-provas &&
+      mc anonymous set none local/everest-provas &&
+      echo 'bucket everest-provas pronto (privado)'
+      "
+    restart: 'no'
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: everest-api:producao
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      DATABASE_URL: postgresql://everest:${POSTGRES_PASSWORD}@postgres:5432/everest?schema=public&connection_limit=10
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
+      WEB_ORIGIN: https://${DOMINIO_APP}
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: https://${DOMINIO_ARQUIVOS:?defina DOMINIO_ARQUIVOS no .env}
+      S3_REGION: us-east-1
+      S3_BUCKET: everest-provas
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      S3_FORCE_PATH_STYLE: 'true'
+      PERMITIR_EDITAR_DIAS_ANTERIORES: 'false'
+      # 1 = só o Caddy na frente; 2 = Caddy atrás de outro proxy do servidor.
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:?defina FIREBASE_PROJECT_ID no .env}
+      FIREBASE_SERVICE_ACCOUNT_BASE64: ${FIREBASE_SERVICE_ACCOUNT_BASE64:?defina FIREBASE_SERVICE_ACCOUNT_BASE64 no .env}
+      AUTH_SENHA_LEGADO: 'false'
+      PIX_COPIA_E_COLA: ${PIX_COPIA_E_COLA:?defina PIX_COPIA_E_COLA no .env}
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_APP_URL: https://${DOMINIO_APP}
+        VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY:?defina VITE_FIREBASE_API_KEY no .env}
+        # O login usa o próprio domínio do app (proxy /__/auth no Caddy).
+        VITE_FIREBASE_AUTH_DOMAIN: ${DOMINIO_APP}
+        VITE_FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+        VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID:?defina VITE_FIREBASE_APP_ID no .env}
+    image: everest-web:producao
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      SITE_APP: ${SITE_APP:-${DOMINIO_APP}}
+      SITE_ARQUIVOS: ${SITE_ARQUIVOS:-${DOMINIO_ARQUIVOS}}
+      ACME_EMAIL: ${ACME_EMAIL:?defina ACME_EMAIL no .env}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+    ports:
+      # Modo padrão: o Caddy atende 80/443 e emite o certificado.
+      # Atrás de um proxy que já usa 80/443: WEB_PORTA_HTTP=127.0.0.1:8088 e WEB_PORTA_HTTPS=127.0.0.1:8443.
+      - '${WEB_PORTA_HTTP:-80}:80'
+      - '${WEB_PORTA_HTTPS:-443}:443'
+    volumes:
+      - caddydata:/data
+      - caddyconfig:/config
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+  caddydata:
+  caddyconfig:

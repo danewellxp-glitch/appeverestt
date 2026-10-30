@@ -30,6 +30,12 @@ export const envSchema = z
     )
     .pipe(z.array(z.url()).min(1)),
   S3_ENDPOINT: z.url(),
+  /**
+   * Endereço do storage visto pelo navegador, usado só para assinar as URLs de upload e leitura.
+   * Servidor próprio (Contabo): a API fala com o MinIO pela rede interna (S3_ENDPOINT=http://minio:9000)
+   * e o celular usa o subdomínio público (ex.: https://arquivos.dominio). Vazio = o mesmo S3_ENDPOINT.
+   */
+  S3_PUBLIC_ENDPOINT: opcional.pipe(z.url().optional()),
   S3_REGION: z.string().min(1).default('auto'),
   S3_BUCKET: z.string().min(1),
   S3_ACCESS_KEY_ID: z.string().min(1),

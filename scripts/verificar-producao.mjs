@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 // Verificação rápida do deploy de produção (docs/DEPLOY.md, seção 11).
-// Uso: node scripts/verificar-producao.mjs https://desafio.exemplo.com.br
-// Testa o app PELO DOMÍNIO DA VERCEL, ou seja, passando pelo rewrite /api → API.
+// Uso: node scripts/verificar-producao.mjs https://desafio.exemplo.com.br [--contabo]
+// Testa o app PELO DOMÍNIO PÚBLICO, passando pelo proxy /api → API (rewrite da Vercel ou Caddy).
+// --contabo: servidor próprio (docker-compose.prod.yml); pula a checagem do vercel.json.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const raiz = fileURLToPath(new URL('..', import.meta.url));
 const base = (process.argv[2] ?? '').replace(/\/+$/, '');
+const contabo = process.argv.includes('--contabo');
 
 if (!/^https?:\/\/[^/]+$/.test(base)) {
   console.error('Uso: node scripts/verificar-producao.mjs https://<domínio-do-app>');
@@ -44,7 +46,7 @@ async function checar(nome, fn) {
 
 console.log(`\nVerificando ${base}\n`);
 
-await checar('vercel.json', async () => {
+if (!contabo) await checar('vercel.json', async () => {
   const vercel = readFileSync(`${raiz}apps/web/vercel.json`, 'utf8');
   if (vercel.includes('API_HOST_AQUI'))
     falha('apps/web/vercel.json ainda tem API_HOST_AQUI (troque pelo host da API)');
@@ -101,6 +103,20 @@ await checar('PWA', async () => {
   } else {
     aviso(`/sw.js sem no-cache (Cache-Control: ${sw.headers.get('cache-control')})`);
   }
+});
+
+await checar('login (Firebase)', async () => {
+  const h = await buscar('/__/auth/handler');
+  if (h.status === 200) ok('/__/auth/handler → 200 (proxy do Firebase no domínio do app)');
+  else falha(`/__/auth/handler → HTTP ${h.status} (proxy /__/* para <projeto>.firebaseapp.com)`);
+  const r = await fetch(`${base}/api/auth/sessao`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: base },
+    body: JSON.stringify({ idToken: 'invalido' }),
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (r.status === 401 || r.status === 400) ok(`POST /api/auth/sessao existe (token inválido → ${r.status})`);
+  else falha(`POST /api/auth/sessao → HTTP ${r.status} (esperado 401 com token inválido)`);
 });
 
 await checar('desafio ativo', async () => {

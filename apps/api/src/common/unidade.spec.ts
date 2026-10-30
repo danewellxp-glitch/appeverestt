@@ -29,6 +29,15 @@ const PIX_DEMO = gerarPixEstatico({
 });
 
 describe('validarEnv', () => {
+  it('S3_PUBLIC_ENDPOINT é opcional e, quando vem, precisa ser URL', () => {
+    expect(validarEnv(ENV_OK).S3_PUBLIC_ENDPOINT).toBeUndefined();
+    expect(validarEnv({ ...ENV_OK, S3_PUBLIC_ENDPOINT: '' }).S3_PUBLIC_ENDPOINT).toBeUndefined();
+    expect(validarEnv({ ...ENV_OK, S3_PUBLIC_ENDPOINT: 'https://arquivos.exemplo.com' }).S3_PUBLIC_ENDPOINT).toBe(
+      'https://arquivos.exemplo.com',
+    );
+    expect(() => validarEnv({ ...ENV_OK, S3_PUBLIC_ENDPOINT: 'arquivos' })).toThrow(/S3_PUBLIC_ENDPOINT/);
+  });
+
   it('aceita env completo e aplica defaults', () => {
     const env = validarEnv(ENV_OK);
     expect(env.NODE_ENV).toBe('development');

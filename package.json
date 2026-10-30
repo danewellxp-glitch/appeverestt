@@ -14,6 +14,7 @@
     "format": "prettier --write .",
     "check:placeholders": "node scripts/check-placeholders.mjs",
     "check:launch": "node scripts/check-placeholders.mjs --strict",
+    "check:launch:contabo": "node scripts/check-placeholders.mjs --strict --contabo",
     "emu": "firebase emulators:start --only auth --project demo-everest"
   },
   "devDependencies": {
