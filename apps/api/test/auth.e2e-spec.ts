@@ -169,6 +169,11 @@ describe('Auth via Firebase (e2e)', () => {
     await agente.patch('/api/me').send({ ...DADOS_PERFIL, nome: 'Maria Souza', aceitouMarketing: true });
     expect((await ctx.prisma.usuario.findUniqueOrThrow({ where: { id } })).aceitouMarketingEm).toEqual(quando);
 
+    // PATCH sem o campo (ex.: editar só o bairro) mantém o consentimento.
+    const semCampo = await agente.patch('/api/me').send({ ...DADOS_PERFIL, nome: 'Maria Souza', bairro: 'Moema' });
+    expect(semCampo.body.usuario).toMatchObject({ bairro: 'Moema', aceitouMarketing: true });
+    expect((await ctx.prisma.usuario.findUniqueOrThrow({ where: { id } })).aceitouMarketingEm).toEqual(quando);
+
     const revoga = await agente.patch('/api/me').send({ ...DADOS_PERFIL, nome: 'Maria Souza', aceitouMarketing: false });
     expect(revoga.body.usuario.aceitouMarketing).toBe(false);
     expect((await ctx.prisma.usuario.findUniqueOrThrow({ where: { id } })).aceitouMarketingEm).toBeNull();

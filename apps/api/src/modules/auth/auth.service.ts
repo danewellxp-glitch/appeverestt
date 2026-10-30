@@ -133,8 +133,13 @@ export class AuthService {
         cidade: input.cidade,
         uf: input.uf,
         aceitouTermosEm: atual.aceitouTermosEm ?? agora,
-        // Guarda quando consentiu; desmarcar revoga.
-        aceitouMarketingEm: input.aceitouMarketing ? (atual.aceitouMarketingEm ?? agora) : null,
+        // true: guarda a data do 1º consentimento; false: revoga; omitido: mantém.
+        aceitouMarketingEm:
+          input.aceitouMarketing === undefined
+            ? atual.aceitouMarketingEm
+            : input.aceitouMarketing
+              ? (atual.aceitouMarketingEm ?? agora)
+              : null,
       },
     });
   }

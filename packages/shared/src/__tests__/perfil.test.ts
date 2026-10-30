@@ -60,14 +60,14 @@ describe('atualizarPerfilSchema', () => {
     aceitouTermos: true,
   };
 
-  it('normaliza e aplica o padrão do marketing (false)', () => {
+  it('normaliza; marketing omitido continua omitido (não revoga)', () => {
     expect(atualizarPerfilSchema.parse(valido)).toEqual({
       ...valido,
       instagram: 'maria.souza',
       whatsapp: '11987654321',
       uf: 'SP',
-      aceitouMarketing: false,
     });
+    expect(atualizarPerfilSchema.parse({ ...valido, aceitouMarketing: true }).aceitouMarketing).toBe(true);
   });
 
   it('18 anos hoje passa; 1 dia antes de completar não', () => {

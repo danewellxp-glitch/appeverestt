@@ -218,7 +218,7 @@ Coletados na `/bem-vindo` e **obrigatórios para garantir a vaga** (a inscriçã
 | `bairro`, `cidade` | 2–80 | trim | Informe o bairro / a cidade. |
 | `uf` | uma das 27 UFs (`UFS`) | maiúsculo | Escolha o estado. |
 | `aceitouTermos` | `true` | `aceitouTermosEm` (mantém a 1ª data) | Aceite a política de privacidade para continuar. |
-| `aceitouMarketing` | boolean, padrão `false` | `aceitouMarketingEm` (data do 1º consentimento; `false` revoga) | — |
+| `aceitouMarketing` | boolean **opcional** | `aceitouMarketingEm`: `true` grava a data do 1º consentimento; `false` revoga; **omitido mantém** | — |
 
 - Helpers em `@everest/shared` (`regras/perfil.ts`): `UFS`, `IDADE_MINIMA`, `idadeEm`, `idadeHoje`, `ehDataValida`, `normalizarInstagram`, `ehInstagramValido`, `normalizarTelefone`, `ehNomeCompleto`. O front usa os mesmos para validar e formatar.
 - O `PATCH /me` também serve para **editar** os dados depois (tela `/perfil`): o front reenvia tudo com `aceitouTermos: true`.

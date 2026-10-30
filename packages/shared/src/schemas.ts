@@ -166,8 +166,11 @@ export const atualizarPerfilSchema = z.object({
     .toUpperCase()
     .pipe(z.enum(UFS, { error: 'Escolha o estado.' })),
   aceitouTermos: aceiteSchema,
-  /** Opcional e separado do aceite: receber novidades e ofertas (marketing). */
-  aceitouMarketing: z.boolean({ error: 'Valor inválido.' }).default(false),
+  /**
+   * Opcional e separado do aceite: receber novidades e ofertas (marketing).
+   * true = consente; false = revoga; omitido = mantém como está (nunca revoga sem querer).
+   */
+  aceitouMarketing: z.boolean({ error: 'Valor inválido.' }).optional(),
 });
 export type AtualizarPerfilInput = z.infer<typeof atualizarPerfilSchema>;
 
