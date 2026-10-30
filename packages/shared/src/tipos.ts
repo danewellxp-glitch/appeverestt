@@ -20,6 +20,10 @@ export interface UsuarioMe {
   nome: string;
   email: string;
   papel: Papel;
+  /** Foto do Google (pode ser null). */
+  fotoUrl: string | null;
+  /** Aceitou os termos e a conta não foi excluída. Falso = precisa passar pela /bem-vindo. */
+  perfilCompleto: boolean;
 }
 
 export interface MeResposta {
@@ -50,7 +54,14 @@ export interface InscricaoResposta {
   criada: boolean;
 }
 
-export type SituacaoDia = 'CONCLUIDO' | 'INVALIDADO' | 'HOJE' | 'NAO_CONCLUIDO' | 'FUTURO';
+/** `AGUARDANDO_CONFERENCIA` só aparece nas respostas de admin (dia concluído ainda não aprovado). */
+export type SituacaoDia =
+  | 'CONCLUIDO'
+  | 'INVALIDADO'
+  | 'HOJE'
+  | 'NAO_CONCLUIDO'
+  | 'FUTURO'
+  | 'AGUARDANDO_CONFERENCIA';
 
 export interface DiaResumo {
   numeroDia: number;
@@ -115,11 +126,14 @@ export interface AdminParticipante {
   dataInscricao: string;
   diasConcluidos: number;
   diasInvalidados: number;
+  /** Dias concluídos (não invalidados) que o embaixador ainda não aprovou. */
+  paraRevisar: number;
 }
 
 export interface AdminParticipantesResposta {
   desafio: { slug: string; nome: string; inscricoesAbertas: boolean; totalVagas: number };
   participantes: AdminParticipante[];
+  totalParaRevisar: number;
 }
 
 export interface AdminParticipanteDetalhe {
@@ -144,4 +158,27 @@ export interface AdminDiaDetalhe extends DiaDetalhe {
   participanteId: string;
   nomeParticipante: string;
   invalidadoEm: string | null;
+  conferidoEm: string | null;
+}
+
+export interface ConferenciaResposta {
+  diaId: string;
+  conferidoEm: string | null;
+}
+
+export interface PessoaFeed {
+  nomeExibicao: string;
+  iniciais: string;
+  fotoUrl: string | null;
+}
+
+export interface FeedResposta {
+  diaAtual: number | null;
+  /** Dias concluídos e não invalidados no diaAtual. */
+  fecharamHoje: number;
+  /** Até 4, mais recentes primeiro. */
+  avataresHoje: PessoaFeed[];
+  maiorSequenciaAtiva: { nomeExibicao: string; dias: number } | null;
+  vagasOcupadas: number;
+  totalVagas: number;
 }

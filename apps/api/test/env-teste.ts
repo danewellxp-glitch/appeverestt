@@ -15,6 +15,8 @@ export const ENV_TESTE: Record<string, string> = {
   S3_FORCE_PATH_STYLE: 'true',
   PERMITIR_EDITAR_DIAS_ANTERIORES: 'false',
   THROTTLE_ATIVO: 'false',
+  FIREBASE_PROJECT_ID: 'demo-everest-test',
+  AUTH_SENHA_LEGADO: 'false',
 };
 
 export function aplicarEnvTeste(): void {

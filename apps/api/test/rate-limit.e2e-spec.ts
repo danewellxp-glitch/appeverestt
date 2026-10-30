@@ -17,15 +17,15 @@ describe('Rate limit (e2e)', () => {
     await ctx.app.close();
   });
 
-  it('login: 6ª tentativa no mesmo minuto → MUITAS_REQUISICOES', async () => {
+  it('sessão: 11ª tentativa no mesmo minuto → MUITAS_REQUISICOES', async () => {
     const status: number[] = [];
     let ultimoCorpo: unknown = null;
-    for (let i = 0; i < 6; i++) {
-      const r = await request(ctx.http).post('/api/auth/login').send({ email: 'x@y.com', senha: 'errada' });
+    for (let i = 0; i < 11; i++) {
+      const r = await request(ctx.http).post('/api/auth/sessao').send({ idToken: 'token-invalido' });
       status.push(r.status);
       ultimoCorpo = r.body;
     }
-    expect(status).toEqual([401, 401, 401, 401, 401, 429]);
+    expect(status).toEqual([...new Array<number>(10).fill(401), 429]);
     expect(ultimoCorpo).toMatchObject({ codigo: 'MUITAS_REQUISICOES' });
   });
 

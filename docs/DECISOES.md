@@ -64,3 +64,12 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | 2026-10-27 | 13 | `TRUST_PROXY_HOPS` configurável (padrão 1; produção Vercel→Railway = 2) | Rate limit por IP precisa do IP real do usuário |
 | 2026-10-27 | 13 | `check:launch` também acusa `API_HOST_AQUI` em `apps/web/vercel.json` | Rewrite do Vercel precisa do host real da API antes do deploy |
 | 2026-10-27 | 12 | UI usa `apps/web/public/logo.webp` (512 px, ~7 KB, gerada por `node scripts/otimizar-logo.cjs`); `logo.png` (1024 px) fica só como fonte dos ícones do PWA. Logo final continua pendente (`TODO_DECISAO(LOGO)`): ao trocar a `logo.png`, rodar o script e o `pwa-assets-generator` | A marca d'água é o LCP de todas as rotas; webp com `width`/`height` e `preload` reduz bytes e evita layout shift |
+| 2026-10-30 | v2 R1 | **firebase-admin 14.5** (API) e **firebase-tools 15.34** (raiz, dev) | Versões estáveis atuais; `firebase-admin/app` e `/auth` funcionam em CJS. O SDK só carrega no primeiro uso do verificador |
+| 2026-10-30 | v2 R1 | Migration `firebase_auth_conferencia` gerada com `prisma migrate diff` + aplicada com `migrate deploy` | `prisma migrate dev` recusa ambiente não interativo (agente). SQL revisado: só as colunas novas e o índice único de `firebaseUid` |
+| 2026-10-30 | v2 R1 | R2 (shared) feita junto com a R1 | A API precisava dos tipos e schemas novos para compilar |
+| 2026-10-30 | v2 R1 | `AUTH_SENHA_LEGADO=true` no `.env` de dev e no ambiente do Playwright até a R5 | O front atual ainda usa `/auth/cadastro` e `/auth/login`; os e2e da API rodam com o legado desligado (padrão) |
+| 2026-10-30 | v2 R1 | `DELETE /me` apaga as fotos mas **não recalcula** os dias | Mantém o histórico de dias concluídos do "Participante removido" no ranking e a vaga ocupada (X5) |
+| 2026-10-30 | v2 R1 | Token do verificador falso: `teste:<uid>:<email>:<verificado>[:<segundos desde o login>[:<nome>]]` | Os 2 campos opcionais testam o `auth_time` > 5 min e o nome vindo do Google |
+| 2026-10-30 | v2 R1 | Aprovar dia não concluído responde **409** com código `VALIDACAO` (`ErroApp` ganhou status opcional) | Contrato da seção 4.2 |
+| 2026-10-30 | v2 R1 | `GridDias` (web atual) mostra `AGUARDANDO_CONFERENCIA` como concluído + ponto âmbar | O token `laranja` só chega na R3; sem isso o grid do admin não compilava |
+

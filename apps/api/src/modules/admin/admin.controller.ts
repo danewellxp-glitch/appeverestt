@@ -2,12 +2,15 @@ import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import {
   atualizarDesafioSchema,
+  conferenciaSchema,
   invalidacaoSchema,
   numeroDiaSchema,
   type AdminDiaDetalhe,
   type AdminParticipanteDetalhe,
   type AdminParticipantesResposta,
   type AtualizarDesafioInput,
+  type ConferenciaInput,
+  type ConferenciaResposta,
   type InvalidacaoInput,
   type InvalidacaoResposta,
 } from '@everest/shared';
@@ -42,8 +45,10 @@ export class AdminController {
             dataInscricao: '2026-10-20T12:00:00.000Z',
             diasConcluidos: 3,
             diasInvalidados: 0,
+            paraRevisar: 2,
           },
         ],
+        totalParaRevisar: 2,
       } satisfies AdminParticipantesResposta,
     },
   })
@@ -78,6 +83,22 @@ export class AdminController {
     @UsuarioAtual() usuario: UsuarioSessao,
   ): Promise<InvalidacaoResposta> {
     return this.admin.invalidacao(diaId, usuario.id, body);
+  }
+
+  @Patch('dias/:diaId/conferencia')
+  @ApiZodBody(conferenciaSchema, { conferido: true })
+  @ApiOkResponse({
+    description:
+      'Aprova um dia concluído (sai da fila "para revisar"). Qualquer edição posterior do dia o devolve à fila. ' +
+      '409 VALIDACAO se o dia não estiver concluído ou estiver invalidado.',
+    schema: { example: { diaId: 'ckx', conferidoEm: '2026-11-04T21:10:00.000Z' } satisfies ConferenciaResposta },
+  })
+  conferencia(
+    @Param('diaId') diaId: string,
+    @Body(new ZodValidationPipe(conferenciaSchema)) body: ConferenciaInput,
+    @UsuarioAtual() usuario: UsuarioSessao,
+  ): Promise<ConferenciaResposta> {
+    return this.admin.conferencia(diaId, usuario.id, body);
   }
 
   @Patch('desafios/:slug')

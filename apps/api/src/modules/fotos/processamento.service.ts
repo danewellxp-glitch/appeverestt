@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import sharp from 'sharp';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CacheService, chaveRanking } from '../../redis/redis.module';
+import { CacheService, chavesDoRanking } from '../../redis/redis.module';
 import { StorageService } from '../../storage/storage.service';
 import { recalcularDia } from '../dias/dia.service';
 import { IDADE_MAX_PENDENTE_MS, LADO_MAX_FOTO, LADO_THUMB, chavesProcessadas } from './fotos.constantes';
@@ -26,14 +26,14 @@ export class ProcessamentoFotoService {
       where: { id: diaId },
       select: { participante: { select: { desafioId: true } } },
     });
-    if (dia) await this.cache.apagar(chaveRanking(dia.participante.desafioId));
+    if (dia) await this.cache.apagar(...chavesDoRanking(dia.participante.desafioId));
   }
 
   private async rejeitar(fotoId: string, diaId: string, chave: string, motivo: string): Promise<ResultadoProcessamento> {
     this.logger.warn(`Foto ${fotoId} rejeitada: ${motivo}`);
     await this.prisma.$transaction(async (tx) => {
-      await tx.fotoProva.updateMany({ where: { id: fotoId, status: 'ENVIADA' }, data: { status: 'REJEITADA' } });
-      await recalcularDia(tx, diaId);
+      const r = await tx.fotoProva.updateMany({ where: { id: fotoId, status: 'ENVIADA' }, data: { status: 'REJEITADA' } });
+      await recalcularDia(tx, diaId, { zerarConferencia: r.count > 0 });
     });
     await this.storage.apagar(chave);
     await this.invalidarRankingDoDia(diaId);

@@ -1,16 +1,39 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Prisma } from '@prisma/client';
+import { Prisma, type Usuario } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { randomBytes } from 'node:crypto';
-import type { CadastroInput, LoginInput, MeResposta, ParticipacaoResumo } from '@everest/shared';
+import {
+  LIMITES,
+  type AtualizarPerfilInput,
+  type CadastroInput,
+  type LoginInput,
+  type MeResposta,
+  type ParticipacaoResumo,
+} from '@everest/shared';
 import { ErroApp } from '../../common/erros';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService, chaveVagas, chavesDoRanking } from '../../redis/redis.module';
+import { StorageService } from '../../storage/storage.service';
 import type { PayloadSessao } from './sessao';
+import { type DadosToken, VERIFICADOR_FIREBASE, type VerificadorFirebase } from './verificador-firebase';
 
+/** Login no Firebase precisa ser recente para virar sessão (token roubado não serve depois). */
+export const IDADE_MAX_LOGIN_S = 300;
+export const NOME_REMOVIDO = 'Participante removido';
+
+function ehP2002(e: unknown): boolean {
+  return e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002';
+}
+
+function nomeInicial(d: DadosToken, email: string): string {
+  const base = d.nome ?? email.split('@')[0] ?? 'Participante';
+  return base.trim().slice(0, LIMITES.nomeMax) || 'Participante';
+}
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   // Hash de uma senha aleatória: o login gasta o mesmo tempo quando o e-mail não existe.
   private readonly hashFicticio = argon2.hash(randomBytes(32).toString('hex'), {
     type: argon2.argon2id,
@@ -19,7 +42,127 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
+    private readonly cache: CacheService,
+    private readonly storage: StorageService,
+    @Inject(VERIFICADOR_FIREBASE) private readonly verificador: VerificadorFirebase,
   ) {}
+
+  // ---------------------------------------------------------------- Firebase
+
+  /** POST /auth/sessao: troca o idToken do Firebase pelo cookie de sessão da API. */
+  async sessao(idToken: string, agora = new Date()): Promise<{ token: string; usuarioId: string }> {
+    const dados = await this.verificador.verificar(idToken);
+    if (!dados.email) {
+      throw new ErroApp('NAO_AUTENTICADO', 'Sua conta precisa ter um e-mail. Entre de outro jeito.');
+    }
+    const agoraS = Math.floor(agora.getTime() / 1000);
+    if (agoraS - dados.authTime > IDADE_MAX_LOGIN_S) {
+      throw new ErroApp('NAO_AUTENTICADO', 'Sua sessão expirou. Entre de novo.');
+    }
+
+    let usuario: Usuario;
+    try {
+      usuario = await this.encontrarOuCriar(dados, dados.email);
+    } catch (e) {
+      // Duas trocas simultâneas do mesmo login novo: a segunda encontra o que a primeira criou.
+      if (!ehP2002(e)) throw e;
+      usuario = await this.encontrarOuCriar(dados, dados.email);
+    }
+
+    if (usuario.excluidoEm) throw new ErroApp('NAO_AUTENTICADO', 'Conta excluída.');
+    if (dados.foto && dados.foto !== usuario.fotoUrl) {
+      usuario = await this.prisma.usuario.update({ where: { id: usuario.id }, data: { fotoUrl: dados.foto } });
+    }
+    return { token: await this.emitirToken(usuario), usuarioId: usuario.id };
+  }
+
+  private async encontrarOuCriar(d: DadosToken, email: string): Promise<Usuario> {
+    const porUid = await this.prisma.usuario.findUnique({ where: { firebaseUid: d.uid } });
+    if (porUid) return porUid;
+
+    const porEmail = await this.prisma.usuario.findUnique({ where: { email } });
+    if (porEmail) {
+      // Só vincula com e-mail verificado: senão qualquer um tomaria a conta de outra pessoa.
+      if (!d.emailVerificado || (porEmail.firebaseUid && porEmail.firebaseUid !== d.uid)) {
+        throw new ErroApp('EMAIL_EM_USO', 'Este e-mail já tem conta. Entre com ele.');
+      }
+      return this.prisma.usuario.update({ where: { id: porEmail.id }, data: { firebaseUid: d.uid } });
+    }
+
+    return this.prisma.usuario.create({
+      data: {
+        nome: nomeInicial(d, email),
+        email,
+        firebaseUid: d.uid,
+        fotoUrl: d.foto,
+        senhaHash: null,
+        aceitouTermosEm: null,
+      },
+    });
+  }
+
+  /** PATCH /me: nome no ranking + aceite dos termos (completa o perfil). */
+  async atualizarPerfil(usuarioId: string, input: AtualizarPerfilInput): Promise<void> {
+    const atual = await this.prisma.usuario.findUnique({ where: { id: usuarioId } });
+    if (!atual || atual.excluidoEm) throw new ErroApp('NAO_AUTENTICADO');
+    await this.prisma.usuario.update({
+      where: { id: usuarioId },
+      data: { nome: input.nome, aceitouTermosEm: atual.aceitouTermosEm ?? new Date() },
+    });
+  }
+
+  /**
+   * DELETE /me (X5): apaga as fotos e anonimiza o usuário. Participante e dias ficam,
+   * para a vaga continuar ocupada (a numeração das vagas é `count + 1`).
+   */
+  async excluirConta(usuarioId: string): Promise<void> {
+    const resultado = await this.prisma.$transaction(async (tx) => {
+      const usuario = await tx.usuario.findUnique({
+        where: { id: usuarioId },
+        include: { participacoes: { select: { desafioId: true } } },
+      });
+      if (!usuario || usuario.excluidoEm) throw new ErroApp('NAO_AUTENTICADO');
+      const fotos = await tx.fotoProva.findMany({
+        where: { dia: { participante: { usuarioId } } },
+        select: { id: true, storageKey: true, thumbKey: true },
+      });
+      await tx.fotoProva.deleteMany({ where: { id: { in: fotos.map((f) => f.id) } } });
+      await tx.usuario.update({
+        where: { id: usuarioId },
+        data: {
+          nome: NOME_REMOVIDO,
+          email: `removido+${usuarioId}@everest.invalid`,
+          firebaseUid: null,
+          fotoUrl: null,
+          senhaHash: null,
+          excluidoEm: new Date(),
+          tokenVersao: { increment: 1 },
+        },
+      });
+      return {
+        uid: usuario.firebaseUid,
+        chaves: fotos.flatMap((f) => [f.storageKey, f.thumbKey]),
+        desafios: [...new Set(usuario.participacoes.map((p) => p.desafioId))],
+      };
+    });
+
+    // Depois do commit: storage e Firebase não são transacionais. Falhas aqui não revivem a conta.
+    try {
+      await this.storage.apagarVarios(resultado.chaves);
+    } catch (e) {
+      this.logger.error(`Falha ao apagar fotos da conta excluída ${usuarioId}: ${String(e)}`);
+    }
+    if (resultado.uid) {
+      try {
+        await this.verificador.excluir(resultado.uid);
+      } catch {
+        // já registrado pelo verificador; a conta local já está anonimizada
+      }
+    }
+    await this.cache.apagar(...resultado.desafios.flatMap((id) => [chaveVagas(id), ...chavesDoRanking(id)]));
+  }
+
+  // ---------------------------------------------------------------- legado (AUTH_SENHA_LEGADO)
 
   async cadastrar(input: CadastroInput): Promise<{ token: string; usuarioId: string }> {
     const senhaHash = await argon2.hash(input.senha, { type: argon2.argon2id });
@@ -34,9 +177,7 @@ export class AuthService {
       });
       return { token: await this.emitirToken(usuario), usuarioId: usuario.id };
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
-        throw new ErroApp('EMAIL_EM_USO');
-      }
+      if (ehP2002(e)) throw new ErroApp('EMAIL_EM_USO');
       throw e;
     }
   }
@@ -45,9 +186,13 @@ export class AuthService {
     const usuario = await this.prisma.usuario.findUnique({ where: { email: input.email } });
     const hash = usuario?.senhaHash ?? (await this.hashFicticio);
     const ok = await argon2.verify(hash, input.senha).catch(() => false);
-    if (!usuario || !ok) throw new ErroApp('CREDENCIAIS_INVALIDAS');
+    if (!usuario || !usuario.senhaHash || usuario.excluidoEm || !ok) {
+      throw new ErroApp('CREDENCIAIS_INVALIDAS');
+    }
     return { token: await this.emitirToken(usuario), usuarioId: usuario.id };
   }
+
+  // ---------------------------------------------------------------- comum
 
   emitirToken(u: { id: string; papel: PayloadSessao['papel']; tokenVersao: number }): Promise<string> {
     const payload: PayloadSessao = { sub: u.id, papel: u.papel, v: u.tokenVersao };
@@ -55,11 +200,19 @@ export class AuthService {
   }
 
   async me(usuarioId: string): Promise<MeResposta> {
-    const usuario = await this.prisma.usuario.findUnique({
+    const u = await this.prisma.usuario.findUnique({
       where: { id: usuarioId },
-      select: { id: true, nome: true, email: true, papel: true },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        papel: true,
+        fotoUrl: true,
+        aceitouTermosEm: true,
+        excluidoEm: true,
+      },
     });
-    if (!usuario) throw new ErroApp('NAO_AUTENTICADO');
+    if (!u || u.excluidoEm) throw new ErroApp('NAO_AUTENTICADO');
     const p = await this.prisma.participante.findFirst({
       where: { usuarioId, desafio: { ativo: true } },
       include: { desafio: { select: { slug: true } } },
@@ -74,6 +227,16 @@ export class AuthService {
           dataInscricao: p.dataInscricao.toISOString(),
         }
       : null;
-    return { usuario, participacao };
+    return {
+      usuario: {
+        id: u.id,
+        nome: u.nome,
+        email: u.email,
+        papel: u.papel,
+        fotoUrl: u.fotoUrl,
+        perfilCompleto: u.aceitouTermosEm !== null,
+      },
+      participacao,
+    };
   }
 }

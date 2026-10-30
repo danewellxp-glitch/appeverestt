@@ -97,7 +97,7 @@ export class FotosService implements OnModuleInit {
           status: 'PENDENTE',
         },
       });
-      await recalcularDia(tx, dia.id);
+      await recalcularDia(tx, dia.id, { zerarConferencia: anterior !== null });
       return anterior ? [anterior.storageKey, anterior.thumbKey] : [];
     });
     if (antigas.length > 0) {
@@ -153,7 +153,7 @@ export class FotosService implements OnModuleInit {
         where: { id: foto.id, status: 'PENDENTE' },
         data: { status: 'ENVIADA', tamanhoBytes: cab.tamanhoBytes },
       });
-      await recalcularDia(tx, foto.diaId);
+      await recalcularDia(tx, foto.diaId, { zerarConferencia: r.count > 0 });
       return r.count;
     });
     if (atualizadas > 0) {
@@ -185,7 +185,7 @@ export class FotosService implements OnModuleInit {
         : null;
       if (!dia || !foto) throw new ErroApp('NAO_ENCONTRADO', 'Não há foto desse tipo neste dia.');
       await tx.fotoProva.delete({ where: { id: foto.id } });
-      await recalcularDia(tx, dia.id);
+      await recalcularDia(tx, dia.id, { zerarConferencia: true });
       return [foto.storageKey, foto.thumbKey];
     });
     await this.storage.apagarVarios(chaves);

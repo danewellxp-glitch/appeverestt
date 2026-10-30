@@ -46,6 +46,10 @@ export class CacheService {
 
 export const chaveVagas = (desafioId: string): string => `vagas:${desafioId}`;
 export const chaveRanking = (desafioId: string): string => `ranking:${desafioId}`;
+export const chaveFeed = (desafioId: string): string => `feed:${desafioId}`;
+
+/** Chaves que mudam junto com o ranking (check-in, fotos, invalidação, exclusão de conta). */
+export const chavesDoRanking = (desafioId: string): string[] => [chaveRanking(desafioId), chaveFeed(desafioId)];
 
 @Injectable()
 class RedisCloser implements OnModuleDestroy {

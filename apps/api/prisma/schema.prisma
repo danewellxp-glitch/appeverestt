@@ -30,11 +30,19 @@ model Usuario {
   nome            String
   /// sempre salvo em lowercase + trim
   email           String         @unique
-  senhaHash       String
+  /// uid do Firebase Auth (vinculado no POST /auth/sessao)
+  firebaseUid     String?        @unique
+  /// foto do Google (pode ser null)
+  fotoUrl         String?
+  /// só usuários legados/seed (login por senha atrás de AUTH_SENHA_LEGADO)
+  senhaHash       String?
   papel           Papel          @default(USUARIO)
   /// incrementar invalida todas as sessões
   tokenVersao     Int            @default(0)
-  aceitouTermosEm DateTime
+  /// null = perfil incompleto (precisa passar pela /bem-vindo)
+  aceitouTermosEm DateTime?
+  /// conta excluída (dados anonimizados; a vaga continua ocupada — X5)
+  excluidoEm      DateTime?
   criadoEm        DateTime       @default(now())
   participacoes   Participante[]
 }
@@ -88,6 +96,9 @@ model DiaDesafio {
   motivoInvalidacao String?
   invalidadoPorId   String?
   invalidadoEm      DateTime?
+  /// aprovado pelo embaixador (X8); zera em qualquer edição do dia
+  conferidoEm       DateTime?
+  conferidoPorId    String?
   atualizadoEm      DateTime     @updatedAt
   participante      Participante @relation(fields: [participanteId], references: [id])
   fotos             FotoProva[]

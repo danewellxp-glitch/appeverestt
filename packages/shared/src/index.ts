@@ -6,3 +6,4 @@ export * from './regras/diaAtual';
 export * from './regras/sequencias';
 export * from './regras/evolucao';
 export * from './regras/ranking';
+export * from './regras/altitude';

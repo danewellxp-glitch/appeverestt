@@ -19,7 +19,7 @@ import {
 import { ErroApp } from '../../common/erros';
 import { AppConfig } from '../../config/app-config.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CacheService, chaveRanking } from '../../redis/redis.module';
+import { CacheService, chavesDoRanking } from '../../redis/redis.module';
 import { StorageService } from '../../storage/storage.service';
 import { type InfoTempo, dataIso, infoTempo } from '../desafios/desafio.service';
 
@@ -34,8 +34,13 @@ export function diaReferenciaSequencia(info: InfoTempo, totalDias: number): numb
   return 0;
 }
 
+export interface OpcoesRecalculo {
+  /** Edição do dia (check-in, foto confirmada/removida/rejeitada, invalidação): volta para a fila de conferência (X8). */
+  zerarConferencia?: boolean;
+}
+
 /** Recalcula `concluido` a partir do banco (fotos ENVIADA/CONFIRMADA). Única fonte do campo. */
-export async function recalcularDia(db: Cliente, diaId: string): Promise<boolean> {
+export async function recalcularDia(db: Cliente, diaId: string, opcoes: OpcoesRecalculo = {}): Promise<boolean> {
   const dia = await db.diaDesafio.findUnique({
     where: { id: diaId },
     include: { fotos: { where: { status: { in: [...STATUS_VALIDOS] } }, select: { tipo: true } } },
@@ -49,8 +54,12 @@ export async function recalcularDia(db: Cliente, diaId: string): Promise<boolean
     invalidado: dia.invalidado,
     fotosValidas: dia.fotos.map((f) => f.tipo),
   });
-  if (concluido !== dia.concluido) {
-    await db.diaDesafio.update({ where: { id: diaId }, data: { concluido } });
+  const zerar = opcoes.zerarConferencia === true && dia.conferidoEm !== null;
+  if (concluido !== dia.concluido || zerar) {
+    await db.diaDesafio.update({
+      where: { id: diaId },
+      data: { concluido, ...(zerar ? { conferidoEm: null, conferidoPorId: null } : {}) },
+    });
   }
   return concluido;
 }
@@ -92,7 +101,7 @@ export class DiaService {
   }
 
   async invalidarRanking(desafioId: string): Promise<void> {
-    await this.cache.apagar(chaveRanking(desafioId));
+    await this.cache.apagar(...chavesDoRanking(desafioId));
   }
 
   async salvarCheckin(
@@ -120,16 +129,22 @@ export class DiaService {
           storyPostado: dados.storyPostado,
         },
       });
-      await recalcularDia(tx, dia.id);
+      await recalcularDia(tx, dia.id, { zerarConferencia: true });
     });
     await this.invalidarRanking(desafio.id);
   }
 
-  async progresso(desafio: Desafio, participanteId: string, agora = new Date()): Promise<MeuProgresso> {
+  /** `paraAdmin`: dias concluídos ainda não aprovados aparecem como AGUARDANDO_CONFERENCIA. */
+  async progresso(
+    desafio: Desafio,
+    participanteId: string,
+    agora = new Date(),
+    opcoes: { paraAdmin?: boolean } = {},
+  ): Promise<MeuProgresso> {
     const t = infoTempo(desafio, agora);
     const registros = await this.prisma.diaDesafio.findMany({
       where: { participanteId },
-      select: { numeroDia: true, concluido: true, invalidado: true },
+      select: { numeroDia: true, concluido: true, invalidado: true, conferidoEm: true },
     });
     const porDia = new Map(registros.map((r) => [r.numeroDia, r]));
     const dataInicio = dataIso(desafio.dataInicio);
@@ -140,7 +155,9 @@ export class DiaService {
       const concluido = r?.concluido === true && !r.invalidado;
       let situacao: SituacaoDia;
       if (r?.invalidado) situacao = 'INVALIDADO';
-      else if (concluido) situacao = 'CONCLUIDO';
+      else if (concluido) {
+        situacao = opcoes.paraAdmin && r.conferidoEm === null ? 'AGUARDANDO_CONFERENCIA' : 'CONCLUIDO';
+      }
       else if (t.status === 'NAO_INICIADO') situacao = 'FUTURO';
       else if (t.status === 'ENCERRADO') situacao = 'NAO_CONCLUIDO';
       else if (n === t.diaAtual) situacao = 'HOJE';
@@ -176,7 +193,7 @@ export class DiaService {
     desafio: Desafio,
     participanteId: string,
     numeroDia: number,
-  ): Promise<DiaDetalhe & { diaId: string | null; invalidadoEm: string | null }> {
+  ): Promise<DiaDetalhe & { diaId: string | null; invalidadoEm: string | null; conferidoEm: string | null }> {
     this.validarNumeroDia(desafio, numeroDia);
     const dia = await this.prisma.diaDesafio.findUnique({
       where: { participanteId_numeroDia: { participanteId, numeroDia } },
@@ -206,6 +223,7 @@ export class DiaService {
       invalidado: dia?.invalidado ?? false,
       motivoInvalidacao: dia?.motivoInvalidacao ?? null,
       invalidadoEm: dia?.invalidadoEm?.toISOString() ?? null,
+      conferidoEm: dia?.conferidoEm?.toISOString() ?? null,
       editavel: this.ehEditavel(desafio, numeroDia),
       requisitosPendentes: requisitosPendentes({ ...base, fotosValidas }),
       fotos,

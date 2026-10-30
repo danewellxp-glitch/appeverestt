@@ -5,7 +5,7 @@ import type { InscricaoResposta } from '@everest/shared';
 import { UsuarioAtual } from '../../common/decorators/usuario-atual.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CacheService, chaveRanking, chaveVagas } from '../../redis/redis.module';
+import { CacheService, chavesDoRanking, chaveVagas } from '../../redis/redis.module';
 import type { UsuarioSessao } from '../auth/sessao';
 import { inscrever } from './inscrever';
 
@@ -41,7 +41,7 @@ export class InscricoesController {
   ): Promise<InscricaoResposta> {
     const r = await inscrever(this.prisma, { slug, usuarioId: usuario.id });
     if (r.criada) {
-      await this.cache.apagar(chaveVagas(r.desafioId), chaveRanking(r.desafioId));
+      await this.cache.apagar(chaveVagas(r.desafioId), ...chavesDoRanking(r.desafioId));
     }
     res.status(r.criada ? HttpStatus.CREATED : HttpStatus.OK);
     const p = r.participante;

@@ -41,9 +41,9 @@ export const MENSAGENS_PADRAO: Record<CodigoErro, string> = {
 
 /** Erro de domínio sempre no formato { codigo, mensagem }. */
 export class ErroApp extends HttpException {
-  constructor(codigo: CodigoErro, mensagem?: string, campos?: Record<string, string>) {
+  constructor(codigo: CodigoErro, mensagem?: string, campos?: Record<string, string>, status?: HttpStatus) {
     const corpo: ErroApi = { codigo, mensagem: mensagem ?? MENSAGENS_PADRAO[codigo] };
     if (campos) corpo.campos = campos;
-    super(corpo, STATUS_PADRAO[codigo]);
+    super(corpo, status ?? STATUS_PADRAO[codigo]);
   }
 }

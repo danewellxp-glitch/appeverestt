@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nomeExibicao, ordenarRanking, type ItemRanking } from '../regras/ranking';
+import { iniciais, nomeExibicao, ordenarRanking, type ItemRanking } from '../regras/ranking';
 
 function item(id: string, parcial: Partial<ItemRanking>): ItemRanking {
   return {
@@ -77,5 +77,13 @@ describe('nomeExibicao', () => {
   });
   it('vazio → vazio', () => {
     expect(nomeExibicao('   ')).toBe('');
+  });
+});
+
+describe('iniciais', () => {
+  it('primeira e última palavra, em maiúscula', () => {
+    expect(iniciais('Maria Souza Lima')).toBe('ML');
+    expect(iniciais('  ana ')).toBe('A');
+    expect(iniciais('')).toBe('');
   });
 });

@@ -28,6 +28,9 @@ export const ENV_API: Record<string, string> = {
   PERMITIR_EDITAR_DIAS_ANTERIORES: 'false',
   // Muitos cadastros seguidos: sem rate limit.
   THROTTLE_ATIVO: 'false',
+  FIREBASE_PROJECT_ID: 'demo-everest',
+  // O front ainda usa /auth/cadastro e /auth/login até a R5 do Frontend v2.
+  AUTH_SENHA_LEGADO: 'true',
 };
 
 /** Desafio ativo criado pelo global-setup: começou há 3 dias (hoje = dia 4). */

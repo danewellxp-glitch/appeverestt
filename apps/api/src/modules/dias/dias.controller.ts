@@ -72,7 +72,7 @@ export class DiasController {
     @UsuarioAtual() usuario: UsuarioSessao,
   ): Promise<DiaDetalhe> {
     const { desafio, participante } = await this.desafios.exigirParticipante(slug, usuario.id);
-    const { diaId: _diaId, invalidadoEm: _invalidadoEm, ...dia } = await this.dias.detalhe(
+    const { diaId: _diaId, invalidadoEm: _invalidadoEm, conferidoEm: _conferidoEm, ...dia } = await this.dias.detalhe(
       desafio,
       participante.id,
       n,
@@ -91,7 +91,7 @@ export class DiasController {
   ): Promise<DiaDetalhe> {
     const { desafio, participante } = await this.desafios.exigirParticipante(slug, usuario.id);
     await this.dias.salvarCheckin(desafio, participante, n, body);
-    const { diaId: _diaId, invalidadoEm: _invalidadoEm, ...dia } = await this.dias.detalhe(
+    const { diaId: _diaId, invalidadoEm: _invalidadoEm, conferidoEm: _conferidoEm, ...dia } = await this.dias.detalhe(
       desafio,
       participante.id,
       n,

@@ -13,12 +13,14 @@
     "test": "pnpm -r --if-present test",
     "format": "prettier --write .",
     "check:placeholders": "node scripts/check-placeholders.mjs",
-    "check:launch": "node scripts/check-placeholders.mjs --strict"
+    "check:launch": "node scripts/check-placeholders.mjs --strict",
+    "emu": "firebase emulators:start --only auth --project demo-everest"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
+    "firebase-tools": "^15.34.2",
     "globals": "^17.13.0",
     "prettier": "^3.9.10",
     "typescript": "^5.9.3",

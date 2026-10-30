@@ -5,7 +5,9 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AppConfig } from '../../config/app-config.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { MeController } from './me.controller';
 import { SESSAO_DIAS } from './sessao';
+import { VERIFICADOR_FIREBASE, VerificadorFirebaseAdmin } from './verificador-firebase';
 
 @Global()
 @Module({
@@ -18,8 +20,17 @@ import { SESSAO_DIAS } from './sessao';
       }),
     }),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard, AdminGuard],
+  controllers: [AuthController, MeController],
+  providers: [
+    AuthService,
+    JwtAuthGuard,
+    AdminGuard,
+    {
+      provide: VERIFICADOR_FIREBASE,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) => new VerificadorFirebaseAdmin(config),
+    },
+  ],
   exports: [JwtModule, JwtAuthGuard, AdminGuard, AuthService],
 })
 export class AuthModule {}

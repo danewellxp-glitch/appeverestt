@@ -7,6 +7,7 @@ import {
   criarDesafio,
   fotosFalsas,
   limparTudo,
+  novoUsuarioLogado,
   participanteComDias,
   tornarAdmin,
 } from './helpers';
@@ -75,10 +76,7 @@ describe('Ranking (e2e)', () => {
 
   it('não inscrito → NAO_INSCRITO', async () => {
     await criarDesafio(ctx.prisma);
-    const agente = request.agent(ctx.http);
-    await agente
-      .post('/api/auth/cadastro')
-      .send({ nome: 'Fora', email: 'fora@teste.dev', senha: 'senha-segura-123', aceitouTermos: true });
+    const { agente } = await novoUsuarioLogado(ctx.http, 'Fora', 'fora@teste.dev');
     expect((await agente.get('/api/desafios/desafio-teste/ranking')).body.codigo).toBe('NAO_INSCRITO');
   });
 });

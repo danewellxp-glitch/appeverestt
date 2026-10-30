@@ -4,7 +4,14 @@ const booleano = z
   .enum(['true', 'false', '1', '0'])
   .transform((v) => v === 'true' || v === '1');
 
-export const envSchema = z.object({
+const opcional = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v) => (v ? v : undefined));
+
+export const envSchema = z
+  .object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(0).max(65535).default(3000),
   DATABASE_URL: z.string().min(1),
@@ -35,7 +42,31 @@ export const envSchema = z.object({
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(10).default(1),
   /** Desliga o rate limit (usado só nos testes automatizados). */
   THROTTLE_ATIVO: booleano.default(true),
-});
+  /** Projeto do Firebase Auth (dev/testes: `demo-everest`). */
+  FIREBASE_PROJECT_ID: z.string().trim().min(1, 'Informe FIREBASE_PROJECT_ID'),
+  /** JSON da conta de serviço em base64. Obrigatório em produção; nunca no repositório. */
+  FIREBASE_SERVICE_ACCOUNT_BASE64: opcional,
+  /** host:porta do emulador de Auth (só dev). Com ele, o admin SDK aceita tokens do emulador. */
+  FIREBASE_AUTH_EMULATOR_HOST: opcional,
+  /** Mantém POST /auth/cadastro e /auth/login (senha local). Padrão: desligado (responde 404). */
+  AUTH_SENHA_LEGADO: booleano.default(false),
+})
+  .superRefine((env, ctx) => {
+    if (env.NODE_ENV === 'production' && !env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['FIREBASE_SERVICE_ACCOUNT_BASE64'],
+        message: 'Obrigatório em produção (JSON da conta de serviço em base64)',
+      });
+    }
+    if (env.NODE_ENV === 'production' && env.FIREBASE_AUTH_EMULATOR_HOST) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['FIREBASE_AUTH_EMULATOR_HOST'],
+        message: 'Não use o emulador em produção',
+      });
+    }
+  });
 
 export type Env = z.infer<typeof envSchema>;
 

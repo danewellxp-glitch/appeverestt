@@ -12,18 +12,24 @@ const emailSchema = z
   .toLowerCase()
   .pipe(z.email({ error: 'E-mail inválido.' }).max(254, { error: 'E-mail longo demais.' }));
 
+const nomeSchema = z
+  .string({ error: 'Informe o nome.' })
+  .trim()
+  .min(LIMITES.nomeMin, { error: `O nome precisa ter pelo menos ${LIMITES.nomeMin} letras.` })
+  .max(LIMITES.nomeMax, { error: `O nome pode ter no máximo ${LIMITES.nomeMax} caracteres.` });
+
+const senhaNovaSchema = z
+  .string({ error: 'Informe a senha.' })
+  .min(LIMITES.senhaMin, { error: `Use pelo menos ${LIMITES.senhaMin} caracteres.` })
+  .max(LIMITES.senhaMax, { error: `A senha pode ter no máximo ${LIMITES.senhaMax} caracteres.` });
+
+const aceiteSchema = z.literal(true, { error: 'Aceite a política de privacidade para continuar.' });
+
 export const cadastroSchema = z.object({
-  nome: z
-    .string({ error: 'Informe o nome.' })
-    .trim()
-    .min(LIMITES.nomeMin, { error: `O nome precisa ter pelo menos ${LIMITES.nomeMin} letras.` })
-    .max(LIMITES.nomeMax, { error: `O nome pode ter no máximo ${LIMITES.nomeMax} caracteres.` }),
+  nome: nomeSchema,
   email: emailSchema,
-  senha: z
-    .string({ error: 'Informe a senha.' })
-    .min(LIMITES.senhaMin, { error: `A senha precisa ter pelo menos ${LIMITES.senhaMin} caracteres.` })
-    .max(LIMITES.senhaMax, { error: `A senha pode ter no máximo ${LIMITES.senhaMax} caracteres.` }),
-  aceitouTermos: z.literal(true, { error: 'Você precisa aceitar a política de privacidade.' }),
+  senha: senhaNovaSchema,
+  aceitouTermos: aceiteSchema,
 });
 export type CadastroInput = z.infer<typeof cadastroSchema>;
 
@@ -92,3 +98,41 @@ export const numeroDiaSchema = z.coerce
   .int({ error: 'Dia inválido.' })
   .min(1, { error: 'Dia inválido.' })
   .max(365, { error: 'Dia inválido.' });
+
+/** Troca do idToken do Firebase pela sessão (cookie) da API. */
+export const sessaoSchema = z.object({
+  idToken: z
+    .string({ error: 'Token ausente.' })
+    .min(1, { error: 'Token ausente.' })
+    .max(4096, { error: 'Token inválido.' }),
+});
+export type SessaoInput = z.infer<typeof sessaoSchema>;
+
+/** PATCH /me: nome no ranking + aceite (completa o perfil). */
+export const atualizarPerfilSchema = z.object({
+  nome: nomeSchema,
+  aceitouTermos: aceiteSchema,
+});
+export type AtualizarPerfilInput = z.infer<typeof atualizarPerfilSchema>;
+
+/** Validação local antes de chamar o Firebase (tela /entrar). */
+export const entrarSchema = z.object({
+  email: emailSchema,
+  senha: senhaNovaSchema,
+});
+export type EntrarInput = z.infer<typeof entrarSchema>;
+
+/** Validação local antes de chamar o Firebase (tela /criar-conta). */
+export const criarContaSchema = z.object({
+  nome: nomeSchema,
+  email: emailSchema,
+  senha: senhaNovaSchema,
+  aceitouTermos: aceiteSchema,
+});
+export type CriarContaInput = z.infer<typeof criarContaSchema>;
+
+/** Fila de conferência do embaixador (X8). */
+export const conferenciaSchema = z.object({
+  conferido: z.boolean({ error: 'Informe se o dia foi conferido.' }),
+});
+export type ConferenciaInput = z.infer<typeof conferenciaSchema>;

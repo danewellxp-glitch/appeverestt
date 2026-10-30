@@ -14,6 +14,7 @@ const ENV_OK = {
   S3_BUCKET: 'b',
   S3_ACCESS_KEY_ID: 'k',
   S3_SECRET_ACCESS_KEY: 's',
+  FIREBASE_PROJECT_ID: 'demo-everest',
 };
 
 describe('validarEnv', () => {
@@ -24,12 +25,25 @@ describe('validarEnv', () => {
     expect(env.WEB_ORIGIN).toEqual(['http://localhost:5173', 'https://app.exemplo.com']);
     expect(env.PERMITIR_EDITAR_DIAS_ANTERIORES).toBe(false);
     expect(env.S3_FORCE_PATH_STYLE).toBe(false);
+    expect(env.AUTH_SENHA_LEGADO).toBe(false);
+    expect(env.FIREBASE_AUTH_EMULATOR_HOST).toBeUndefined();
+  });
+
+  it('produção exige a conta de serviço do Firebase e recusa o emulador', () => {
+    const prod = { ...ENV_OK, NODE_ENV: 'production' };
+    expect(() => validarEnv(prod)).toThrow(/FIREBASE_SERVICE_ACCOUNT_BASE64/);
+    expect(() =>
+      validarEnv({ ...prod, FIREBASE_SERVICE_ACCOUNT_BASE64: 'e30=', FIREBASE_AUTH_EMULATOR_HOST: '127.0.0.1:9099' }),
+    ).toThrow(/FIREBASE_AUTH_EMULATOR_HOST/);
+    expect(validarEnv({ ...prod, FIREBASE_SERVICE_ACCOUNT_BASE64: 'e30=' }).NODE_ENV).toBe('production');
   });
 
   it('falha rápido se faltar variável ou o segredo for curto', () => {
     const { DATABASE_URL: _semBanco, ...semBanco } = ENV_OK;
     expect(() => validarEnv(semBanco)).toThrow(/DATABASE_URL/);
     expect(() => validarEnv({ ...ENV_OK, JWT_SECRET: 'curto' })).toThrow(/JWT_SECRET/);
+    const { FIREBASE_PROJECT_ID: _semProjeto, ...semProjeto } = ENV_OK;
+    expect(() => validarEnv(semProjeto)).toThrow(/FIREBASE_PROJECT_ID/);
   });
 });
 

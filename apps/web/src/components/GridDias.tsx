@@ -8,6 +8,7 @@ const DESCRICAO: Record<DiaResumo['situacao'], string> = {
   HOJE: 'hoje',
   NAO_CONCLUIDO: 'não concluído',
   FUTURO: 'ainda não chegou',
+  AGUARDANDO_CONFERENCIA: 'concluído, aguardando conferência',
 };
 
 function estilo(d: DiaResumo, selecionado: boolean): string {
@@ -15,6 +16,7 @@ function estilo(d: DiaResumo, selecionado: boolean): string {
   const anel = selecionado ? ' ring-2 ring-white ring-offset-2 ring-offset-fundo' : '';
   switch (d.situacao) {
     case 'CONCLUIDO':
+    case 'AGUARDANDO_CONFERENCIA':
       return `${base} bg-vermelho text-white${anel}`;
     case 'INVALIDADO':
       return `${base} border border-amber-700 bg-amber-950/60 text-amber-100${anel}`;
@@ -49,12 +51,15 @@ export function GridDias({
         const ativo = selecionado === d.numeroDia;
         const conteudo = (
           <>
-            {d.situacao === 'CONCLUIDO' ? (
+            {d.situacao === 'AGUARDANDO_CONFERENCIA' && (
+              <span aria-hidden className="absolute right-1 top-1 size-2 rounded-full bg-amber-400" />
+            )}
+            {d.situacao === 'CONCLUIDO' || d.situacao === 'AGUARDANDO_CONFERENCIA' ? (
               <Check className="size-4" aria-hidden />
             ) : d.situacao === 'INVALIDADO' ? (
               <AlertTriangle className="size-4" aria-hidden />
             ) : null}
-            <span className={d.situacao === 'CONCLUIDO' || d.situacao === 'INVALIDADO' ? 'text-[10px] leading-none' : ''}>
+            <span className={d.situacao === 'FUTURO' || d.situacao === 'HOJE' || d.situacao === 'NAO_CONCLUIDO' ? '' : 'text-[10px] leading-none'}>
               {d.numeroDia}
             </span>
           </>

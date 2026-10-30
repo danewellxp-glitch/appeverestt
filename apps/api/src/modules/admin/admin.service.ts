@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import type { Desafio } from '@prisma/client';
 import type {
   AdminDiaDetalhe,
@@ -6,6 +6,8 @@ import type {
   AdminParticipanteDetalhe,
   AdminParticipantesResposta,
   AtualizarDesafioInput,
+  ConferenciaInput,
+  ConferenciaResposta,
   InvalidacaoInput,
   InvalidacaoResposta,
 } from '@everest/shared';
@@ -31,7 +33,7 @@ export class AdminService {
       orderBy: [{ vagaNumero: { sort: 'asc', nulls: 'first' } }, { dataInscricao: 'asc' }],
     });
     const ids = participantes.map((p) => p.id);
-    const [concluidos, invalidados] = await Promise.all([
+    const [concluidos, invalidados, aRevisar] = await Promise.all([
       this.prisma.diaDesafio.groupBy({
         by: ['participanteId'],
         where: { participanteId: { in: ids }, concluido: true, invalidado: false },
@@ -42,11 +44,17 @@ export class AdminService {
         where: { participanteId: { in: ids }, invalidado: true },
         _count: { _all: true },
       }),
+      this.prisma.diaDesafio.groupBy({
+        by: ['participanteId'],
+        where: { participanteId: { in: ids }, concluido: true, invalidado: false, conferidoEm: null },
+        _count: { _all: true },
+      }),
     ]);
     const mapa = (linhas: { participanteId: string; _count: { _all: number } }[]) =>
       new Map(linhas.map((l) => [l.participanteId, l._count._all]));
     const nConcluidos = mapa(concluidos);
     const nInvalidados = mapa(invalidados);
+    const nParaRevisar = mapa(aRevisar);
     return participantes.map((p) => ({
       participanteId: p.id,
       usuarioId: p.usuario.id,
@@ -57,14 +65,17 @@ export class AdminService {
       dataInscricao: p.dataInscricao.toISOString(),
       diasConcluidos: nConcluidos.get(p.id) ?? 0,
       diasInvalidados: nInvalidados.get(p.id) ?? 0,
+      paraRevisar: nParaRevisar.get(p.id) ?? 0,
     }));
   }
 
   async participantes(slug: string): Promise<AdminParticipantesResposta> {
     const d = await this.desafios.porSlug(slug);
+    const participantes = await this.listar(d);
     return {
       desafio: { slug: d.slug, nome: d.nome, inscricoesAbertas: d.inscricoesAbertas, totalVagas: d.totalVagas },
-      participantes: await this.listar(d),
+      participantes,
+      totalParaRevisar: participantes.reduce((soma, p) => soma + p.paraRevisar, 0),
     };
   }
 
@@ -72,7 +83,10 @@ export class AdminService {
     const d = await this.desafios.porSlug(slug);
     const [p] = await this.listar(d, participanteId);
     if (!p) throw new ErroApp('NAO_ENCONTRADO', 'Participante não encontrado.');
-    return { participante: p, progresso: await this.dias.progresso(d, p.participanteId) };
+    return {
+      participante: p,
+      progresso: await this.dias.progresso(d, p.participanteId, new Date(), { paraAdmin: true }),
+    };
   }
 
   async dia(slug: string, participanteId: string, numeroDia: number): Promise<AdminDiaDetalhe> {
@@ -102,8 +116,18 @@ export class AdminService {
               motivoInvalidacao: input.motivo ?? null,
               invalidadoPorId: adminId,
               invalidadoEm: new Date(),
+              conferidoEm: null,
+              conferidoPorId: null,
             }
-          : { invalidado: false, motivoInvalidacao: null, invalidadoPorId: null, invalidadoEm: null },
+          : // Revalidar não marca como conferido: o dia volta para a fila (X8).
+            {
+              invalidado: false,
+              motivoInvalidacao: null,
+              invalidadoPorId: null,
+              invalidadoEm: null,
+              conferidoEm: null,
+              conferidoPorId: null,
+            },
       });
       await recalcularDia(tx, diaId);
       return tx.diaDesafio.findUniqueOrThrow({ where: { id: diaId } });
@@ -115,6 +139,36 @@ export class AdminService {
       concluido: dia.concluido,
       motivoInvalidacao: dia.motivoInvalidacao,
     };
+  }
+
+  /** Fila de conferência (X8): aprova (ou desfaz a aprovação de) um dia concluído e não invalidado. */
+  async conferencia(diaId: string, adminId: string, input: ConferenciaInput): Promise<ConferenciaResposta> {
+    const existe = await this.prisma.diaDesafio.findUnique({ where: { id: diaId }, select: { id: true } });
+    if (!existe) throw new ErroApp('NAO_ENCONTRADO', 'Dia não encontrado.');
+
+    if (!input.conferido) {
+      await this.prisma.diaDesafio.update({
+        where: { id: diaId },
+        data: { conferidoEm: null, conferidoPorId: null },
+      });
+      return { diaId, conferidoEm: null };
+    }
+
+    const conferidoEm = new Date();
+    // Condição no próprio UPDATE: se o dia mudou entre a leitura e a escrita, não aprova.
+    const r = await this.prisma.diaDesafio.updateMany({
+      where: { id: diaId, concluido: true, invalidado: false },
+      data: { conferidoEm, conferidoPorId: adminId },
+    });
+    if (r.count === 0) {
+      throw new ErroApp(
+        'VALIDACAO',
+        'Só dá para aprovar um dia concluído e não invalidado.',
+        undefined,
+        HttpStatus.CONFLICT,
+      );
+    }
+    return { diaId, conferidoEm: conferidoEm.toISOString() };
   }
 
   async atualizarDesafio(slug: string, input: AtualizarDesafioInput): Promise<AdminParticipantesResposta['desafio']> {

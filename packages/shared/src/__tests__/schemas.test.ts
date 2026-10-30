@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  atualizarPerfilSchema,
+  conferenciaSchema,
+  criarContaSchema,
+  entrarSchema,
+  sessaoSchema,
   cadastroSchema,
   checkinSchema,
   invalidacaoSchema,
@@ -77,5 +82,33 @@ describe('invalidacaoSchema', () => {
   });
   it('revalidar não exige motivo', () => {
     expect(invalidacaoSchema.safeParse({ invalidado: false }).success).toBe(true);
+  });
+});
+
+describe('schemas do Frontend v2', () => {
+  it('sessaoSchema exige token até 4096 caracteres', () => {
+    expect(sessaoSchema.safeParse({ idToken: 'abc' }).success).toBe(true);
+    expect(sessaoSchema.safeParse({ idToken: '' }).success).toBe(false);
+    expect(sessaoSchema.safeParse({ idToken: 'x'.repeat(4097) }).success).toBe(false);
+  });
+
+  it('atualizarPerfilSchema exige nome e aceite', () => {
+    expect(atualizarPerfilSchema.safeParse({ nome: ' Maria ', aceitouTermos: true }).data?.nome).toBe('Maria');
+    const sem = atualizarPerfilSchema.safeParse({ nome: 'Maria', aceitouTermos: false });
+    expect(sem.success).toBe(false);
+    expect(sem.error?.issues[0]?.message).toBe('Aceite a política de privacidade para continuar.');
+  });
+
+  it('entrarSchema e criarContaSchema: senha de 8 a 72', () => {
+    expect(entrarSchema.safeParse({ email: 'A@B.COM', senha: '1234567' }).success).toBe(false);
+    expect(entrarSchema.safeParse({ email: 'A@B.COM', senha: '12345678' }).data?.email).toBe('a@b.com');
+    expect(
+      criarContaSchema.safeParse({ nome: 'Ana', email: 'a@b.com', senha: '12345678', aceitouTermos: true }).success,
+    ).toBe(true);
+  });
+
+  it('conferenciaSchema exige booleano', () => {
+    expect(conferenciaSchema.safeParse({ conferido: true }).success).toBe(true);
+    expect(conferenciaSchema.safeParse({ conferido: 'sim' }).success).toBe(false);
   });
 });

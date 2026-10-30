@@ -8,16 +8,23 @@ import Redis from 'ioredis';
 import { hojeNoFuso, somarDias } from '@everest/shared';
 import { AppModule } from '../src/app.module';
 import { configurarApp } from '../src/app.setup';
+import { VERIFICADOR_FIREBASE } from '../src/modules/auth/verificador-firebase';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { VerificadorFalso, tokenTeste } from './verificador-falso';
 
 export interface Contexto {
   app: INestApplication<App>;
   prisma: PrismaService;
   http: App;
+  verificador: VerificadorFalso;
 }
 
 export async function criarApp(): Promise<Contexto> {
-  const modulo = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  const verificador = new VerificadorFalso();
+  const modulo = await Test.createTestingModule({ imports: [AppModule] })
+    .overrideProvider(VERIFICADOR_FIREBASE)
+    .useValue(verificador)
+    .compile();
   const app = modulo.createNestApplication<NestExpressApplication>({ logger: ['error', 'warn'] });
   configurarApp(app);
   await app.init();
@@ -25,6 +32,7 @@ export async function criarApp(): Promise<Contexto> {
     app: app as unknown as INestApplication<App>,
     prisma: app.get(PrismaService),
     http: app.getHttpServer() as App,
+    verificador,
   };
 }
 
@@ -33,9 +41,9 @@ export async function limparTudo(prisma: PrismaService): Promise<void> {
     'TRUNCATE TABLE "FotoProva", "DiaDesafio", "Participante", "Desafio", "Usuario" CASCADE',
   );
   const redis = new Redis(process.env.REDIS_URL ?? '');
-  const chaves = await redis.keys('vagas:*');
-  const chavesRanking = await redis.keys('ranking:*');
-  const todas = [...chaves, ...chavesRanking];
+  const todas = (
+    await Promise.all(['vagas:*', 'ranking:*', 'feed:*'].map((padrao) => redis.keys(padrao)))
+  ).flat();
   if (todas.length > 0) await redis.del(...todas);
   await redis.quit();
 }
@@ -68,19 +76,38 @@ export function emailUnico(prefixo = 'user'): string {
   return `${prefixo}.${Date.now()}.${contador}@teste.dev`;
 }
 
-/** Cadastra e devolve um agente supertest com o cookie de sessão. */
+let contadorUid = 0;
+export function uidUnico(): string {
+  contadorUid += 1;
+  return `uid-${Date.now()}-${contadorUid}`;
+}
+
+/** Abre sessão via POST /auth/sessao (verificador falso). Perfil incompleto até o PATCH /me. */
+export async function sessaoFirebase(
+  http: App,
+  email = emailUnico(),
+  opcoes: { uid?: string; verificado?: boolean; nome?: string } = {},
+): Promise<{ agente: ReturnType<typeof request.agent>; email: string; id: string; uid: string }> {
+  const uid = opcoes.uid ?? uidUnico();
+  const agente = request.agent(http);
+  const r = await agente
+    .post('/api/auth/sessao')
+    .send({ idToken: tokenTeste(uid, email, { verificado: opcoes.verificado ?? true, nome: opcoes.nome }) });
+  if (r.status !== 200) throw new Error(`sessão falhou: ${r.status} ${JSON.stringify(r.body)}`);
+  const corpo = r.body as { usuario: { id: string } };
+  return { agente, email, id: corpo.usuario.id, uid };
+}
+
+/** Entra pelo Firebase (falso) e completa o perfil: agente supertest com o cookie de sessão. */
 export async function novoUsuarioLogado(
   http: App,
   nome = 'Pessoa Teste',
   email = emailUnico(),
-): Promise<{ agente: ReturnType<typeof request.agent>; email: string; id: string }> {
-  const agente = request.agent(http);
-  const r = await agente
-    .post('/api/auth/cadastro')
-    .send({ nome, email, senha: 'senha-segura-123', aceitouTermos: true });
-  if (r.status !== 201) throw new Error(`cadastro falhou: ${r.status} ${JSON.stringify(r.body)}`);
-  const corpo = r.body as { usuario: { id: string } };
-  return { agente, email, id: corpo.usuario.id };
+): Promise<{ agente: ReturnType<typeof request.agent>; email: string; id: string; uid: string }> {
+  const sessao = await sessaoFirebase(http, email, { nome });
+  const r = await sessao.agente.patch('/api/me').send({ nome, aceitouTermos: true });
+  if (r.status !== 200) throw new Error(`PATCH /me falhou: ${r.status} ${JSON.stringify(r.body)}`);
+  return sessao;
 }
 
 export async function tornarAdmin(prisma: PrismaService, usuarioId: string): Promise<void> {

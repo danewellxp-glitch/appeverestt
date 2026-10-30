@@ -43,3 +43,13 @@ export function nomeExibicao(nomeCompleto: string): string {
   if (!ultimo) return capitalizar(primeiro);
   return `${capitalizar(primeiro)} ${ultimo.charAt(0).toLocaleUpperCase('pt-BR')}.`;
 }
+
+/** Iniciais para avatar sem foto: "Maria Souza Lima" -> "ML"; "Ana" -> "A". */
+export function iniciais(nomeCompleto: string): string {
+  const partes = nomeCompleto.trim().split(/\s+/).filter(Boolean);
+  const primeiro = partes[0];
+  if (!primeiro) return '';
+  const ultimo = partes.length > 1 ? partes[partes.length - 1] : undefined;
+  const letra = (p: string) => p.charAt(0).toLocaleUpperCase('pt-BR');
+  return ultimo ? `${letra(primeiro)}${letra(ultimo)}` : letra(primeiro);
+}

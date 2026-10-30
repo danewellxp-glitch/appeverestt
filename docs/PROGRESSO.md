@@ -121,22 +121,22 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] **DoD:** relatório com o estado de cada comando; `pnpm --filter web build` passa
 
 ## R1: Backend (Firebase, perfil, feed, conferência)
-- [ ] `firebase-tools` (dev) + script raiz `pnpm emu`; `firebase.json` só com a porta 9099 do emulador de auth
-- [ ] Migration Prisma da seção 4.1
-- [ ] `firebase-admin` + provider `VERIFICADOR_FIREBASE` (real + falso) + env (seção 4.2)
-- [ ] `POST /auth/sessao`, `PATCH /me`, `DELETE /me`, `GET /desafios/:slug/feed`, `PATCH /admin/dias/:diaId/conferencia`, e `paraRevisar`/`totalParaRevisar`/`AGUARDANDO_CONFERENCIA` nas rotas de admin
-- [ ] Zerar a conferência em toda edição do dia (seção 4.1)
-- [ ] Legado `cadastro`/`login` atrás de `AUTH_SENHA_LEGADO`
-- [ ] Helpers de e2e migrados para `/auth/sessao` com o verificador falso + testes da seção 4.3
-- [ ] Script `seed:firebase` para o emulador
-- [ ] Swagger com exemplos dos endpoints novos
-- [ ] **DoD:** `pnpm --filter api test` e `test:e2e` 100% verdes; `idToken` do emulador funciona no `POST /auth/sessao`
+- [x] `firebase-tools` (dev) + script raiz `pnpm emu`; `firebase.json` só com a porta 9099 do emulador de auth (UI desligada)
+- [x] Migration Prisma da seção 4.1 (`20261030120000_firebase_auth_conferencia`)
+- [x] `firebase-admin` + provider `VERIFICADOR_FIREBASE` (real + falso) + env (seção 4.2)
+- [x] `POST /auth/sessao`, `PATCH /me`, `DELETE /me`, `GET /desafios/:slug/feed`, `PATCH /admin/dias/:diaId/conferencia`, e `paraRevisar`/`totalParaRevisar`/`AGUARDANDO_CONFERENCIA` nas rotas de admin
+- [x] Zerar a conferência em toda edição do dia (check-in, foto substituída/confirmada/removida/rejeitada, invalidação)
+- [x] Legado `cadastro`/`login` atrás de `AUTH_SENHA_LEGADO` (404 quando desligado)
+- [x] Helpers de e2e migrados para `/auth/sessao` com o verificador falso + testes da seção 4.3
+- [x] Script `seed:firebase` para o emulador
+- [x] Swagger com exemplos dos endpoints novos (conferido em `/api/docs-json`)
+- [x] **DoD:** `pnpm --filter api test` (8) e `test:e2e` (76 em 9 suítes) verdes; `idToken` do emulador (`accounts:signInWithPassword` de maria@everest.dev) funcionou no `POST /auth/sessao` com o verificador real
 
-## R2: Shared
-- [ ] Tipos `UsuarioMe` (+`fotoUrl`, `perfilCompleto`), `FeedResposta`, `AdminParticipante.paraRevisar`, `DiaResumo.situacao` (+`AGUARDANDO_CONFERENCIA`)
-- [ ] Schemas `sessaoSchema`, `atualizarPerfilSchema`, `entrarSchema`, `criarContaSchema` e `conferenciaSchema`
-- [ ] `regras/altitude.ts` + testes (seção 10)
-- [ ] **DoD:** `pnpm --filter @everest/shared test` e `build` ok; `pnpm typecheck` da raiz ok
+## R2: Shared (feita junto com a R1)
+- [x] Tipos `UsuarioMe` (+`fotoUrl`, `perfilCompleto`), `FeedResposta`, `AdminParticipante.paraRevisar`, `DiaResumo.situacao` (+`AGUARDANDO_CONFERENCIA`), `ConferenciaResposta`
+- [x] Schemas `sessaoSchema`, `atualizarPerfilSchema`, `entrarSchema`, `criarContaSchema` e `conferenciaSchema`
+- [x] `regras/altitude.ts` + testes (seção 10); também `iniciais()` para avatar
+- [x] **DoD:** `pnpm --filter @everest/shared test` (61) e `build` ok; `pnpm typecheck` da raiz ok
 
 ## R3: Tema, tokens e fontes
 - [ ] Fontes instaladas e importadas (seções 2 e 6.2)
