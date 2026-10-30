@@ -1,11 +1,11 @@
 import { METAS, TIPOS_FOTO, type FotoDia } from '@everest/shared';
 import { Camera } from 'lucide-react';
 import { CardRequisito } from '../checkin/CardRequisito';
-import { fotoEhValida } from './fotosValidas';
+import { ROTULO_TIPO_FOTO, fotoEhValida } from './fotosValidas';
 import { SlotFoto } from './SlotFoto';
 import { useFotosDia } from './useUploadFoto';
 
-/** Card "Fotos": 3 slots (Água, Exercício, Leitura). */
+/** "Prova do dia": 3 slots (água, treino, leitura), cada um com o seu envio. */
 export function CardFotos({
   slug,
   numeroDia,
@@ -19,13 +19,20 @@ export function CardFotos({
 }) {
   const { estados, enviar, remover } = useFotosDia(slug, numeroDia);
   const validas = TIPOS_FOTO.filter((t) => fotoEhValida(fotos.find((f) => f.tipo === t))).length;
+  const erros = TIPOS_FOTO.flatMap((t) => {
+    const erro = estados[t]?.erro;
+    return erro ? [`${ROTULO_TIPO_FOTO[t]}: ${erro}`] : [];
+  });
 
   return (
-    <CardRequisito titulo="Fotos" icone={<Camera className="size-5" />} cumprido={validas >= METAS.fotos}>
-      <p className="text-sm text-texto-2">
-        {validas} de {METAS.fotos} fotos de prova. Uma de cada: água, exercício e leitura.
-      </p>
-      <ul className="flex flex-col gap-2">
+    <CardRequisito
+      titulo="Prova do dia"
+      meta="Uma foto de cada: água, treino e leitura"
+      icone={<Camera className="size-5" />}
+      cumprido={validas >= METAS.fotos}
+      falta={`${validas} de ${METAS.fotos}`}
+    >
+      <ul className="grid grid-cols-3 gap-2" aria-label="Fotos de prova">
         {TIPOS_FOTO.map((tipo) => (
           <SlotFoto
             key={tipo}
@@ -38,6 +45,11 @@ export function CardFotos({
           />
         ))}
       </ul>
+      <div aria-live="polite" className="text-[13px] text-vermelho-texto empty:hidden">
+        {erros.map((e) => (
+          <p key={e}>{e}</p>
+        ))}
+      </div>
     </CardRequisito>
   );
 }

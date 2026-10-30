@@ -94,4 +94,7 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | 2026-10-30 | v2 R6 | `useCheckin.alterar(fn, { imediato: true })` salva sem debounce | Toque único ("Marcar como postado") precisa refletir já no card "Seu dia"; o resto do check-in continua com 800 ms |
 | 2026-10-30 | v2 R6 | O nome do container transform é aplicado no contêiner do conteúdo do `AppShell` (via `location.state.vt`) | Vale para qualquer tela de destino sem mexer em cada página |
 | 2026-10-30 | v2 R6 | `useCheckin` também invalida o feed no sucesso | O servidor invalida o cache do feed junto com o ranking; o front acompanha |
+| 2026-10-30 | v2 R7 | Leitura sem campo de digitação: só stepper (−, +1, +5), como no protótipo | Meta de 10 páginas; o campo de texto confundia com o número grande |
+| 2026-10-30 | v2 R7 | Remover foto é direto no × (sem confirmação), e há um botão de trocar ao lado | Só vale no dia editável e a foto pode ser reenviada; menos toques no celular |
+| 2026-10-30 | v2 R7 | A tela do dia não tem mais o grid dos 30 dias; a navegação entre dias é pela faixa da home e pelo grid do Progresso | Segue o protótipo (`#dia`) |
 

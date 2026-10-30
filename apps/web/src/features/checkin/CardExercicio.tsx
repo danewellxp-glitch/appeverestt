@@ -1,6 +1,6 @@
 import { Dumbbell } from 'lucide-react';
-import { CardRequisito } from './CardRequisito';
 import { Interruptor } from '../../components/ui/Interruptor';
+import { CardRequisito } from './CardRequisito';
 
 export function CardExercicio({
   exercicio,
@@ -12,8 +12,14 @@ export function CardExercicio({
   aoAlterar: (feito: boolean) => void;
 }) {
   return (
-    <CardRequisito titulo="Exercício" icone={<Dumbbell className="size-5" />} cumprido={exercicio}>
-      <Interruptor ligado={exercicio} rotulo="Fiz meu exercício hoje" disabled={!editavel} aoAlternar={aoAlterar} />
+    <CardRequisito
+      titulo="Exercício"
+      meta="Qualquer treino conta"
+      icone={<Dumbbell className="size-5" />}
+      cumprido={exercicio}
+      falta="Pendente"
+    >
+      <Interruptor ligado={exercicio} rotulo="Fiz meu treino hoje" disabled={!editavel} aoAlternar={aoAlterar} />
     </CardRequisito>
   );
 }

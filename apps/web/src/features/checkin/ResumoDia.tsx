@@ -1,54 +1,33 @@
 import { REQUISITOS, type Requisito } from '@everest/shared';
-import { Check } from 'lucide-react';
-import { Barra } from '../../components/ui/Barra';
+import { Segmentos } from '../desafio/CardSeuDia';
+import { BannerDiaConcluido } from './BannerDiaConcluido';
 
-const ROTULO_REQUISITO: Record<Requisito, string> = {
-  AGUA: 'Água',
-  EXERCICIO: 'Exercício',
-  LEITURA: 'Leitura',
-  FOTOS: 'Fotos',
-  STORY: 'Story',
-};
-
-/**
- * "N de 5 requisitos" (prévia local, calculada com as regras do shared) e o banner de
- * dia concluído — este só aparece quando o servidor confirma a conclusão.
- */
-export function ResumoDia({ pendentes, concluido }: { pendentes: Requisito[]; concluido: boolean }) {
+/** Card resumo do dia: "k de 5 requisitos", "fecha às 23:59", barra de 5 segmentos e o banner. */
+export function ResumoDia({
+  pendentes,
+  concluido,
+  animarBanner,
+  editavel,
+  totalDias,
+}: {
+  pendentes: Requisito[];
+  concluido: boolean;
+  animarBanner: boolean;
+  editavel: boolean;
+  totalDias: number;
+}) {
   const total = REQUISITOS.length;
   const feitos = total - pendentes.length;
   return (
-    <div className="flex flex-col gap-3">
-      {concluido && (
-        <div role="status" className="rounded-2xl bg-vermelho px-4 py-5 text-center text-sobre-vermelho">
-          <p className="text-2xl font-bold">Dia concluído! 🔥</p>
-          <p className="mt-1 text-sm">Os 5 requisitos estão cumpridos. Amanhã tem mais.</p>
-        </div>
-      )}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between">
-          <p className="text-base font-bold">
-            {feitos} de {total} requisitos
-          </p>
-          <p className="rotulo">Checklist</p>
-        </div>
-        <Barra valor={feitos} maximo={total} rotulo={`${feitos} de ${total} requisitos cumpridos`} />
-        <ul className="flex flex-wrap gap-1.5" aria-label="Requisitos do dia">
-          {REQUISITOS.map((r) => {
-            const ok = !pendentes.includes(r);
-            return (
-              <li
-                key={r}
-                className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${ok ? 'border-ok-borda bg-ok-fundo text-ok-texto' : 'border-borda text-texto-2'}`}
-              >
-                {ok && <Check className="size-3.5" aria-hidden />}
-                {ROTULO_REQUISITO[r]}
-                <span className="sr-only">{ok ? ': feito' : ': pendente'}</span>
-              </li>
-            );
-          })}
-        </ul>
+    <section aria-label="Resumo do dia" className="surgir grid gap-3 rounded-3xl bg-superficie p-4 shadow-[inset_0_0_0_1px_var(--borda)]">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="font-bold" aria-live="polite">
+          {feitos} de {total} requisitos
+        </p>
+        {editavel && <p className="text-[13px] text-texto-2">fecha às 23:59</p>}
       </div>
-    </div>
+      <Segmentos feitos={feitos} total={total} />
+      {concluido && <BannerDiaConcluido animar={animarBanner} totalDias={totalDias} />}
+    </section>
   );
 }

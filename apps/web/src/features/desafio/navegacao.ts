@@ -1,14 +1,11 @@
-/**
- * Rota do check-in de um dia. Transitório até a R7: a tela do dia ainda é `/hoje?dia=N`;
- * na R7 vira `/desafio/dia/N` (só esta função muda).
- */
+/** Rota do check-in de um dia (docs/FRONTEND.md §3). */
 export function caminhoDoDia(numeroDia: number): string {
-  return `/hoje?dia=${numeroDia}`;
+  return `/desafio/dia/${numeroDia}`;
 }
 
 /** Baixa o chunk da tela do dia antes da navegação (a View Transition captura a tela já pronta). */
 export function preCarregarDia(): void {
-  void import('../../pages/Hoje');
+  void import('../../pages/Dia');
 }
 
 export function preCarregarRanking(): void {

@@ -9,6 +9,7 @@ import {
   RotaProtegida,
   RotaVisitante,
 } from '../features/auth/rotas';
+import { RedirecionarHoje } from '../features/checkin/RedirecionarHoje';
 import Entrada from '../pages/Entrada';
 
 // Todas as rotas, exceto a Entrada, são carregadas sob demanda (code splitting).
@@ -20,7 +21,7 @@ const BemVindo = lazy(() => import('../pages/BemVindo'));
 const Privacidade = lazy(() => import('../pages/Privacidade'));
 const Regras = lazy(() => import('../pages/Regras'));
 const Desafio = lazy(() => import('../pages/Desafio'));
-const Hoje = lazy(() => import('../pages/Hoje'));
+const Dia = lazy(() => import('../pages/Dia'));
 const Progresso = lazy(() => import('../pages/Progresso'));
 const Ranking = lazy(() => import('../pages/Ranking'));
 const Admin = lazy(() => import('../pages/Admin'));
@@ -55,8 +56,10 @@ export const router = createBrowserRouter([
               {
                 element: <RotaInscrito />,
                 children: [
-                  { path: '/hoje', element: <Hoje /> },
+                  // Rota antiga: /hoje → /desafio/dia/<hoje>; /hoje?dia=N → /desafio/dia/N.
+                  { path: '/hoje', element: <RedirecionarHoje /> },
                   { path: '/desafio', element: <Desafio /> },
+                  { path: '/desafio/dia/:n', element: <Dia /> },
                   { path: '/progresso', element: <Progresso /> },
                   { path: '/ranking', element: <Ranking /> },
                 ],

@@ -1,11 +1,11 @@
 import { LIMITES, METAS } from '@everest/shared';
-import { BookOpen } from 'lucide-react';
-import { useId, useState } from 'react';
+import { BookOpen, Minus } from 'lucide-react';
+import { useId } from 'react';
 import { Botao } from '../../components/ui/Botao';
-import { Barra } from '../../components/ui/Barra';
 import { CardRequisito } from './CardRequisito';
 import { limitar } from './formatos';
 
+/** Stepper de páginas: − / número grande / +, mais os atalhos +1 e +5. */
 export function CardLeitura({
   paginas,
   editavel,
@@ -15,67 +15,59 @@ export function CardLeitura({
   editavel: boolean;
   aoAlterar: (fn: (atual: number) => number) => void;
 }) {
-  const idCampo = useId();
-  const idDica = useId();
-  // Texto enquanto a pessoa digita (permite apagar o campo sem virar 0 na hora).
-  const [digitando, setDigitando] = useState<string | null>(null);
+  const idSaida = useId();
   const somar = (n: number) => aoAlterar((atual) => limitar(atual + n, 0, LIMITES.paginasMax));
-
   return (
-    <CardRequisito titulo="Leitura" icone={<BookOpen className="size-5" />} cumprido={paginas >= METAS.paginas}>
-      <Barra
-        valor={paginas}
-        maximo={METAS.paginas}
-        rotulo={`Leitura: ${paginas} de ${METAS.paginas} páginas`}
-      />
-      <div className="flex items-end gap-2">
-        <Botao
-          variante="secundario"
-          disabled={!editavel || paginas <= 0}
-          onClick={() => somar(-1)}
-          aria-label="Tirar 1 página"
-        >
-          −1
-        </Botao>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <label htmlFor={idCampo} className="rotulo">
-            Páginas lidas
-          </label>
-          <input
-            id={idCampo}
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="off"
-            aria-describedby={idDica}
-            disabled={!editavel}
-            value={digitando ?? String(paginas)}
-            onFocus={(e) => e.currentTarget.select()}
-            onChange={(e) => {
-              const texto = e.currentTarget.value.replace(/\D/g, '').slice(0, 4);
-              setDigitando(texto);
-              if (texto !== '') {
-                const n = limitar(Number(texto), 0, LIMITES.paginasMax);
-                aoAlterar(() => n);
-              }
-            }}
-            onBlur={() => {
-              if (digitando === '') aoAlterar(() => 0);
-              setDigitando(null);
-            }}
-            className="min-h-11 w-full rounded-xl border border-borda-campo bg-superficie-2 px-3 text-center text-xl font-bold text-texto disabled:opacity-60"
-          />
+    <CardRequisito
+      titulo="Leitura"
+      meta={`Meta: ${METAS.paginas} páginas`}
+      icone={<BookOpen className="size-5" />}
+      cumprido={paginas >= METAS.paginas}
+      falta={`Faltam ${Math.max(0, METAS.paginas - paginas)} pág.`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          {editavel && (
+            <button
+              type="button"
+              aria-label="Menos uma página"
+              aria-controls={idSaida}
+              disabled={paginas <= 0}
+              onClick={() => somar(-1)}
+              className="press grid size-11 place-items-center rounded-full bg-superficie-2 disabled:opacity-50"
+            >
+              <Minus className="size-4" aria-hidden />
+            </button>
+          )}
+          <output
+            id={idSaida}
+            aria-live="polite"
+            aria-label={`${paginas} de ${METAS.paginas} páginas`}
+            className="min-w-[2ch] text-center font-display text-[34px] leading-none font-extrabold tabular-nums"
+          >
+            {paginas}
+          </output>
+          <span aria-hidden className="text-[13px] text-texto-2">
+            / {METAS.paginas} páginas
+          </span>
         </div>
-        <Botao variante="secundario" disabled={!editavel} onClick={() => somar(1)} aria-label="Somar 1 página">
-          +1
-        </Botao>
-        <Botao variante="secundario" disabled={!editavel} onClick={() => somar(5)} aria-label="Somar 5 páginas">
-          +5
-        </Botao>
+        {editavel && (
+          <div className="flex gap-1.5">
+            <Botao tamanho="sm" variante="secundario" aria-controls={idSaida} onClick={() => somar(1)} aria-label="Mais uma página">
+              +1
+            </Botao>
+            <Botao
+              tamanho="sm"
+              variante="secundario"
+              aria-controls={idSaida}
+              onClick={() => somar(5)}
+              aria-label="Mais cinco páginas"
+            >
+              +5
+            </Botao>
+          </div>
+        )}
       </div>
-      <p id={idDica} className="text-xs text-texto-2">
-        Meta: {METAS.paginas} páginas por dia.
-      </p>
     </CardRequisito>
   );
 }

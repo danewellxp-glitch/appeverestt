@@ -175,10 +175,10 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] **DoD** (Playwright 390×844, claro e escuro, login real pelo emulador): 1) a faixa centraliza o dia atual (desvio 0 px); 2) dia futuro → shake + toast "O dia 6 abre em 2 dias, à meia-noite."; 3) "Seu dia" abre o check-in do dia; 4) card preto abre o ranking; 5) carrossel encaixa e os pontos acompanham (18/6 → 6/18 px); 6) "Marcar como postado" muda o "Seu dia" de 0 para 1 de 5 na hora
 
 ## R7: Check-in `/desafio/dia/:n`
-- [ ] `pages/Dia.tsx` (refatora `Hoje.tsx`), `useDiaSelecionado` lendo `useParams`, redirect de `:n` inválido
-- [ ] Restyle de `CardRequisito`, `CardAgua`, `CardExercicio`, `CardLeitura`, `CardFotos`/`SlotFoto`, `CardStory`, `ResumoDia`, `IndicadorSalvamento` + `BannerDiaConcluido`
-- [ ] Modo leitura (dia passado), invalidado, offline e erro
-- [ ] **DoD:** banner animado uma vez + toast; recarregar mantém; remover foto tira o banner; `/desafio` atualizado; testes existentes verdes
+- [x] `pages/Dia.tsx` (substitui `Hoje.tsx`), `useDiaSelecionado` lendo `useParams`; `:n` inválido ou fora de 1..min(diaAtual, totalDias) redireciona para o dia atual; `/hoje` e `/hoje?dia=N` redirecionam (`RedirecionarHoje`)
+- [x] Restyle de `CardRequisito` (bolha + selo "Feito"/o que falta + anel vermelho), `CardAgua`, `CardExercicio`, `CardLeitura` (stepper), `CardFotos`/`SlotFoto` (grade 3:4), `CardStory` (linha copiável), `ResumoDia` (card resumo + 5 segmentos), `IndicadorSalvamento` (compacto no topo) + `BannerDiaConcluido`
+- [x] Modo leitura (dia passado, com cadeado), invalidado (motivo), offline (aviso global + edição desligada) e erro com "Tentar de novo"; removidos `CabecalhoDia`, `TelaAntesInicio` e `TelaEncerrado` (conteúdo já na home)
+- [x] **DoD** (Playwright 390×844, login real, fotos de verdade no MinIO + worker): completar os 5 requisitos mostra o banner animado uma vez e o toast "Dia 4 concluído. +295 m na escalada."; recarregar mantém 5 de 5 com o banner parado e sem toast; remover a foto de água tira o banner (4 de 5); voltar para `/desafio` mostra "4 de 5" com a tag "Fotos 2/3"; `useCheckin.test` e `useUploadFoto.test` verdes. Conferidos também `/hoje` → `/desafio/dia/4`, `/desafio/dia/99` → `/desafio/dia/4` e o dia passado sem botões de edição
 
 ## R8: Progresso, Ranking, Regras e Privacidade
 - [ ] `Montanha` + `pages/Progresso.tsx`

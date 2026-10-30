@@ -269,6 +269,17 @@
     transform: translateY(-10px);
   }
 }
+@keyframes draw {
+  from {
+    stroke-dashoffset: 30;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
 @keyframes revelar {
   from {
     opacity: 0;

@@ -12,8 +12,7 @@ interface ItemAba {
 }
 
 export const ABAS: readonly ItemAba[] = [
-  // `/hoje` ainda é a home do inscrito até a R5/R6 (vira `/desafio/dia/:n`).
-  { para: '/desafio', rotulo: 'Desafio', Icone: Flag, tambem: ['/hoje'] },
+  { para: '/desafio', rotulo: 'Desafio', Icone: Flag },
   { para: '/progresso', rotulo: 'Progresso', Icone: ChartLine },
   { para: '/ranking', rotulo: 'Ranking', Icone: Trophy },
   { para: '/perfil', rotulo: 'Perfil', Icone: User },

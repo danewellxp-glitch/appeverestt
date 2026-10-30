@@ -4,6 +4,7 @@ import { Botao } from '../components/ui/Botao';
 import { Alerta, Card, Skeleton } from '../components/ui/basicos';
 import { CartoesProgresso, LegendaGrid } from '../features/ranking/ResumoProgresso';
 import { useMe, useMeuProgresso } from '../lib/queries';
+import { caminhoDoDia } from '../features/desafio/navegacao';
 
 function EsqueletoProgresso() {
   return (
@@ -76,7 +77,7 @@ export default function Progresso() {
               </div>
               <GridDias
                 dias={progresso.data.dias}
-                aoSelecionar={(n) => void navegar(`/hoje?dia=${n}`)}
+                aoSelecionar={(n) => void navegar(caminhoDoDia(n))}
                 rotulo="Seus dias no desafio"
               />
               <LegendaGrid />
