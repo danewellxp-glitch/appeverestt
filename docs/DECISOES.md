@@ -85,4 +85,9 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | 2026-10-30 | v2 R4 | **Transitório até R5/R6/R9:** aba "Desafio" → `/desafio` redireciona para `/hoje`; `/hoje` mostra as abas; aba "Perfil" (`/perfil`) cai no 404 até a R9; logout só pela Entrada (`/`) e admin só pela URL `/admin` | O header saiu (seção 8.2) antes das telas novas existirem; cada fase seguinte remove um item desta lista |
 | 2026-10-30 | v2 R4 | Toast aceita `acao` e `duracao: Infinity` | Unifica o "Nova versão disponível · Atualizar" do PWA, que precisa ficar até a pessoa agir |
 | 2026-10-30 | v2 R4 | Cores fixas do `Avatar` com classes da paleta (`bg-*-700` + branco) | Avatar de iniciais é igual nos dois temas; todas as 8 cores passam 4,5:1 com texto branco |
+| 2026-10-30 | v2 R5 | `POST /auth/sessao` revincula o usuário a um **uid novo** quando o e-mail é verificado (antes: 409) | Conta recriada no Firebase (ou emulador reiniciado) deixaria a pessoa trancada; e-mail verificado prova a posse. E-mail não verificado continua 409 |
+| 2026-10-30 | v2 R5 | `RotaVisitante` executa o pós-login (`usePosAutenticacao`) em vez de só redirecionar | Quando o `me` chega no cache, a tela de login desmonta; a decisão (bem-vindo / inscrição / volta) precisa morar no guard |
+| 2026-10-30 | v2 R5 | Aceite marcado em /criar-conta vai para a /bem-vindo via `sessionStorage` (`everest-aceite-pendente`), limpo depois do PATCH | Sobrevive ao redirect do Google e ao recarregar; não é dado sensível |
+| 2026-10-30 | v2 R5 | Todos passam pela /bem-vindo (inclusive quem criou conta por e-mail) | Dados de cadastro obrigatórios (Q7/X11); a spec foi atualizada na R1.1 |
+| 2026-10-30 | v2 R5 | `AUTH_SENHA_LEGADO=false` em dev; o ambiente do Playwright (Fase 12) ainda liga o legado até a R11 reescrever os testes com o emulador | O front não usa mais senha local |
 

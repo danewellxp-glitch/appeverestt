@@ -90,6 +90,17 @@ describe('Auth via Firebase (e2e)', () => {
     expect(depois.firebaseUid).toBe(uid);
   });
 
+  it('conta recriada no Firebase (uid novo, e-mail verificado) → revincula ao mesmo usuário', async () => {
+    const email = emailUnico('recriada');
+    const antigo = await sessaoFirebase(ctx.http, email);
+    const novo = await sessaoFirebase(ctx.http, email, { uid: uidUnico() });
+    expect(novo.id).toBe(antigo.id);
+    expect((await ctx.prisma.usuario.findUniqueOrThrow({ where: { id: antigo.id } })).firebaseUid).toBe(novo.uid);
+    // A sessão do uid antigo não deixa de existir, mas o uid antigo não acha mais ninguém.
+    const r = await request(ctx.http).post('/api/auth/sessao').send({ idToken: tokenTeste(antigo.uid, email, { verificado: false }) });
+    expect(r.status).toBe(409);
+  });
+
   it('e-mail NÃO verificado igual a um existente → 409 EMAIL_EM_USO', async () => {
     const email = emailUnico('tomada');
     await novoUsuarioLogado(ctx.http, 'Dona da Conta', email);

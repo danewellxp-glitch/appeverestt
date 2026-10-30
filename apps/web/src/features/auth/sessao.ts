@@ -5,7 +5,7 @@ export function limparDadosDeSessaoAnterior(qc: QueryClient): void {
   qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'me' && q.queryKey[0] !== 'desafio' });
 }
 
-const ROTAS_DE_AUTENTICACAO = ['/login', '/cadastro'];
+const ROTAS_DE_AUTENTICACAO = ['/login', '/cadastro', '/entrar', '/criar-conta', '/recuperar-senha', '/bem-vindo'];
 
 /**
  * Valida o `?volta=`: só caminhos internos ("/algo"), nunca "//host" ou "/\host"

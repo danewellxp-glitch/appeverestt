@@ -161,12 +161,12 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] **DoD:** `pnpm --filter web test` 17/17; build ok. Conferido no Playwright (390×844, dois temas): indicador da aba segue a rota, abas somem fora das rotas de aba
 
 ## R5: Autenticação no front
-- [ ] `lib/firebase.ts`, `features/auth/firebaseAuth.ts`, `errosFirebase.ts` e `.env.example` do web (seção 5)
-- [ ] Páginas `Entrar`, `CriarConta`, `RecuperarSenha` e `BemVindo` + `TelaAuth` + `BotaoGoogle`
-- [ ] Guards `RotaVisitante` e `RotaPerfilCompleto`; `usePosAutenticacao` atualizado (seção 5.4)
-- [ ] Router novo (seção 3) com os redirects das rotas antigas
-- [ ] Remover `pages/Login.tsx`, `pages/Cadastro.tsx`, `useLogin` e `useCadastro`
-- [ ] **DoD:** login por e-mail no emulador → `/desafio`; Google → `/bem-vindo` → vaga → `/desafio`; "Criar conta" → revelação da vaga; `/login` → `/entrar`; chunk do Firebase fora do chunk de entrada
+- [x] `lib/firebase.ts` (import dinâmico + prefetch), `features/auth/firebaseAuth.ts`, `errosFirebase.ts` e `.env.example` do web (seção 5)
+- [x] Páginas `Entrar`, `CriarConta`, `RecuperarSenha` e `BemVindo` (com os dados de cadastro da R1.1 e a revelação da vaga) + `TelaAuth` + `BotaoGoogle` + `FormularioPerfil` (reaproveitado no /perfil)
+- [x] Guards `RotaVisitante` (roda o pós-login) e `RotaPerfilCompleto`; `usePosAutenticacao` atualizado (seção 5.4)
+- [x] Router novo com `/login` → `/entrar` e `/cadastro` → `/criar-conta` (preservando a query); `RotaAdmin` barra para `/desafio`
+- [x] Removidos `pages/Login.tsx`, `pages/Cadastro.tsx`, `useLogin` e `useCadastro`; `AUTH_SENHA_LEGADO=false` no `.env` de dev e no exemplo
+- [x] **DoD** (Playwright + `pnpm emu` + `seed:firebase` + API + web dev): login de maria@everest.dev por e-mail → `/desafio`; Google no emulador cria conta → `/bem-vindo` (aceite desmarcado) → vaga nº 9 → `/desafio`; "Criar conta" por e-mail → `/bem-vindo` (aceite já marcado) → vaga nº 10; `/login?volta=…` → `/entrar?volta=…`; senha errada → "E-mail ou senha incorretos."; build: o SDK do Firebase fica nos chunks `index.esm-*` (auth 36,2 KB gzip + app 9,9 KB gzip), fora do chunk de entrada (que só tem o wrapper `lib/firebase.ts`)
 
 ## R6: Home `/desafio`
 - [ ] `FaixaDias`, `CarrosselDestaque`, `CardEscalada`, `CardStoryDoDia`, `CardSeuDia`, `CardsAtividade` e `CtaFixo`

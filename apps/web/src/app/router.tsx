@@ -1,12 +1,22 @@
 import { lazy } from 'react';
 import { Navigate, createBrowserRouter } from 'react-router';
 import { AppShell } from '../components/layout/AppShell';
-import { RotaAdmin, RotaInscrito, RotaProtegida } from '../features/auth/rotas';
+import {
+  RedirecionarPreservandoBusca,
+  RotaAdmin,
+  RotaInscrito,
+  RotaPerfilCompleto,
+  RotaProtegida,
+  RotaVisitante,
+} from '../features/auth/rotas';
 import Entrada from '../pages/Entrada';
 
 // Todas as rotas, exceto a Entrada, são carregadas sob demanda (code splitting).
-const Login = lazy(() => import('../pages/Login'));
-const Cadastro = lazy(() => import('../pages/Cadastro'));
+// O Firebase só entra nos chunks das telas de auth (import dinâmico em lib/firebase.ts).
+const Entrar = lazy(() => import('../pages/Entrar'));
+const CriarConta = lazy(() => import('../pages/CriarConta'));
+const RecuperarSenha = lazy(() => import('../pages/RecuperarSenha'));
+const BemVindo = lazy(() => import('../pages/BemVindo'));
 const Privacidade = lazy(() => import('../pages/Privacidade'));
 const Regras = lazy(() => import('../pages/Regras'));
 const Hoje = lazy(() => import('../pages/Hoje'));
@@ -21,21 +31,36 @@ export const router = createBrowserRouter([
   {
     element: <AppShell />,
     children: [
-      { path: '/login', element: <Login /> },
-      { path: '/cadastro', element: <Cadastro /> },
+      {
+        element: <RotaVisitante />,
+        children: [
+          { path: '/entrar', element: <Entrar /> },
+          { path: '/criar-conta', element: <CriarConta /> },
+        ],
+      },
+      { path: '/recuperar-senha', element: <RecuperarSenha /> },
+      // Rotas antigas (docs/FRONTEND.md §3): redirecionam preservando a query.
+      { path: '/login', element: <RedirecionarPreservandoBusca para="/entrar" /> },
+      { path: '/cadastro', element: <RedirecionarPreservandoBusca para="/criar-conta" /> },
       { path: '/privacidade', element: <Privacidade /> },
       { path: '/regras', element: <Regras /> },
       {
         element: <RotaProtegida />,
         children: [
+          { path: '/bem-vindo', element: <BemVindo /> },
           {
-            element: <RotaInscrito />,
+            element: <RotaPerfilCompleto />,
             children: [
-              { path: '/hoje', element: <Hoje /> },
-              // Transitório: a aba "Desafio" leva à home atual até a página /desafio existir (R6).
-              { path: '/desafio', element: <Navigate to="/hoje" replace /> },
-              { path: '/progresso', element: <Progresso /> },
-              { path: '/ranking', element: <Ranking /> },
+              {
+                element: <RotaInscrito />,
+                children: [
+                  { path: '/hoje', element: <Hoje /> },
+                  // Transitório: a home /desafio chega na R6; até lá leva ao check-in de hoje.
+                  { path: '/desafio', element: <Navigate to="/hoje" replace /> },
+                  { path: '/progresso', element: <Progresso /> },
+                  { path: '/ranking', element: <Ranking /> },
+                ],
+              },
             ],
           },
           {

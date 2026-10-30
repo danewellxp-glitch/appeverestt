@@ -99,7 +99,9 @@ export class AuthService {
     const porEmail = await this.prisma.usuario.findUnique({ where: { email } });
     if (porEmail) {
       // Só vincula com e-mail verificado: senão qualquer um tomaria a conta de outra pessoa.
-      if (!d.emailVerificado || (porEmail.firebaseUid && porEmail.firebaseUid !== d.uid)) {
+      // Com e-mail verificado, revincula mesmo que outro uid estivesse ligado (conta recriada no
+      // Firebase): a posse do e-mail está provada e a pessoa não fica trancada para sempre.
+      if (!d.emailVerificado) {
         throw new ErroApp('EMAIL_EM_USO', 'Este e-mail já tem conta. Entre com ele.');
       }
       return this.prisma.usuario.update({ where: { id: porEmail.id }, data: { firebaseUid: d.uid } });

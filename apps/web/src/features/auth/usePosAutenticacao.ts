@@ -9,12 +9,13 @@ import { mensagemGeral } from './formulario';
 import { destinoSeguro } from './sessao';
 
 /**
- * O que fazer quando há uma sessão (logo após login/cadastro, ou ao abrir /login e
- * /cadastro já logado):
- *   ?acao=inscrever → inscreve no desafio atual → /hoje (erro: fica na tela com a mensagem)
- *   ?volta=/rota    → volta para a rota (só caminhos internos)
- *   senão           → /hoje se inscrito, "/" se não.
- * Roda uma única vez por montagem (o `me` aparece no cache e o efeito dispara).
+ * Para onde ir quando já há sessão (logo depois de entrar, ou ao abrir /entrar já logado),
+ * na ordem (docs/FRONTEND.md §5.4):
+ *   perfil incompleto      → /bem-vindo (preservando acao/volta)
+ *   ?acao=inscrever         → inscreve → /bem-vindo?etapa=vaga (revelação da vaga)
+ *   ?volta=/rota            → volta (só caminhos internos)
+ *   inscrito / não inscrito → /desafio / "/"
+ * Roda uma vez por montagem.
  */
 export function usePosAutenticacao(me: MeResposta | null | undefined) {
   const [params] = useSearchParams();
@@ -32,6 +33,14 @@ export function usePosAutenticacao(me: MeResposta | null | undefined) {
     iniciado.current = true;
 
     async function concluir(sessao: MeResposta): Promise<void> {
+      if (!sessao.usuario.perfilCompleto) {
+        const busca = new URLSearchParams();
+        if (acao) busca.set('acao', acao);
+        if (volta) busca.set('volta', volta);
+        const q = busca.toString();
+        void navegar(`/bem-vindo${q ? `?${q}` : ''}`, { replace: true });
+        return;
+      }
       if (acao === 'inscrever' && !sessao.participacao) {
         try {
           const desafio = await qc.ensureQueryData({
@@ -39,13 +48,13 @@ export function usePosAutenticacao(me: MeResposta | null | undefined) {
             queryFn: ({ signal }) => api<DesafioAtual>('/desafios/atual', { signal }),
           });
           await inscrever(desafio.slug);
-          void navegar('/hoje', { replace: true });
+          void navegar('/bem-vindo?etapa=vaga', { replace: true });
         } catch (e) {
           setErro(mensagemGeral(e));
         }
         return;
       }
-      const destino = destinoSeguro(volta) ?? (sessao.participacao ? '/hoje' : '/');
+      const destino = destinoSeguro(volta) ?? (sessao.participacao ? '/desafio' : '/');
       void navegar(destino, { replace: true });
     }
 
@@ -53,8 +62,6 @@ export function usePosAutenticacao(me: MeResposta | null | undefined) {
   }, [me, acao, volta, qc, inscrever, navegar]);
 
   return {
-    /** Há sessão e o redirecionamento/inscrição está em andamento. */
-    redirecionando: Boolean(me) && erro === null,
     /** Falha ao inscrever depois de entrar (ex.: vagas esgotadas). */
     erroInscricao: erro,
   };

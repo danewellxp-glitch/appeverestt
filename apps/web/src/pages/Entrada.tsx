@@ -10,6 +10,7 @@ import { useInscrever } from '../features/desafio/useInscrever';
 import { BotaoBaixarApp } from '../features/pwa/BotaoBaixarApp';
 import { ehApiError } from '../lib/api';
 import { formatarData } from '../lib/datas';
+import { preCarregarAuth } from '../lib/firebase';
 import { useDesafioAtual, useMe } from '../lib/queries';
 
 const CLASSE_LINK_PRIMARIO =
@@ -59,7 +60,9 @@ function BarraTopo({ me, mePendente }: { me: MeResposta | null; mePendente: bool
         ) : (
           !mePendente && (
             <Link
-              to="/login"
+              to="/entrar"
+              onPointerDown={preCarregarAuth}
+              onFocus={preCarregarAuth}
               className="flex min-h-11 items-center rounded-xl px-2 text-sm font-semibold text-texto-2 hover:text-texto"
             >
               Já tenho conta —&nbsp;<span className="font-bold text-texto underline underline-offset-4">Entrar</span>
@@ -127,7 +130,7 @@ function AcaoPrincipal({
 }) {
   if (me?.participacao) {
     return (
-      <Link to="/hoje" className={CLASSE_LINK_PRIMARIO}>
+      <Link to="/desafio" className={CLASSE_LINK_PRIMARIO}>
         Ir para o desafio
         <ArrowRight className="size-5" aria-hidden />
       </Link>
@@ -149,6 +152,8 @@ function AcaoPrincipal({
     <Botao
       larguraTotal
       onClick={aoEntrar}
+      onPointerDown={me ? undefined : preCarregarAuth}
+      onFocus={me ? undefined : preCarregarAuth}
       carregando={inscrevendo}
       className="min-h-12 text-base font-black"
       icone={<ArrowRight className="size-5" aria-hidden />}
@@ -171,10 +176,15 @@ export default function Entrada() {
 
   function entrar(slug: string) {
     if (!me) {
-      void navegar('/cadastro?acao=inscrever');
+      void navegar('/criar-conta?acao=inscrever');
       return;
     }
-    inscrever.mutate(slug, { onSuccess: () => void navegar('/hoje') });
+    // A inscrição exige o cadastro completo (X11): a /bem-vindo cuida disso e da vaga.
+    if (!me.usuario.perfilCompleto) {
+      void navegar('/bem-vindo?acao=inscrever');
+      return;
+    }
+    inscrever.mutate(slug, { onSuccess: () => void navegar('/bem-vindo?etapa=vaga') });
   }
 
   return (
