@@ -27,7 +27,7 @@ import { type ErrosCampos, errosDoServidor, mensagemGeral } from '../features/au
 import { useAtualizarPerfil } from '../features/auth/perfil';
 import { useExcluirConta } from '../features/auth/useExcluirConta';
 import { useLogout } from '../features/auth/useLogout';
-import { ModalInstrucoesIOS } from '../features/pwa/ModalInstrucoesIOS';
+import { FolhaInstalar } from '../features/pwa/FolhaInstalar';
 import { useInstallPrompt } from '../features/pwa/useInstallPrompt';
 import { useMe } from '../lib/queries';
 import { type PreferenciaTema, useTema } from '../lib/tema';
@@ -110,8 +110,7 @@ export default function Perfil() {
   const excluir = useExcluirConta();
   const atualizar = useAtualizarPerfil();
   const instalacao = useInstallPrompt();
-  const [folha, setFolha] = useState<'dados' | 'excluir' | null>(null);
-  const [modalIos, setModalIos] = useState(false);
+  const [folha, setFolha] = useState<'dados' | 'excluir' | 'instalar' | null>(null);
   const [errosServidor, setErrosServidor] = useState<ErrosCampos<CampoPerfil>>({});
   const [erroDados, setErroDados] = useState<string | null>(null);
 
@@ -158,18 +157,6 @@ export default function Perfil() {
     });
   }
 
-  async function instalar() {
-    if (instalacao.podeInstalar) {
-      const r = await instalacao.instalar();
-      if (r !== 'indisponivel') return;
-    }
-    if (instalacao.ios) {
-      setModalIos(true);
-      return;
-    }
-    toast('Abra o menu do navegador e escolha "Instalar app" ou "Adicionar à tela inicial".', { duracao: 6000 });
-  }
-
   return (
     <div className="flex flex-col gap-4">
       <header className="surgir mt-2 flex flex-col items-center gap-2 text-center">
@@ -204,7 +191,7 @@ export default function Perfil() {
 
       <Lista titulo="Atalhos">
         <LinhaBotao Icone={IdCard} rotulo="Meus dados" haspopup aoClicar={() => setFolha('dados')} />
-        {!instalacao.instalado && <LinhaBotao Icone={Download} rotulo="Instalar o app" aoClicar={() => void instalar()} />}
+        {!instalacao.instalado && <LinhaBotao Icone={Download} rotulo="Instalar o app" haspopup aoClicar={() => setFolha('instalar')} />}
         <LinhaLink para="/regras" Icone={BookOpen} rotulo="Regras" />
         <LinhaLink para="/privacidade" Icone={ShieldCheck} rotulo="Política de privacidade" />
         {u.papel === 'ADMIN' && <LinhaLink para="/admin" Icone={UserCog} rotulo="Painel do embaixador" />}
@@ -240,7 +227,7 @@ export default function Perfil() {
         </Botao>
       </FolhaInferior>
 
-      <ModalInstrucoesIOS aberto={modalIos} onFechar={() => setModalIos(false)} />
+      <FolhaInstalar aberta={folha === 'instalar'} aoFechar={() => setFolha(null)} />
     </div>
   );
 }

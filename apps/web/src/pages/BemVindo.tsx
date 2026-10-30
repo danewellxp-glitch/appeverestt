@@ -13,6 +13,7 @@ import { lerAceitePendente, limparAceitePendente, useAtualizarPerfil } from '../
 import { destinoSeguro } from '../features/auth/sessao';
 import { api, ehApiError } from '../lib/api';
 import { chaves, useDesafioAtual, useMe } from '../lib/queries';
+import { LinkNav } from '../components/layout/LinkNav';
 import { marcarDirecao } from '../lib/transicoes';
 
 const ERROS_SEM_VAGA = ['VAGAS_ESGOTADAS', 'INSCRICOES_FECHADAS', 'DESAFIO_ENCERRADO', 'NAO_ENCONTRADO'] as const;
@@ -60,12 +61,12 @@ function SemVaga({ mensagem }: { mensagem: string }) {
     <section className="flex flex-col gap-4 py-6">
       <Alerta tipo="erro">{mensagem}</Alerta>
       <p className="text-sm text-texto-2">Seus dados ficaram salvos e você continua logado.</p>
-      <Link
+      <LinkNav
         to="/"
         className="press inline-flex h-[54px] items-center justify-center rounded-full bg-superficie-2 font-semibold"
       >
         Voltar ao início
-      </Link>
+      </LinkNav>
     </section>
   );
 }

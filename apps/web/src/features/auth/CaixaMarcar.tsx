@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from 'react';
-import { Link } from 'react-router';
+import { LinkNav } from '../../components/layout/LinkNav';
 
 /** Checkbox nativo grande (22 px, vermelho) com texto e erro ligados por aria-describedby. */
 export function CaixaMarcar({
@@ -43,9 +43,9 @@ export function TextoAceite() {
   return (
     <>
       Li e aceito a{' '}
-      <Link to="/privacidade" className="text-texto underline decoration-vermelho underline-offset-[3px]">
+      <LinkNav to="/privacidade" className="text-texto underline decoration-vermelho underline-offset-[3px]">
         política de privacidade
-      </Link>
+      </LinkNav>
       , incluindo o uso das minhas fotos de prova.
     </>
   );

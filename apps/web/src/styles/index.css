@@ -168,6 +168,10 @@
   h3 {
     text-wrap: balance;
   }
+  /* Título focado por código depois de navegar (AppShell): sem anel, é só ponto de partida. */
+  main h1[tabindex='-1']:focus {
+    outline: none;
+  }
   /* Foco sempre visível (teclado). */
   :focus-visible {
     outline: 2px solid var(--color-vermelho-texto);

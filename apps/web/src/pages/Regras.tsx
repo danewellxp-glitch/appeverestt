@@ -13,11 +13,11 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
-import { Link } from 'react-router';
 import { BotaoVoltar } from '../components/layout/BotaoVoltar';
 import { Skeleton } from '../components/ui/basicos';
 import { regrasDiarias, regrasVagasEPremio, textosRegras, type IdRegra, type Regra } from '../content/regras';
 import { formatarData } from '../lib/datas';
+import { LinkNav } from '../components/layout/LinkNav';
 import { useDesafioAtual, useMe } from '../lib/queries';
 
 const ICONES: Record<IdRegra, LucideIcon> = {
@@ -110,13 +110,13 @@ export default function Regras() {
       <p className="text-xs text-texto-2">{textosRegras.rodape}</p>
 
       {!me?.participacao && (
-        <Link
+        <LinkNav
           to="/"
           className="press inline-flex h-[54px] w-full items-center justify-center gap-2.5 rounded-full bg-vermelho px-5 font-semibold text-sobre-vermelho hover:bg-vermelho-escuro"
         >
           Quero participar
           <ArrowRight className="size-5" aria-hidden />
-        </Link>
+        </LinkNav>
       )}
     </article>
   );

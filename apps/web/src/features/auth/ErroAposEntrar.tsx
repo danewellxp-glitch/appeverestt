@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router';
+import { LinkNav } from '../../components/layout/LinkNav';
 import { Alerta } from '../../components/ui/basicos';
 
 /** Exibido quando a pessoa entrou/cadastrou, mas a inscrição no desafio falhou (ex.: vagas esgotadas). */
@@ -14,13 +14,13 @@ export function ErroAposEntrar({ mensagem }: { mensagem: string }) {
       <p className="text-texto-2">
         Você já está logado. Volte ao início para ver a situação atualizada das vagas.
       </p>
-      <Link
+      <LinkNav
         to="/"
         className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-borda bg-superficie-2 px-4 text-sm font-bold uppercase tracking-wide text-texto hover:border-texto-2"
       >
         <ArrowLeft className="size-4" aria-hidden />
         Voltar ao início
-      </Link>
+      </LinkNav>
     </section>
   );
 }

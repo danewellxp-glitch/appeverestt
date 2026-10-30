@@ -104,4 +104,7 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | 2026-10-30 | v2 R9 | No admin, o dia aberto por padrão é gravado em `?dia=N` ao abrir | Depois de aprovar, a fila muda e a seleção pulava para outro dia |
 | 2026-10-30 | v2 R9 | Motivo da invalidação com 5+ caracteres só no front (o schema da API exige não vazio) | Segue a seção 8.3 sem mudar o contrato |
 | 2026-10-30 | v2 R9 | Avatar no admin só com iniciais (a lista de admin não traz `fotoUrl`) | Evita mudar o contrato só para isso; foto aparece no ranking e no feed |
+| 2026-10-30 | v2 R10 | Entrada (`/`) refeita nesta fase | A spec marca a Entrada como "refazer" (§3, §9.1), mas nenhuma fase a listava; é a primeira tela e a R11 roda axe/Lighthouse nela |
+| 2026-10-30 | v2 R10 | `WEB_ORIGIN` de dev inclui `http://localhost:4173` (`.env` e `.env.example`) | O preview do build (PWA) faz POST para a API; sem isso, a checagem de Origin devolvia 403 |
+| 2026-10-30 | v2 R10 | Precache do SW passou de 39 para 55 entradas (~1 MB) com os chunks do Firebase e das telas novas | Funciona offline como antes; avaliar na R11 (Lighthouse) se vale excluir os chunks do Firebase do precache |
 

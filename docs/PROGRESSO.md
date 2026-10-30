@@ -193,10 +193,10 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [x] **DoD** (Playwright, login real): trocar para Escuro no Perfil vale em /progresso e depois de recarregar (`everest-tema=escuro`), e volta para Sistema; conta nova criada e excluída → `/` com "Conta excluída." e o ranking mostra "Participante removido"; no admin, aprovar baixa "para revisar" (8 → 7), invalidar sem motivo é bloqueado e, com motivo, o ranking recalcula (Beatriz 2 → 1 dia; revalidado depois)
 
 ## R10: PWA e polimento de navegação
-- [ ] Folha "Instalar o app" com `Segmentado` iPhone/Android (substitui o `ModalInstrucoesIOS`)
-- [ ] `view-transition-name: tabbar`; foco no `h1` depois de navegar; direção certa em todos os links
-- [ ] `NaoEncontrada` no novo visual
-- [ ] **DoD:** build + preview; manifest e SW como antes; transições no Chrome e fallback sem `startViewTransition`
+- [x] Folha "Instalar o app" (`FolhaInstalar`) com `Segmentado` iPhone/Android, prompt nativo quando existe e "Copiar o link do app"; substitui o `ModalInstrucoesIOS` (removido) na Entrada e no Perfil; marcador Q2 mantido em `urlDoApp`
+- [x] `view-transition-name: tabbar` (desde a R4); foco no `h1` depois de navegar (`AppShell`, espera o skeleton sair); `ScrollRestoration`; direção em todos os links (`LinkNav` com `avancar`/`voltar`/`aba`)
+- [x] `NaoEncontrada` no visual novo ("Trilha errada"); **Entrada (`/`) refeita** (§9.1: marca, montanha, hero, card de vagas com Contador, CTA, "Baixar o app", regras), que não estava em nenhuma fase
+- [x] **DoD** (Playwright no `build + preview`): manifest "Everest Desafio" standalone com 3 ícones, SW ativo, 55 entradas no cache e 0 de `/api`; `startViewTransition` chamado em 5 de 5 navegações por toque (abas, link e voltar); com `delete Document.prototype.startViewTransition` a navegação segue instantânea e sem erro; foco cai no `h1` ("Progresso") depois de trocar de aba
 
 ## R11: Qualidade
 - [ ] Playwright com o emulador do Firebase: smoke criar conta → bem-vindo → vaga → check-in com 3 fotos → dia concluído → ranking; smoke Google → bem-vindo

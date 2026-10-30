@@ -1,119 +1,89 @@
 import type { DesafioAtual, MeResposta } from '@everest/shared';
-import { ArrowRight, BookOpen, CalendarDays, Flag, LogOut, Shield } from 'lucide-react';
-import { Link, useNavigate } from 'react-router';
+import { ArrowRight, BookOpen } from 'lucide-react';
+import type { CSSProperties } from 'react';
+import { useNavigate } from 'react-router';
+import { LinkNav } from '../components/layout/LinkNav';
 import { Watermark } from '../components/layout/Watermark';
-import { Botao } from '../components/ui/Botao';
-import { Alerta, Card, Skeleton } from '../components/ui/basicos';
+import { Alerta, Skeleton } from '../components/ui/basicos';
 import { Barra } from '../components/ui/Barra';
-import { useLogout } from '../features/auth/useLogout';
+import { Botao } from '../components/ui/Botao';
+import { Contador } from '../components/ui/Contador';
 import { useInscrever } from '../features/desafio/useInscrever';
 import { BotaoBaixarApp } from '../features/pwa/BotaoBaixarApp';
 import { ehApiError } from '../lib/api';
-import { formatarData } from '../lib/datas';
+import { formatarDataCurta } from '../lib/datas';
 import { preCarregarAuth } from '../lib/firebase';
 import { useDesafioAtual, useMe } from '../lib/queries';
 
-const CLASSE_LINK_PRIMARIO =
-  'inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-vermelho px-4 py-3 text-base font-black uppercase tracking-wide text-sobre-vermelho hover:bg-vermelho-escuro';
+const CLASSE_CTA =
+  'press inline-flex h-[54px] w-full items-center justify-center gap-2.5 rounded-full bg-vermelho px-5 font-semibold text-sobre-vermelho hover:bg-vermelho-escuro';
 
-function primeiroNome(nome: string): string {
-  return nome.trim().split(/\s+/)[0] ?? nome;
-}
-
-function textoStatus(d: DesafioAtual): string {
-  if (d.status === 'ENCERRADO') return 'Desafio encerrado';
-  if (d.status === 'EM_ANDAMENTO') return `Em andamento · dia ${d.diaAtual ?? 1} de ${d.totalDias}`;
-  if (d.diasParaInicio <= 1) return 'Começa amanhã';
-  return `Começa em ${d.diasParaInicio} dias`;
-}
-
-function BarraTopo({ me, mePendente }: { me: MeResposta | null; mePendente: boolean }) {
-  const logout = useLogout();
+/** Montanha da capa: três serras, pico com neve, trilha tracejada vermelha e bandeira. */
+function MontanhaCapa() {
   return (
-    <header className="pt-safe">
-      <div className="mx-auto flex min-h-14 max-w-md items-center justify-between gap-3 px-5">
-        <span className="rotulo">Everest · 30 dias</span>
-        {me ? (
-          <div className="flex min-w-0 items-center gap-1">
-            <span className="truncate text-sm text-texto-2">
-              Olá, <strong className="font-bold text-texto">{primeiroNome(me.usuario.nome)}</strong>
-            </span>
-            {me.usuario.papel === 'ADMIN' && (
-              <Link
-                to="/admin"
-                aria-label="Painel do embaixador"
-                className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-texto-2 hover:text-texto"
-              >
-                <Shield className="size-5" aria-hidden />
-              </Link>
-            )}
-            <button
-              type="button"
-              onClick={() => logout.mutate()}
-              disabled={logout.isPending}
-              className="flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-sm font-semibold text-texto-2 hover:text-texto"
-            >
-              <LogOut className="size-4" aria-hidden />
-              Sair
-            </button>
-          </div>
-        ) : (
-          !mePendente && (
-            <Link
-              to="/entrar"
-              onPointerDown={preCarregarAuth}
-              onFocus={preCarregarAuth}
-              className="flex min-h-11 items-center rounded-xl px-2 text-sm font-semibold text-texto-2 hover:text-texto"
-            >
-              Já tenho conta —&nbsp;<span className="font-bold text-texto underline underline-offset-4">Entrar</span>
-            </Link>
-          )
-        )}
-      </div>
+    <svg viewBox="0 0 390 150" preserveAspectRatio="xMidYMax slice" aria-hidden className="block size-full">
+      <path className="fill-superficie-2" d="M0 150 L0 96 L52 70 L98 92 L150 48 L196 80 L240 54 L292 86 L340 60 L390 84 L390 150Z" />
+      <path className="fill-borda" d="M0 150 L0 118 L60 92 L104 112 L160 76 L206 104 L262 86 L320 108 L390 98 L390 150Z" />
+      <path className="fill-texto" d="M70 150 L168 40 L196 62 L214 30 L250 72 L312 150Z" />
+      <path className="fill-fundo" d="M214 30 L226 46 L218 44 L212 52 L204 44 L200 50 L196 62 L204 46Z" />
+      <path
+        className="stroke-vermelho"
+        d="M110 150 C 150 128 170 120 182 98 S 196 74 206 58 S 210 40 214 31"
+        fill="none"
+        strokeWidth={2}
+        strokeDasharray="3 5"
+        strokeLinecap="round"
+      />
+      <line className="stroke-texto" x1="214" y1="31" x2="214" y2="12" strokeWidth={1.5} />
+      <path className="fill-vermelho" d="M214 12 L230 16.5 L214 21Z" />
+    </svg>
+  );
+}
+
+function Topo({ me, mePendente }: { me: MeResposta | null; mePendente: boolean }) {
+  const classeLink =
+    'inline-flex min-h-11 items-center px-1 text-sm font-semibold underline decoration-vermelho underline-offset-4';
+  return (
+    <header className="surgir flex items-center justify-between gap-3">
+      <span className="flex items-center gap-2 font-display text-xl font-black tracking-[0.12em]">
+        <img src="/logo.webp" alt="" width={28} height={28} className="size-7 object-contain" />
+        EVEREST
+      </span>
+      {mePendente ? null : me?.participacao ? (
+        <LinkNav to="/desafio" className={classeLink}>
+          Ir para o desafio
+        </LinkNav>
+      ) : me ? (
+        <LinkNav to="/perfil" className={classeLink}>
+          Minha conta
+        </LinkNav>
+      ) : (
+        <LinkNav to="/entrar" onPointerDown={preCarregarAuth} onFocus={preCarregarAuth} className={classeLink}>
+          Entrar
+        </LinkNav>
+      )}
     </header>
   );
 }
 
-function PainelVagas({ desafio }: { desafio: DesafioAtual }) {
+function CardVagas({ desafio }: { desafio: DesafioAtual }) {
   const preenchidas = Math.max(0, desafio.totalVagas - desafio.vagasDisponiveis);
+  const esgotado = desafio.vagasDisponiveis <= 0;
   return (
-    <Card className="flex flex-col gap-4 p-5">
-      <div className="flex items-center justify-between gap-3">
-        <h2 id="titulo-vagas" className="rotulo">
-          Vagas
-        </h2>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-borda px-2.5 py-1 text-xs font-semibold text-texto">
-          {desafio.status === 'EM_ANDAMENTO' && <span className="size-2 rounded-full bg-vermelho-texto" aria-hidden />}
-          {textoStatus(desafio)}
-        </span>
-      </div>
-      <p aria-live="polite" aria-atomic="true" className="text-lg font-semibold leading-snug">
-        <span className="text-5xl font-black tabular-nums text-texto">{desafio.vagasDisponiveis}</span>{' '}
-        <span className="font-bold">de {desafio.totalVagas} vagas disponíveis</span>
+    <section
+      aria-label="Vagas"
+      className="grid gap-2.5 rounded-3xl bg-superficie p-[18px] shadow-[inset_0_0_0_1px_var(--borda)]"
+    >
+      <p className="flex items-baseline justify-between gap-3" aria-live="polite">
+        <Contador valor={desafio.vagasDisponiveis} className="font-display text-[52px] leading-[0.9] font-extrabold" />
+        <span className="text-[13px] text-texto-2">{esgotado ? 'vagas: esgotado' : 'vagas restantes'}</span>
       </p>
-      <div className="flex flex-col gap-1.5">
-        <Barra valor={preenchidas} maximo={desafio.totalVagas} rotulo="Vagas preenchidas" />
-        <p className="text-xs text-texto-2">
-          {preenchidas} de {desafio.totalVagas} vagas preenchidas
-        </p>
-      </div>
-      <dl className="grid grid-cols-2 gap-3 border-t border-borda pt-4 text-sm">
-        <div className="flex flex-col gap-1">
-          <dt className="rotulo flex items-center gap-1.5">
-            <CalendarDays className="size-3.5" aria-hidden />
-            Início
-          </dt>
-          <dd className="font-bold">{formatarData(desafio.dataInicio)}</dd>
-        </div>
-        <div className="flex flex-col gap-1">
-          <dt className="rotulo flex items-center gap-1.5">
-            <Flag className="size-3.5" aria-hidden />
-            Fim
-          </dt>
-          <dd className="font-bold">{formatarData(desafio.dataFim)}</dd>
-        </div>
-      </dl>
-    </Card>
+      <Barra valor={preenchidas} maximo={desafio.totalVagas} rotulo="Vagas preenchidas" />
+      <p className="text-[13px] text-texto-2">
+        {preenchidas} de {desafio.totalVagas} vagas preenchidas
+        {esgotado ? '. Fique de olho no próximo desafio.' : ''}
+      </p>
+    </section>
   );
 }
 
@@ -130,20 +100,19 @@ function AcaoPrincipal({
 }) {
   if (me?.participacao) {
     return (
-      <Link to="/desafio" className={CLASSE_LINK_PRIMARIO}>
+      <LinkNav to="/desafio" className={CLASSE_CTA}>
         Ir para o desafio
         <ArrowRight className="size-5" aria-hidden />
-      </Link>
+      </LinkNav>
     );
   }
   let bloqueio: string | null = null;
   if (desafio.status === 'ENCERRADO') bloqueio = 'Desafio encerrado';
   else if (!desafio.inscricoesAbertas) bloqueio = 'Inscrições encerradas';
   else if (desafio.vagasDisponiveis <= 0) bloqueio = 'Vagas esgotadas';
-
   if (bloqueio) {
     return (
-      <Botao larguraTotal disabled className="min-h-12 text-base">
+      <Botao larguraTotal disabled>
         {bloqueio}
       </Botao>
     );
@@ -155,14 +124,14 @@ function AcaoPrincipal({
       onPointerDown={me ? undefined : preCarregarAuth}
       onFocus={me ? undefined : preCarregarAuth}
       carregando={inscrevendo}
-      className="min-h-12 text-base font-black"
       icone={<ArrowRight className="size-5" aria-hidden />}
     >
-      {inscrevendo ? 'Garantindo sua vaga…' : 'Entrar no desafio'}
+      Entrar no desafio
     </Botao>
   );
 }
 
+/** "/" (docs/FRONTEND.md §9.1): capa, vagas e entrada no desafio. Sem Firebase no bundle desta rota. */
 export default function Entrada() {
   const desafioQ = useDesafioAtual({ atualizarACada: 30_000 });
   const meQ = useMe();
@@ -170,90 +139,87 @@ export default function Entrada() {
   const navegar = useNavigate();
 
   const me = meQ.data ?? null;
-  // Erro de rede no /auth/me: segue como visitante (a landing não pode travar).
+  // Erro de rede no /auth/me: segue como visitante (a capa não pode travar).
   const mePendente = meQ.isPending && !meQ.isError;
   const semDesafio = ehApiError(desafioQ.error, 'NAO_ENCONTRADO');
+  const desafio = desafioQ.data;
 
   function entrar(slug: string) {
     if (!me) {
-      void navegar('/criar-conta?acao=inscrever');
+      void navegar('/criar-conta?acao=inscrever', { viewTransition: true });
       return;
     }
     // A inscrição exige o cadastro completo (X11): a /bem-vindo cuida disso e da vaga.
     if (!me.usuario.perfilCompleto) {
-      void navegar('/bem-vindo?acao=inscrever');
+      void navegar('/bem-vindo?acao=inscrever', { viewTransition: true });
       return;
     }
-    inscrever.mutate(slug, { onSuccess: () => void navegar('/bem-vindo?etapa=vaga') });
+    inscrever.mutate(slug, { onSuccess: () => void navegar('/bem-vindo?etapa=vaga', { viewTransition: true }) });
   }
 
   return (
-    <div className="relative flex min-h-dvh flex-col">
+    <div className="relative min-h-dvh">
       <Watermark />
-      <BarraTopo me={me} mePendente={mePendente} />
+      <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-4 px-5 pt-[calc(env(safe-area-inset-top)+16px)] pb-[calc(env(safe-area-inset-bottom)+24px)]">
+        <Topo me={me} mePendente={mePendente} />
 
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 px-5 pt-4 pb-10">
-        <section className="flex flex-col items-center text-center">
-          <img
-            src="/logo.webp"
-            alt="Everest"
-            width={112}
-            height={112}
-            className="size-28 object-contain drop-shadow-[0_0_24px_rgba(220,38,38,0.25)]"
-          />
-          <p className="rotulo mt-6">Desafio 30 dias</p>
-          <h1 className="mt-2 text-[2.6rem] font-black uppercase leading-[0.95] tracking-tight">
-            A sua <span className="text-vermelho">melhor</span> versão
+        <div className="surgir -mx-5 -mt-1 h-[150px]" style={{ '--i': 1 } as CSSProperties}>
+          <MontanhaCapa />
+        </div>
+
+        <div className="surgir grid gap-3" style={{ '--i': 2 } as CSSProperties}>
+          <p className="rotulo">
+            Desafio 30 dias{desafio ? ` · início ${formatarDataCurta(desafio.dataInicio)}` : ''}
+          </p>
+          <h1 className="font-display text-[min(76px,18vw)] leading-[0.88] font-black uppercase">
+            A sua
+            <br />
+            melhor
+            <br />
+            <span className="text-vermelho">versão</span>
           </h1>
-          <p className="mt-4 max-w-xs text-base text-texto-2">Construindo a sua melhor versão para 2027</p>
-        </section>
+          <p className="max-w-[34ch] text-[15px] text-texto-2">
+            Construindo a sua melhor versão para 2027. Água, treino, leitura, prova do dia e story, todos os dias, por
+            30 dias.
+          </p>
+        </div>
 
-        <section aria-labelledby="titulo-vagas" className="flex flex-col gap-4">
+        <div className="surgir grid gap-3" style={{ '--i': 3 } as CSSProperties}>
           {desafioQ.isPending ? (
-            <div role="status" aria-label="Carregando as vagas" className="flex flex-col gap-4">
-              <h2 id="titulo-vagas" className="sr-only">
-                Vagas
-              </h2>
-              <Skeleton className="h-60 w-full rounded-2xl" />
-              <Skeleton className="h-12 w-full" />
+            <div role="status" aria-label="Carregando as vagas" className="grid gap-3">
+              <Skeleton className="h-36 rounded-3xl" />
+              <Skeleton className="h-[54px] rounded-full" />
             </div>
           ) : semDesafio ? (
-            <Card className="flex flex-col gap-2 p-5 text-center">
-              <h2 id="titulo-vagas" className="text-xl font-bold">
-                Nenhum desafio aberto agora
-              </h2>
-              <p className="text-texto-2">
+            <section className="grid gap-2 rounded-3xl bg-superficie p-5 text-center shadow-[inset_0_0_0_1px_var(--borda)]">
+              <h2 className="text-lg font-bold">Nenhum desafio aberto agora</h2>
+              <p className="text-sm text-texto-2">
                 O próximo desafio ainda não foi aberto. Fique de olho no Instagram do Everest para não perder as
                 inscrições.
               </p>
-            </Card>
-          ) : desafioQ.isError ? (
-            <>
-              <h2 id="titulo-vagas" className="sr-only">
-                Vagas
-              </h2>
-              <Alerta
-                tipo="erro"
-                acao={
-                  <Botao variante="fantasma" className="-my-2" onClick={() => void desafioQ.refetch()}>
-                    Tentar de novo
-                  </Botao>
-                }
-              >
-                Não foi possível carregar o desafio. Verifique a conexão.
-              </Alerta>
-            </>
+            </section>
+          ) : desafioQ.isError || !desafio ? (
+            <Alerta
+              tipo="erro"
+              acao={
+                <Botao variante="secundario" tamanho="sm" onClick={() => void desafioQ.refetch()}>
+                  Tentar de novo
+                </Botao>
+              }
+            >
+              Não foi possível carregar o desafio. Verifique a conexão.
+            </Alerta>
           ) : (
             <>
-              <PainelVagas desafio={desafioQ.data} />
+              <CardVagas desafio={desafio} />
               {mePendente ? (
-                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-[54px] rounded-full" />
               ) : (
                 <AcaoPrincipal
-                  desafio={desafioQ.data}
+                  desafio={desafio}
                   me={me}
                   inscrevendo={inscrever.isPending}
-                  aoEntrar={() => entrar(desafioQ.data.slug)}
+                  aoEntrar={() => entrar(desafio.slug)}
                 />
               )}
               {inscrever.isError && (
@@ -263,26 +229,23 @@ export default function Entrada() {
               )}
             </>
           )}
-        </section>
-
-        <div className="flex flex-col gap-3">
-          <BotaoBaixarApp className="w-full" />
-          <Link
+          <BotaoBaixarApp />
+          <LinkNav
             to="/regras"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-bold uppercase tracking-wide text-texto hover:bg-superficie-2"
+            className="mx-auto inline-flex min-h-11 items-center gap-2 px-1 text-sm font-semibold underline decoration-vermelho underline-offset-4"
           >
             <BookOpen className="size-4" aria-hidden />
-            Ver as regras do desafio
-          </Link>
+            Ver as regras
+          </LinkNav>
         </div>
 
-        <footer className="mt-auto flex justify-center pb-safe">
-          <Link
+        <footer className="mt-auto flex justify-center">
+          <LinkNav
             to="/privacidade"
             className="inline-flex min-h-11 items-center px-2 text-xs text-texto-2 underline-offset-4 hover:text-texto hover:underline"
           >
             Política de privacidade
-          </Link>
+          </LinkNav>
         </footer>
       </main>
     </div>

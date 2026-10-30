@@ -1,7 +1,7 @@
 import { criarContaSchema } from '@everest/shared';
 import { LogIn } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router';
+import { useLocation, useSearchParams } from 'react-router';
 import { Alerta } from '../components/ui/basicos';
 import { Botao } from '../components/ui/Botao';
 import { CampoTexto } from '../components/ui/CampoTexto';
@@ -11,6 +11,7 @@ import { criarContaComEmail, entrarComGoogle } from '../features/auth/firebaseAu
 import { type ErrosCampos, errosDasIssues } from '../features/auth/formulario';
 import { marcarAceitePendente } from '../features/auth/perfil';
 import { Divisor, TelaAuth } from '../features/auth/TelaAuth';
+import { LinkNav } from '../components/layout/LinkNav';
 import { useAcaoAuth } from '../features/auth/useAcaoAuth';
 
 const CAMPOS = ['nome', 'email', 'senha', 'aceitouTermos'] as const;
@@ -74,9 +75,9 @@ export default function CriarConta() {
           tipo="erro"
           acao={
             acao.erroGeral.linkEntrar ? (
-              <Link to={{ pathname: '/entrar', search }} className="font-bold underline underline-offset-4">
+              <LinkNav to={{ pathname: '/entrar', search }} className="font-bold underline underline-offset-4">
                 Entrar
-              </Link>
+              </LinkNav>
             ) : undefined
           }
         >
