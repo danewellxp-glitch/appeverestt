@@ -107,8 +107,7 @@ export const instagramPadrao = '';
 export const hero = {
   /** Linhas do título; a última sai em vermelho. */
   titulo: ['A sua', 'melhor', 'versão'] as [string, string, string],
-  subtitulo: (totalDias: number) =>
-    `Construindo a sua melhor versão para 2027. Água, treino, leitura, prova do dia e story, todos os dias, por ${dias(totalDias)}.`,
+  subtitulo: (_totalDias: number) => 'Construindo a sua melhor versão para 2027.',
   saibaMais: 'Conheça o desafio',
   /** Selo acima do botão para quem já tem vaga. */
   seloVaga: (vaga: number, confirmada: boolean) =>
@@ -117,12 +116,13 @@ export const hero = {
 
 export const secaoDesafio = {
   eyebrow: 'O desafio',
-  titulo: '5 hábitos. Todo dia.',
+  /** Título em 3 partes; a do meio sai em vermelho. */
+  titulo: ['3 hábitos', 'simples', ', todos os dias!'] as [string, string, string],
   texto: (totalDias: number) =>
-    `Durante ${dias(totalDias)} seguidos você cumpre os mesmos 5 hábitos e registra tudo no app, com foto de prova. O dia só conta com os 5 feitos, e cada dia concluído sobe a sua escalada no ranking.`,
+    `Durante ${dias(totalDias)} seguidos você cumpre os mesmos 3 hábitos e registra tudo no app, com foto de prova. O dia só conta com os 3 feitos, e cada dia concluído sobe a sua escalada no ranking.`,
   numeros: (totalDias: number, totalVagas: number) => [
     { valor: numero.format(totalDias), rotulo: totalDias === 1 ? 'dia' : 'dias seguidos' },
-    { valor: '5', rotulo: 'hábitos por dia' },
+    { valor: '3', rotulo: 'hábitos por dia' },
     { valor: numero.format(totalVagas), rotulo: totalVagas === 1 ? 'vaga' : 'vagas' },
   ],
   tituloHabitos: 'Todo dia',
@@ -178,7 +178,7 @@ export function passosComoFunciona(p: {
     },
     {
       titulo: `${dias(p.totalDias)} de check-in`,
-      texto: 'Todo dia você marca os 5 hábitos no app, envia as 3 fotos e sobe no ranking.',
+      texto: 'Todo dia você marca os 3 hábitos no app, envia as 3 fotos e sobe no ranking.',
     },
   ];
 }

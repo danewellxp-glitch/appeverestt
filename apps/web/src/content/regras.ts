@@ -51,7 +51,7 @@ export function regrasDiarias(instagram: string, hashtag: string): Regra[] {
  * "Vagas e prêmio". `valorCentavos` null (desafio não carregado ou Pix não configurado neste
  * ambiente) omite a regra do pagamento, como a capa omite o preço.
  */
-export function regrasVagasEPremio(totalVagas: number | null, totalDias: number, valorCentavos: number | null = null): Regra[] {
+export function regrasVagasEPremio(totalVagas: number | null, _totalDias: number, valorCentavos: number | null = null): Regra[] {
   const pagamento: Regra[] =
     valorCentavos === null
       ? []
@@ -73,7 +73,7 @@ export function regrasVagasEPremio(totalVagas: number | null, totalDias: number,
     {
       id: 'PREMIO',
       titulo: 'Prêmio',
-      texto: `Camiseta de treino, whey e creatina para quem terminar os ${numero.format(totalDias)} dias em 1º no ranking.`,
+      texto: 'Haverá uma premiação.',
     },
     {
       id: 'DESEMPATE',
@@ -106,6 +106,6 @@ export const textosRegras = {
   // Todos os links dizem "Regras" (Perfil, home, landing); "Como funciona" é a seção da landing.
   titulo: 'Regras',
   notaDiaria:
-    'O dia só conta quando os 5 requisitos estão cumpridos. Só o dia de hoje pode ser editado, até 23:59 no horário de Brasília.',
+    'O dia só conta quando os 3 requisitos estão cumpridos. Só o dia de hoje pode ser editado, até 23:59 no horário de Brasília.',
   rodape: 'Foco em evolução de hábito, sem promessa de resultado físico.',
 } as const;

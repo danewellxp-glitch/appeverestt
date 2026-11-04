@@ -9,16 +9,23 @@ import { ID_SECAO_DESAFIO } from './Hero';
 import { numerosDoDesafio } from './numeros';
 import { SecaoLanding, SubtituloLanding } from './Secao';
 
-/** "O desafio": o que é, os 5 hábitos, os números, o prêmio, o vídeo do TT e o 2º "Quero participar". */
+/** "O desafio": o que é, os 3 hábitos, os números, o prêmio, o vídeo do TT e o 2º "Quero participar". */
 export function SecaoDesafio() {
   const { desafio } = useEstadoInscricao();
   const { totalDias, totalVagas } = numerosDoDesafio(desafio);
   const regras = regrasVagasEPremio(totalVagas, totalDias);
   const premio = regras.find((r) => r.id === 'PREMIO');
   const desempate = regras.find((r) => r.id === 'DESEMPATE');
+  const [tituloInicio, tituloDestaque, tituloFim] = secaoDesafio.titulo;
+  const titulo = (
+    <>
+      {tituloInicio} <span className="text-vermelho">{tituloDestaque}</span>
+      {tituloFim}
+    </>
+  );
 
   return (
-    <SecaoLanding id={ID_SECAO_DESAFIO} eyebrow={secaoDesafio.eyebrow} titulo={secaoDesafio.titulo}>
+    <SecaoLanding id={ID_SECAO_DESAFIO} eyebrow={secaoDesafio.eyebrow} titulo={titulo}>
       <p className="text-[15px] text-texto-2">{secaoDesafio.texto(totalDias)}</p>
 
       <ul className="grid grid-cols-3 gap-2.5">
@@ -45,7 +52,7 @@ export function SecaoDesafio() {
               {secaoDesafio.tituloPremio}
             </span>
           </span>
-          <p className="text-[17px] leading-snug font-bold">{premio.texto}</p>
+          <p className="text-[17px] leading-snug font-bold uppercase">{premio.texto.replace(/\.$/, '')}</p>
           {desempate && (
             <p className="text-xs text-pop-texto-2">
               <b className="font-semibold text-pop-texto">{secaoDesafio.rotuloDesempate}:</b> {desempate.texto}
