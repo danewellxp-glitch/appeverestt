@@ -7,7 +7,7 @@ import {
 } from '@everest/shared';
 import { Lock } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Navigate } from 'react-router';
+import { Navigate, useSearchParams } from 'react-router';
 import { BotaoVoltar } from '../components/layout/BotaoVoltar';
 import { Alerta, Skeleton } from '../components/ui/basicos';
 import { Botao } from '../components/ui/Botao';
@@ -18,6 +18,7 @@ import { CardLeitura } from '../features/checkin/CardLeitura';
 import { CardStory } from '../features/checkin/CardStory';
 import { IndicadorSalvamento } from '../features/checkin/IndicadorSalvamento';
 import { ResumoDia } from '../features/checkin/ResumoDia';
+import { useAcaoRapida } from '../features/checkin/useAcaoRapida';
 import { useCheckin } from '../features/checkin/useCheckin';
 import { useDiaSelecionado } from '../features/checkin/useDiaSelecionado';
 import { CardFotos } from '../features/fotos/CardFotos';
@@ -77,6 +78,9 @@ function ConteudoDia({
   const editavel = dia.editavel && online;
   const checkin = useCheckin(slug, dia, editavel);
   usePollingFotos(slug, dia);
+  // `?acao=agua|treino|leitura` (atalho do ícone): aplica uma vez e limpa a URL.
+  const [params, setParams] = useSearchParams();
+  useAcaoRapida({ params, setParams, dia, editavel, online, valores: checkin.valores, alterar: checkin.alterar, toast });
 
   const valores = checkin.valores;
   const pendentes = valores

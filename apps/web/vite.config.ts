@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { atalhosDoManifest } from './src/features/pwa/atalhos';
 
 // Destino do proxy /api (dev e preview). Os testes E2E (Playwright) apontam para a API de teste.
 const API_PROXY = process.env.VITE_API_PROXY ?? 'http://localhost:3000';
@@ -58,6 +59,8 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         display: 'standalone',
+        // Abre sempre em tela cheia de app (sem a barra do navegador).
+        display_override: ['standalone'],
         orientation: 'portrait',
         background_color: '#000000',
         theme_color: '#000000',
@@ -71,6 +74,8 @@ export default defineConfig({
             purpose: 'maskable',
           },
         ],
+        // Toque longo no ícone (Android): água, treino e leitura em 1 toque (features/pwa/atalhos.ts).
+        shortcuts: atalhosDoManifest(),
       },
       workbox: {
         // Só o app shell (assets do build + ícones). Nada de runtimeCaching:
@@ -78,9 +83,12 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,webp,woff2}'],
         // A UI usa as máscaras public/marca/*.png (entram pelo glob acima); logo.png é só a fonte
         // dos ícones do PWA (scripts/marca.cjs) e não precisa ir para o precache.
-        globIgnores: ['**/logo.png'],
+        // Fotos da landing (public/landing/) são grandes: carregam sob demanda, fora do precache.
+        globIgnores: ['**/logo.png', '**/landing/**'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api/],
+        // /__/* é o login do Firebase (popup e iframe do Google): tem que ir para a rede,
+        // senão o SW devolve o index.html e o popup mostra o 404 do app.
+        navigateFallbackDenylist: [/^\/api/, /^\/__\//],
         cleanupOutdatedCaches: true,
       },
       // SW desligado no `vite dev` (sem dev-dist); teste com build + preview.

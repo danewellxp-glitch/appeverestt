@@ -1,10 +1,11 @@
-import { Download, Link2, Share } from 'lucide-react';
+import { Download, Link2, Share, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { Botao } from '../../components/ui/Botao';
 import { FolhaInferior } from '../../components/ui/FolhaInferior';
 import { Segmentado } from '../../components/ui/Segmentado';
 import { useToast } from '../../components/ui/Toast';
 import { copiarTexto } from '../desafio/navegacao';
+import { ATALHOS_APP } from './atalhos';
 import { ehIOS, useInstallPrompt } from './useInstallPrompt';
 
 function ehLocal(url: string): boolean {
@@ -17,8 +18,9 @@ function ehLocal(url: string): boolean {
 }
 
 /**
- * Link público do app. TODO_DECISAO(Q2): VITE_APP_URL ainda não definido para produção.
- * Se o env apontar para localhost mas o app estiver publicado, usa a origem atual.
+ * Link público do app (Q2): `VITE_APP_URL`, que o build de produção recebe do docker-compose.prod.yml
+ * (`https://${DOMINIO_APP}`). Sem ele, ou se ele apontar para localhost num app publicado, usa a
+ * origem atual.
  */
 export function urlDoApp(): string {
   const origem = window.location.origin;
@@ -61,6 +63,12 @@ export function FolhaInstalar({ aberta, aoFechar }: { aberta: boolean; aoFechar:
     toast(ok ? 'Link copiado! Abra no navegador do celular.' : `Abra no celular: ${url}`, { duracao: ok ? 2400 : 8000 });
   }
 
+  async function copiarAtalho(nome: string, caminho: string) {
+    const url = `${urlDoApp().replace(/\/$/, '')}${caminho}`;
+    const ok = await copiarTexto(url);
+    toast(ok ? `Link "${nome}" copiado! Cole no app Atalhos.` : `Link "${nome}": ${url}`, { duracao: ok ? 2400 : 8000 });
+  }
+
   return (
     <FolhaInferior aberta={aberta} aoFechar={aoFechar} titulo="Instalar o app">
       <p className="text-[13px] text-texto-2">Fica na tela inicial, abre em tela cheia e funciona como um app.</p>
@@ -99,6 +107,34 @@ export function FolhaInstalar({ aberta, aoFechar }: { aberta: boolean; aoFechar:
           </Botao>
         </>
       )}
+      <section aria-labelledby="atalhos-rapidos" className="grid gap-2 rounded-2xl bg-superficie-2 px-3.5 py-3">
+        <h3 id="atalhos-rapidos" className="flex items-center gap-1.5 text-sm font-semibold">
+          <Zap className="size-4" aria-hidden /> Água, treino e leitura em 1 toque
+        </h3>
+        {sistema === 'android' ? (
+          <p className="text-[13px] text-texto-2">
+            Depois de instalar, toque e segure o ícone do Everest na tela inicial: aparecem os atalhos
+            {' '}
+            {ATALHOS_APP.map((a) => a.name).join(', ')}.
+          </p>
+        ) : (
+          <>
+            <p className="text-[13px] text-texto-2">
+              No app Atalhos do iPhone, crie um atalho &quot;Abrir URL&quot; com um destes links e adicione como widget
+              na tela inicial:
+            </p>
+            <ul className="flex flex-wrap gap-2">
+              {ATALHOS_APP.map((a) => (
+                <li key={a.acao}>
+                  <Botao tamanho="sm" variante="secundario" onClick={() => void copiarAtalho(a.name, a.url)}>
+                    Copiar link: {a.name}
+                  </Botao>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
       <button
         type="button"
         onClick={() => void copiarLink()}

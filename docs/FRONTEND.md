@@ -88,6 +88,7 @@ Use as versões estáveis atuais e siga a documentação **da versão instalada*
 | `/cadastro` | `/criar-conta` |
 | `/hoje` | `/desafio/dia/<diaAtual>`, ou `/desafio` se o desafio não estiver em andamento |
 | `/hoje?dia=N` | `/desafio/dia/N` |
+| `/hoje?acao=agua\|treino\|leitura` | `/desafio/dia/<diaAtual>?acao=...` (ou `/desafio` fora do período). O check-in aplica a ação uma vez (água +250 ml, treino feito, leitura = meta), salva na hora, mostra um toast e limpa a URL. É a entrada dos `shortcuts` do manifest (toque longo no ícone no Android) e dos atalhos do app Atalhos no iPhone (`features/checkin/acaoRapida.ts`, `features/pwa/atalhos.ts`) |
 
 **Novos guards** (em `features/auth/rotas.tsx`):
 
@@ -583,7 +584,13 @@ export function abrirComTransformacao(el: HTMLElement, nome: string, navegar: ()
   - Pílula flutuante: `left/right 14 px`, `bottom 14 px + safe-area`, altura 64 px, fundo `superficie`, sombra.
   - Indicador vermelho animado (seção 7.2) e itens com ícone + rótulo de 11 px.
   - **Abas:** Desafio (`Flag`), Progresso (`ChartLine`), Ranking (`Trophy`), Perfil (`User`).
-  - Some com `translateY(120%)` nas rotas sem abas.
+  - **Quando aparece (X17, 2026-11-04):** em todas as telas do `AppShell` para quem tem o pagamento
+    confirmado (inclusive dia, regras, privacidade, feedback, painel do embaixador e 404), no navegador
+    e no app instalado. Some com `translateY(120%)` só no fluxo de login/cadastro/pagamento
+    (`ROTAS_SEM_ABAS`) e para quem ainda não teve o pagamento confirmado. A landing (`/`) fica fora do
+    `AppShell` e nunca tem barra.
+  - Aba ativa: a rota ou uma sub-rota dela; `/regras`, `/privacidade`, `/feedback` e `/admin/*` acendem
+    "Perfil" (são abertas a partir dele).
 - **`BotaoVoltar`:** círculo de 44 px, `aria-label="Voltar"`. Usa `navigate(-1)` se houver histórico interno; senão vai para a rota pai.
 - **`Watermark`:** inalterado; a cor segue o `texto` com 5% de opacidade.
 

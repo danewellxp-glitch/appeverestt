@@ -230,3 +230,64 @@ Marque `[x]` somente o que foi **verificado** (comando rodado / teste passando).
 - [ ] `pnpm check:launch` sem marcadores
 - [ ] **DoD:** login com Google no iPhone com o app instalado (redirect) e no Android (popup) no domínio real
 - [ ] Contas do dono (`docs/CONTAS.md`) e `PIX_COPIA_E_COLA` real na API de produção
+
+## R16: App instalado, barra de abas fixa e correções do front (2026-11-04)
+- [x] `features/pwa/standalone.ts`: detecção única do app instalado (`rodandoStandalone`, usada também na Entrada, na instalação e no login do iOS) e `aplicarModoApp` (viewport sem zoom, `html[data-app]`, pinça e duplo toque cancelados), só no app instalado (X17)
+- [x] Barra de abas em todas as telas de quem tem o pagamento confirmado, menos login/cadastro/pagamento (`ROTAS_SEM_ABAS`); `/regras`, `/privacidade`, `/feedback` e `/admin/*` acendem a aba Perfil
+- [x] Correções: cabeçalho do TT duplicado quando a foto falha; "começa hoje" sem desafio carregado; alerta antigo no "Adicionar participante"; erro duplicado no formulário do desafio; "Pagamento em análise" no Perfil; foco preso às abas do painel; "Vagas esgotadas" alcançável por leitor de tela; h1 de /regras volta a "Regras"; rolagem da landing restaurada ao voltar; `BotaoBaixarApp` órfão removido
+- [x] **DoD:** typecheck, lint e `pnpm --filter web test` verdes; Playwright no build (API simulada, 390×844): barra presente em 11 rotas de confirmado e ausente para pendente/visitante; app instalado com viewport travado, `touch-action: pan-x pan-y` e barra presa no fundo depois de rolar (27/27)
+- [x] Verificação com axe (subagente, API simulada, 12 rotas × 2 temas): zero violações; nada do `<main>` fica sob a barra; folhas inferiores ficam acima dela
+- [x] Corrigido (já existia desde a R6): os textos sr-only da faixa de dias escapavam do trilho e esticavam `/desafio` para ~1.567 px; no Chrome do celular a barra de abas e o botão de check-in saíam da tela. Trilho com `relative`; página com 390 px e dia atual centralizado com desvio 0 px
+- [ ] Limite conhecido (já existia): um segundo toque em outra aba durante a animação de troca (~0,5 s) se perde, porque o Chrome manda os toques para o `<html>` enquanto a View Transition roda (`pointer-events: none` no véu não resolve)
+- [ ] E2E completo do web (`pnpm --filter web test:e2e`) não rodado: o emulador do Firebase precisa de Java, que não está instalado neste servidor
+- [ ] Conferir no celular depois do deploy: pinça e duplo toque sem zoom no app instalado (Android e iPhone)
+
+## Backlog por prioridade (2026-11-04)
+P0 = participante real perde dia ou ganha dia indevido · P1 = número errado ou regra só no front · P2 = texto incoerente · P3 = depende do dono · P4 = crescimento
+
+### R17: P0, regras do dia e das fotos
+- [x] Foto confirmada depois da virada do dia não conta para o dia anterior (`confirmar` checa a janela e descarta o envio)
+- [x] Tolerância de 5 min na virada da meia-noite para check-in e fotos que já estavam a caminho (`TOLERANCIA_VIRADA_MS`, vale também para o último dia)
+- [x] Trocar uma foto não apaga a anterior antes de a nova chegar: migration `troca_foto_sem_perda` (índice único parcial só para fotos recebidas), a nova fica PENDENTE ao lado e a troca acontece na confirmação
+- [x] **DoD:** api unit `janela.spec.ts` (9); api e2e 99/99 (2 novos: troca que não chega mantém o dia concluído; confirmação depois da virada → `DIA_NAO_EDITAVEL`)
+- [x] Revisão independente (subagente) corrigida: a confirmação trava a foto nova antes de apagar a antiga (se a nova sumiu, nada sai; `fotos-troca.e2e-spec.ts`); a fila do worker vem antes de apagar os arquivos antigos, que viram best-effort; o modo app não cancela mais `touchend`/`touchmove` (engolia toques rápidos em "+1 página"); funil monotônico (isentos contam em "informaram"); admin que avisou Pix conta na receita; formulário de novo desafio com erro quando a lista não carrega
+
+### R18: P1, números e regras no servidor
+- [x] Indicadores: admin inscrito (confirmado sem Pix) fica fora da receita e de "informaram", como o embaixador (`isento`). O funil continua como documentado (informaram sem isentos, confirmados com todos)
+- [x] Salvar o check-in sem mudança não devolve o dia para a fila de conferência nem limpa o cache do ranking
+- [x] `ativar` ao criar desafio pela API passa a ser `false` por padrão (o painel já mandava explícito)
+- [x] Perfil completo (dados + aceite dos termos) exigido também no servidor para participar (`exigirParticipante` → 403 `PERFIL_INCOMPLETO`)
+- [x] **DoD:** api unit 55 (metricas +1); api e2e 101 (conferência +1, perfil +1); shared 77
+
+### R19: P2, textos
+- [x] Passos da landing na ordem do app: conta → vaga reservada → Pix → confirmação ("Passo 2 de 2" no pagamento fica: bate com o "Passo 1 de 2" do cadastro e com o E2E)
+- [x] Q2/Q15 confirmados com o domínio real (everestt.app.br); marcador Q2 removido. "Desafio 30 Dias Everest" é o nome da marca (fica); "para 2027" na landing é texto de campanha (fica com o dono)
+
+### P3, depende do dono (não construir sem resposta)
+- Conteúdo da landing (TT, fotos, WhatsApp), vídeo, texto da privacidade (Q8), prêmio
+- Embaixador compete no ranking? Sair da conta encerra a sessão em todos os aparelhos?
+- Provedor para Pix com confirmação automática (custo por transação)
+
+### P4, crescimento
+- Lembrete diário (push no app instalado) para quem não fechou o dia
+- Antifraude de fotos como sinal para o embaixador: **foto repetida feita na R20**. Data da foto (EXIF) fica de fora: o worker apaga o EXIF e muitos celulares e apps de mensagem não mandam
+- Várias turmas, metas por desafio, comunidade
+
+### R20: P4, sinal de foto parecida (2026-11-04)
+- [x] Worker calcula o dHash (64 bits, 16 hex) da versão processada e grava em `FotoProva.hashPerceptual` (migration `20261104150000_hash_foto`, coluna nula; o índice parcial da R17 continua só no SQL). Imagem lisa (cor sólida) fica sem hash; falha no hash não derruba a foto
+- [x] `fotos/hash-perceptual.ts`: `dHashDePixels`, `hashPerceptual` (sharp), `distanciaHamming` e `IndiceHashes` (casa dos pombos), com `DISTANCIA_MAX_PARECIDA = 5` (X20)
+- [x] `GET /admin/desafios/:slug/participantes/:id/dias/:n`: cada foto traz `parecida` (`participanteId`, `nome`, `numeroDia`, `tipo`, `mesmaPessoa`) ou null, com uma consulta só (`admin/fotos-parecidas.ts`). A rota do participante continua sem o campo
+- [x] Lista e detalhe do participante: `diasFotoParecida` (dias **para revisar** com foto parecida; aprovar ou invalidar tira da lista)
+- [x] Painel: aviso no dia ("Uma foto deste dia é parecida com outra já enviada no desafio"), pílula em cada foto ("Parecida com a foto de Maria S. · dia 3 · água", com link para o dia da outra foto; sem link quando é do mesmo dia), "Foto parecida no dia N" na lista e atalhos "Dia N" no participante; tokens `aviso-*` dos dois temas
+- [x] `scripts/hash-fotos.ts` (`node dist/cli/scripts/hash-fotos.js [--desafio <slug>] [--lote 20]`): preenche as fotos CONFIRMADA sem hash lendo o `.full.webp` do storage, em lotes com cursor; idempotente; resumo no fim (preenchidas, lisas, sem arquivo, falhas)
+- [x] **DoD:** api unit 74 (+19: hash-perceptual 16, fotos-parecidas 3); api e2e 106 (fotos +3: mesma foto como água e leitura → `parecida` só no admin e sai da lista ao aprovar; outra pessoa com a mesma foto recomprimida e menor → aponta a original, fotos diferentes e lisas não; script preenche e roda de novo sem mexer); shared 77; web 143 (+8: `fotoParecida`, `FotosDia`); typecheck e lint verdes
+- [ ] Produção: a migration roda sozinha no boot da API (`migrate deploy` no `CMD` da imagem); depois do deploy, rodar uma vez `docker compose -f docker-compose.prod.yml exec api node dist/cli/scripts/hash-fotos.js`
+- [ ] axe/Playwright das telas do admin com foto parecida não rodados (este servidor roda a produção; sem a pilha de E2E). Cores só com os tokens `aviso-*` já aprovados no axe da R14
+
+## R21: Água, treino e leitura em 1 toque (atalhos do ícone) (2026-11-04)
+- [x] `/hoje?acao=agua|treino|leitura` (`features/checkin/acaoRapida.ts`): água +250 ml, treino feito, leitura = meta (10 páginas). `RedirecionarHoje` leva a ação para o dia atual (ou `/desafio` fora do período); `useAcaoRapida` aplica uma vez na tela do dia, salva na hora, mostra toast e limpa a URL com replace (dia fechado ou offline só avisa)
+- [x] `shortcuts` do manifest (`features/pwa/atalhos.ts`, fonte única com o `vite.config.ts`): toque longo no ícone no Android mostra "Água +250 ml", "Treino feito" e "Leitura feita"
+- [x] Folha "Instalar o app": seção "Água, treino e leitura em 1 toque" (Android: toque longo; iPhone: botões que copiam o link de cada ação para o app Atalhos, que vira widget). Limite da plataforma: no iPhone o link abre no Safari, não dentro do app instalado
+- [x] **DoD:** web unit 162 (+19: `acaoRapida`, `useAcaoRapida`, `atalhos`); typecheck e lint verdes; manifest do build conferido com os 3 atalhos. Smoke E2E ganhou `/hoje?acao=agua` (+250 ml, toast, URL limpa, persistência), `treino` já marcado e o teste do manifest
+- [ ] E2E do web não rodado neste servidor (sem Java para o emulador do Firebase)
+- [ ] Widget nativo de tela inicial não existe para PWA (Android nem iOS); só com app nativo. Próximo passo possível: Web Push com botões de ação no Android (registrar água direto da notificação)
