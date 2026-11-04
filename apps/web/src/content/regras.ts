@@ -106,6 +106,6 @@ export const textosRegras = {
   // Todos os links dizem "Regras" (Perfil, home, landing); "Como funciona" é a seção da landing.
   titulo: 'Regras',
   notaDiaria:
-    'O dia só conta quando os 3 requisitos estão cumpridos. Só o dia de hoje pode ser editado, até 23:59 no horário de Brasília.',
+    'O dia só conta com os 3 hábitos feitos e comprovados, com as fotos e o story. Só o dia de hoje pode ser editado, até 23:59 no horário de Brasília.',
   rodape: 'Foco em evolução de hábito, sem promessa de resultado físico.',
 } as const;
