@@ -31,6 +31,12 @@ export const LIMITES = {
 } as const;
 
 export const TOTAL_DIAS_PADRAO = 30;
+
+/**
+ * Tolerância da virada do dia (X18): até 5 min depois da meia-noite, o dia que acabou ainda aceita
+ * o check-in e as fotos que já estavam a caminho (rede lenta, upload grande). Depois disso, só hoje.
+ */
+export const TOLERANCIA_VIRADA_MS = 5 * 60 * 1000;
 export const TIMEZONE_PADRAO = 'America/Sao_Paulo';
 
 export const CODIGOS_ERRO = [
@@ -54,8 +60,14 @@ export const CODIGOS_ERRO = [
   'PAGAMENTO_PENDENTE',
   /** 409: aviso de pagamento depois da confirmação. */
   'PAGAMENTO_JA_CONFIRMADO',
-  /** 409: o admin tentou remover uma inscrição confirmada, do embaixador ou com check-ins. */
+  /** 409: o admin tentou remover a inscrição do embaixador ou uma inscrição com check-ins. */
   'PARTICIPANTE_NAO_REMOVIVEL',
+  /** 409: o admin tentou inscrever quem já está no desafio. */
+  'JA_INSCRITO',
+  /** 409: já existe um desafio com esse identificador (slug). */
+  'DESAFIO_JA_EXISTE',
+  /** 409: mudança que o desafio não aceita mais (ex.: data de início com check-ins, vagas abaixo das ocupadas). */
+  'DESAFIO_NAO_EDITAVEL',
   /** 503: PIX_COPIA_E_COLA não configurado (só fora de produção). */
   'PAGAMENTO_INDISPONIVEL',
   'ERRO_INTERNO',

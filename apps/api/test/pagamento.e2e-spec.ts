@@ -220,7 +220,8 @@ describe('Pagamento por Pix manual (e2e)', () => {
     const det = await admin.agente.get(`${ADMIN}/participantes/${u2.participanteId}`);
     expect(det.body.removivel).toBe(true);
     expect(det.body.feedback).toMatchObject({ nota: 3 });
-    expect((await admin.agente.get(`${ADMIN}/participantes/${u1.participanteId}`)).body.removivel).toBe(false);
+    // Confirmado sem check-ins também pode sair (ex.: desistiu antes do início).
+    expect((await admin.agente.get(`${ADMIN}/participantes/${u1.participanteId}`)).body.removivel).toBe(true);
 
     expect((await request(ctx.http).get('/api/desafios/atual')).body.vagasDisponiveis).toBe(0);
     const del = await admin.agente.delete(`${ADMIN}/participantes/${u2.participanteId}`);
@@ -271,7 +272,7 @@ describe('Pagamento por Pix manual (e2e)', () => {
     expect(vagas).toHaveLength(5);
   });
 
-  it('DELETE recusa confirmado, embaixador e quem tem check-in (409); inexistente → 404', async () => {
+  it('DELETE remove confirmado sem check-in; recusa embaixador e quem tem check-in (409); inexistente → 404', async () => {
     const confirmado = await cenarioInscrito(ctx, { nome: 'Cora Confirmada' });
     const comDia = await cenarioInscrito(ctx, { nome: 'Dino Com Dia', pagamento: 'PENDENTE' });
     await ctx.prisma.diaDesafio.create({ data: { participanteId: comDia.participanteId, numeroDia: 1, aguaMl: 500 } });
@@ -279,7 +280,10 @@ describe('Pagamento por Pix manual (e2e)', () => {
     const ins = await inscrever(ctx.prisma, { slug: 'desafio-teste', usuarioId: emb.id, embaixador: true });
     const admin = await novoAdmin();
 
-    for (const id of [confirmado.participanteId, comDia.participanteId, ins.participante.id]) {
+    expect((await admin.agente.get(`${ADMIN}/participantes/${confirmado.participanteId}`)).body.removivel).toBe(true);
+    expect((await admin.agente.delete(`${ADMIN}/participantes/${confirmado.participanteId}`)).status).toBe(200);
+
+    for (const id of [comDia.participanteId, ins.participante.id]) {
       const r = await admin.agente.delete(`${ADMIN}/participantes/${id}`);
       expect(r.status).toBe(409);
       expect(r.body.codigo).toBe('PARTICIPANTE_NAO_REMOVIVEL');
@@ -288,7 +292,7 @@ describe('Pagamento por Pix manual (e2e)', () => {
     const nada = await admin.agente.delete(`${ADMIN}/participantes/nao-existe`);
     expect(nada.status).toBe(404);
     expect(nada.body.codigo).toBe('NAO_ENCONTRADO');
-    expect(await ctx.prisma.participante.count()).toBe(3);
+    expect(await ctx.prisma.participante.count()).toBe(2);
   });
 
   it('detalhe do admin traz dados de cadastro (com idade), pagamento e feedback', async () => {

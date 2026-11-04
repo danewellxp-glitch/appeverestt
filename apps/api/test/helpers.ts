@@ -202,10 +202,16 @@ export async function fotosFalsas(prisma: PrismaService, participanteId: string,
     create: { participanteId, numeroDia },
   });
   for (const tipo of ['AGUA', 'EXERCICIO', 'LEITURA'] as const) {
-    await prisma.fotoProva.upsert({
-      where: { diaId_tipo: { diaId: dia.id, tipo } },
-      update: { status: 'CONFIRMADA' },
-      create: {
+    const existente = await prisma.fotoProva.findFirst({
+        where: { diaId: dia.id, tipo, status: { not: 'PENDENTE' } },
+        select: { id: true },
+      });
+    if (existente) {
+      await prisma.fotoProva.update({ where: { id: existente.id }, data: { status: 'CONFIRMADA' } });
+      continue;
+    }
+    await prisma.fotoProva.create({
+      data: {
         diaId: dia.id,
         tipo,
         storageKey: `falsa/${dia.id}/${tipo}.webp`,

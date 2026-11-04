@@ -88,8 +88,22 @@ export function regrasVagasEPremio(totalVagas: number | null, totalDias: number,
   ];
 }
 
+/**
+ * Vídeo do TT explicando o desafio: topo de /regras e seção "O desafio" da landing.
+ * url: link do YouTube (vídeo, Shorts ou youtu.be; pode ser "não listado") ou um arquivo de vídeo
+ * servido pelo app (ex.: '/video/desafio.mp4' em apps/web/public/video/). Vazio = aviso "Vídeo em
+ * breve" em /regras (a landing esconde o bloco).
+ * formato: 'vertical' (gravado no celular, 9:16) ou 'horizontal' (16:9).
+ * TODO_DECISAO(VIDEO): colar o link do vídeo do TT explicando o desafio quando estiver gravado.
+ */
+export const videoDesafio: { url: string; formato: 'vertical' | 'horizontal' } = {
+  url: '',
+  formato: 'vertical',
+};
+
 export const textosRegras = {
   eyebrow: 'Desafio 30 dias Everest',
+  // Todos os links dizem "Regras" (Perfil, home, landing); "Como funciona" é a seção da landing.
   titulo: 'Regras',
   notaDiaria:
     'O dia só conta quando os 5 requisitos estão cumpridos. Só o dia de hoje pode ser editado, até 23:59 no horário de Brasília.',

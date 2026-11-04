@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   TIMEZONE_PADRAO,
+  TOTAL_DIAS_PADRAO,
   LIMITES,
   MIME_TYPES_FOTO,
   TAMANHO_MAX_FOTO_BYTES,
@@ -100,9 +101,81 @@ export const invalidacaoSchema = z
   });
 export type InvalidacaoInput = z.infer<typeof invalidacaoSchema>;
 
-export const atualizarDesafioSchema = z.object({
+/** Identificador do desafio na URL (ex.: desafio-30-everest). Não muda depois de criado. */
+export const slugDesafioSchema = z
+  .string({ error: 'Informe o identificador do desafio.' })
+  .trim()
+  .toLowerCase()
+  .min(3, { error: 'Use pelo menos 3 caracteres.' })
+  .max(60, { error: 'Use no máximo 60 caracteres.' })
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { error: 'Use só letras minúsculas, números e hífen (ex.: desafio-30-everest).' });
+
+/** Campos editáveis do desafio pelo painel do admin (criar e atualizar). */
+const camposDesafio = {
+  nome: z
+    .string({ error: 'Informe o nome do desafio.' })
+    .trim()
+    .min(3, { error: 'Nome muito curto.' })
+    .max(80, { error: 'Use no máximo 80 caracteres.' }),
+  /** 'YYYY-MM-DD', no fuso do desafio. */
+  dataInicio: z
+    .string({ error: 'Informe a data de início.' })
+    .trim()
+    .refine(ehDataValida, { error: 'Data de início inválida.' }),
+  totalDias: z
+    .number({ error: 'Informe o total de dias.' })
+    .int({ error: 'Use um número inteiro de dias.' })
+    .min(1, { error: 'Pelo menos 1 dia.' })
+    .max(365, { error: 'No máximo 365 dias.' }),
+  totalVagas: z
+    .number({ error: 'Informe o número de vagas.' })
+    .int({ error: 'Use um número inteiro de vagas.' })
+    .min(1, { error: 'Pelo menos 1 vaga.' })
+    .max(10000, { error: 'No máximo 10.000 vagas.' }),
+  /** Sem "@". */
+  instagramHandle: z
+    .string({ error: 'Informe o @ do Instagram do desafio.' })
+    .transform(normalizarInstagram)
+    .refine((v) => v.length > 0, { error: 'Informe o @ do Instagram do desafio.' })
+    .refine(ehInstagramValido, { error: '@ inválido. Use letras, números, "." ou "_".' }),
+  /** Sem "#". */
+  hashtag: z
+    .string({ error: 'Informe a hashtag.' })
+    .trim()
+    .transform((v) => v.replace(/^#+/, ''))
+    .refine((v) => /^[A-Za-z0-9_]{1,50}$/.test(v), { error: 'Hashtag inválida. Use letras, números ou "_".' }),
   inscricoesAbertas: z.boolean({ error: 'Informe se as inscrições estão abertas.' }),
+  embaixadorOcupaVaga: z.boolean({ error: 'Informe se o embaixador ocupa uma vaga.' }),
+};
+
+/**
+ * POST /admin/desafios: o admin cria um desafio pelo painel.
+ * `ativar` = vira o desafio do app (só um ativo por vez; os outros são desativados). Padrão `false`:
+ * criar sem dizer nada nunca derruba o desafio em andamento (o painel sempre manda o valor).
+ */
+export const criarDesafioSchema = z.object({
+  slug: slugDesafioSchema,
+  ...camposDesafio,
+  totalDias: camposDesafio.totalDias.default(TOTAL_DIAS_PADRAO),
+  totalVagas: camposDesafio.totalVagas.default(50),
+  hashtag: camposDesafio.hashtag.default('DESAFIO30EVEREST'),
+  inscricoesAbertas: camposDesafio.inscricoesAbertas.default(true),
+  embaixadorOcupaVaga: camposDesafio.embaixadorOcupaVaga.default(true),
+  ativar: z.boolean({ error: 'Informe se o desafio fica ativo.' }).default(false),
 });
+export type CriarDesafioInput = z.infer<typeof criarDesafioSchema>;
+/** Formato aceito na entrada (campos com padrão são opcionais). */
+export type CriarDesafioForm = z.input<typeof criarDesafioSchema>;
+
+/**
+ * PATCH /admin/desafios/:slug: muda qualquer campo (pelo menos um).
+ * `dataInicio` e `totalDias` só mudam enquanto não houver check-in; `totalVagas` não pode ficar
+ * abaixo das vagas já ocupadas; `ativo: true` desativa os outros desafios.
+ */
+export const atualizarDesafioSchema = z
+  .object({ ...camposDesafio, ativo: z.boolean({ error: 'Informe se o desafio fica ativo.' }) })
+  .partial()
+  .refine((v) => Object.values(v).some((x) => x !== undefined), { error: 'Nada para atualizar.' });
 export type AtualizarDesafioInput = z.infer<typeof atualizarDesafioSchema>;
 
 export const numeroDiaSchema = z.coerce
@@ -221,3 +294,15 @@ export const conferenciaSchema = z.object({
   conferido: z.boolean({ error: 'Informe se o dia foi conferido.' }),
 });
 export type ConferenciaInput = z.infer<typeof conferenciaSchema>;
+
+/**
+ * POST /admin/desafios/:slug/participantes: o admin inscreve quem JÁ TEM CONTA no app (pelo e-mail).
+ * Pega a menor vaga livre, como na inscrição normal. Padrão: pagamento já confirmado (ex.: pagou direto ao TT).
+ */
+export const adicionarParticipanteSchema = z.object({
+  email: emailSchema,
+  pagamentoStatus: z
+    .enum(['PENDENTE', 'INFORMADO', 'CONFIRMADO'], { error: 'Status de pagamento inválido.' })
+    .default('CONFIRMADO'),
+});
+export type AdicionarParticipanteInput = z.infer<typeof adicionarParticipanteSchema>;

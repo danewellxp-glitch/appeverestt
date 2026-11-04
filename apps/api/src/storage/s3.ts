@@ -1,4 +1,4 @@
-import { S3Client } from '@aws-sdk/client-s3';
+import { NotFound, S3Client, S3ServiceException } from '@aws-sdk/client-s3';
 
 export interface ConfigS3 {
   endpoint: string;
@@ -39,4 +39,13 @@ export function configS3DoEnv(env: NodeJS.ProcessEnv): ConfigS3 {
     secretAccessKey: obrigatoria('S3_SECRET_ACCESS_KEY'),
     forcePathStyle: env.S3_FORCE_PATH_STYLE === 'true' || env.S3_FORCE_PATH_STYLE === '1',
   };
+}
+
+/** Erro do S3 de objeto inexistente (HEAD → NotFound, GET → NoSuchKey). */
+export function ehNaoEncontrado(e: unknown): boolean {
+  return (
+    e instanceof NotFound ||
+    (e instanceof S3ServiceException &&
+      (e.name === 'NotFound' || e.name === 'NoSuchKey' || e.$metadata.httpStatusCode === 404))
+  );
 }

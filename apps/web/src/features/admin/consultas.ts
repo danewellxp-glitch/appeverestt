@@ -1,30 +1,47 @@
 import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   TIMEZONE_PADRAO,
+  type AdicionarParticipanteInput,
+  type AdminDesafioConfig,
+  type AdminDesafiosResposta,
   type AdminDiaDetalhe,
   type AdminFeedbacksResposta,
+  type AdminMetricas,
+  type AdminParticipante,
   type AdminParticipanteDetalhe,
   type AdminParticipantesResposta,
   type AtualizarDesafioInput,
   type ConferenciaInput,
   type ConferenciaResposta,
+  type CriarDesafioInput,
   type InvalidacaoInput,
   type InvalidacaoResposta,
   type PagamentoAdminInput,
 } from '@everest/shared';
-import { api } from '../../lib/api';
+import { api, ehApiError } from '../../lib/api';
 import { chaves, useDesafioAtual, useMe } from '../../lib/queries';
+
+/** Chaves de cache do painel (todas começam com 'admin': `invalidateQueries(['admin'])` pega tudo). */
+export const chavesAdmin = {
+  desafios: ['admin', 'desafios'] as const,
+  desafio: (slug: string) => ['admin', 'desafio', slug] as const,
+  metricas: (slug: string) => ['admin', 'metricas', slug] as const,
+};
+
+/** Indicadores se atualizam sozinhos a cada 60 s (só com a aba visível). */
+export const INTERVALO_METRICAS_MS = 60_000;
 
 /**
  * Slug do desafio para as telas do embaixador: o da participação do admin ou,
- * se ele não estiver inscrito, o do desafio ativo.
+ * se ele não estiver inscrito, o do desafio ativo. Sem desafio ativo (404) não é erro: slug vazio.
  */
 export function useSlugAdmin() {
   const me = useMe();
   const desafio = useDesafioAtual();
   const slug = me.data?.participacao?.desafioSlug ?? desafio.data?.slug;
   const carregando = !slug && (me.isPending || desafio.isPending);
-  const erro = !slug && !carregando && (me.isError || desafio.isError);
+  const semDesafioAtivo = ehApiError(desafio.error, 'NAO_ENCONTRADO');
+  const erro = !slug && !carregando && (me.isError || (desafio.isError && !semDesafioAtivo));
   return {
     slug,
     carregando,
@@ -127,22 +144,141 @@ export function useRemoverParticipante(slug: string | undefined) {
   });
 }
 
+/** Coloca a configuração nova nos caches do painel (lista de desafios, desafio e participantes). */
+function guardarDesafio(qc: QueryClient, desafio: AdminDesafioConfig): void {
+  qc.setQueryData(chavesAdmin.desafio(desafio.slug), desafio);
+  qc.setQueryData<AdminDesafiosResposta>(chavesAdmin.desafios, (antigo) => {
+    if (!antigo) return antigo;
+    const existe = antigo.desafios.some((d) => d.slug === desafio.slug);
+    const desafios = existe
+      ? antigo.desafios.map((d) => (d.slug === desafio.slug ? desafio : d))
+      : [desafio, ...antigo.desafios];
+    // Só um ativo por vez: ativar este desativa os outros.
+    return {
+      desafios: desafio.ativo
+        ? desafios.map((d) => (d.slug === desafio.slug ? d : { ...d, ativo: false }))
+        : desafios,
+    };
+  });
+  qc.setQueryData<AdminParticipantesResposta>(chaves.adminParticipantes(desafio.slug), (antigo) =>
+    antigo
+      ? {
+          ...antigo,
+          desafio: {
+            slug: desafio.slug,
+            nome: desafio.nome,
+            inscricoesAbertas: desafio.inscricoesAbertas,
+            totalVagas: desafio.totalVagas,
+          },
+        }
+      : antigo,
+  );
+}
+
+/**
+ * Depois de criar/editar/ativar um desafio: painel, desafio público e `me` (a participação do
+ * admin é a do desafio ativo), além de ranking e feed.
+ */
+async function invalidarAposDesafio(qc: QueryClient): Promise<void> {
+  await Promise.all([
+    qc.invalidateQueries({ queryKey: ['admin'] }),
+    qc.invalidateQueries({ queryKey: chaves.desafioAtual }),
+    qc.invalidateQueries({ queryKey: chaves.me }),
+    qc.invalidateQueries({ queryKey: ['ranking'] }),
+    qc.invalidateQueries({ queryKey: ['feed'] }),
+  ]);
+}
+
 /** Abre/fecha as inscrições. Atualiza o cache da lista e o desafio atual. */
 export function useAtualizarInscricoes(slug: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: AtualizarDesafioInput) =>
-      api<AdminParticipantesResposta['desafio']>(`/admin/desafios/${slug ?? ''}`, {
+      api<AdminDesafioConfig>(`/admin/desafios/${slug ?? ''}`, {
         method: 'PATCH',
         body: input,
       }),
     onSuccess: (desafio) => {
-      qc.setQueryData<AdminParticipantesResposta>(
-        chaves.adminParticipantes(desafio.slug),
-        (antigo) => (antigo ? { ...antigo, desafio } : antigo),
-      );
+      guardarDesafio(qc, desafio);
       void qc.invalidateQueries({ queryKey: chaves.desafioAtual });
+      void qc.invalidateQueries({ queryKey: chavesAdmin.desafios });
     },
+  });
+}
+
+/** GET /admin/desafios: todos os desafios (o ativo primeiro). */
+export function useAdminDesafios() {
+  return useQuery({
+    queryKey: chavesAdmin.desafios,
+    queryFn: ({ signal }) => api<AdminDesafiosResposta>('/admin/desafios', { signal }),
+  });
+}
+
+/** GET /admin/desafios/:slug (com o valor da lista como prévia, se já estiver no cache). */
+export function useAdminDesafio(slug: string | undefined) {
+  const qc = useQueryClient();
+  return useQuery<AdminDesafioConfig>({
+    queryKey: chavesAdmin.desafio(slug ?? ''),
+    queryFn: ({ signal }) =>
+      api<AdminDesafioConfig>(`/admin/desafios/${encodeURIComponent(slug ?? '')}`, { signal }),
+    enabled: Boolean(slug),
+    placeholderData: () =>
+      qc.getQueryData<AdminDesafiosResposta>(chavesAdmin.desafios)?.desafios.find((d) => d.slug === slug),
+  });
+}
+
+/** GET /admin/desafios/:slug/metricas, atualizado a cada 60 s com a aba visível. */
+export function useAdminMetricas(slug: string | undefined) {
+  return useQuery({
+    queryKey: chavesAdmin.metricas(slug ?? ''),
+    queryFn: ({ signal }) =>
+      api<AdminMetricas>(`/admin/desafios/${encodeURIComponent(slug ?? '')}/metricas`, { signal }),
+    enabled: Boolean(slug),
+    refetchInterval: INTERVALO_METRICAS_MS,
+    refetchIntervalInBackground: false,
+    staleTime: 30_000,
+  });
+}
+
+/** POST /admin/desafios: cria (e, com `ativar`, já ativa) um desafio. */
+export function useCriarDesafio() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CriarDesafioInput) =>
+      api<AdminDesafioConfig>('/admin/desafios', { method: 'POST', body: input }),
+    onSuccess: async (desafio) => {
+      guardarDesafio(qc, desafio);
+      await invalidarAposDesafio(qc);
+    },
+  });
+}
+
+/** PATCH /admin/desafios/:slug com o slug na chamada (editar qualquer desafio, ou ativar). */
+export function useAtualizarDesafio() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ slug, ...input }: AtualizarDesafioInput & { slug: string }) =>
+      api<AdminDesafioConfig>(`/admin/desafios/${encodeURIComponent(slug)}`, {
+        method: 'PATCH',
+        body: input,
+      }),
+    onSuccess: async (desafio) => {
+      guardarDesafio(qc, desafio);
+      await invalidarAposDesafio(qc);
+    },
+  });
+}
+
+/** POST .../participantes: inscreve quem já tem conta (pelo e-mail), com o status do pagamento. */
+export function useAdicionarParticipante(slug: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: AdicionarParticipanteInput) =>
+      api<AdminParticipante>(`/admin/desafios/${encodeURIComponent(slug ?? '')}/participantes`, {
+        method: 'POST',
+        body: input,
+      }),
+    onSuccess: () => invalidarAposPagamento(qc),
   });
 }
 

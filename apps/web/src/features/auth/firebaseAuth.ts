@@ -4,16 +4,13 @@ import type { User } from 'firebase/auth';
 import { api } from '../../lib/api';
 import { obterAuth } from '../../lib/firebase';
 import { chaves } from '../../lib/queries';
+import { rodandoStandalone } from '../pwa/standalone';
 import { codigoFirebase } from './errosFirebase';
 import { limparDadosDeSessaoAnterior } from './sessao';
 
 /** iPhone com o app instalado: popup não funciona lá; usa redirect. */
 function iosInstalado(): boolean {
-  const ios = /iP(hone|ad|od)/.test(navigator.userAgent);
-  const standalone =
-    (navigator as Navigator & { standalone?: boolean }).standalone === true ||
-    (typeof matchMedia === 'function' && matchMedia('(display-mode: standalone)').matches);
-  return ios && standalone;
+  return /iP(hone|ad|od)/.test(navigator.userAgent) && rodandoStandalone();
 }
 
 /**

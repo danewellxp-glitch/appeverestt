@@ -135,6 +135,50 @@ services:
       - caddydata:/data
       - caddyconfig:/config
 
+  # Opcional: Cloudflare Tunnel (nenhuma porta pública; o HTTPS fica na Cloudflare).
+  # Liga com COMPOSE_PROFILES=tunnel e CLOUDFLARE_TUNNEL_TOKEN no .env (docs/DEPLOY-CONTABO.md).
+  # No painel do túnel, os dois domínios apontam para HTTP web:80 (sem "HTTP Host Header").
+  tunnel:
+    image: cloudflare/cloudflared:2026.10.3
+    profiles: [tunnel]
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      - web
+
+  # Opcional: simulador de usuários virtuais (VUs) no desafio de TESTE (docs/VU.md).
+  # Liga com COMPOSE_PROFILES=vu (ou --profile vu). Usa a imagem da API e chama a API PÚBLICA
+  # (login Firebase → cookie, check-ins, upload das fotos). Antes do lançamento real:
+  #   docker compose -f docker-compose.prod.yml run --rm vu node dist/cli/scripts/vu.js limpar --desafio teste-vu --remover-desafio
+  vu:
+    image: everest-api:producao
+    profiles: [vu]
+    restart: unless-stopped
+    command: ['node', 'dist/cli/scripts/vu.js', 'loop', '--desafio', 'teste-vu', '--intervalo', '15']
+    depends_on:
+      - api
+    # A imagem traz o healthcheck HTTP da API; aqui não há servidor ouvindo.
+    healthcheck:
+      disable: true
+    stop_grace_period: 30s
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://everest:${POSTGRES_PASSWORD}@postgres:5432/everest?schema=public&connection_limit=3
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: everest-provas
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      S3_FORCE_PATH_STYLE: 'true'
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      FIREBASE_SERVICE_ACCOUNT_BASE64: ${FIREBASE_SERVICE_ACCOUNT_BASE64}
+      VU_BASE_URL: https://${DOMINIO_APP}
+      VU_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}
+      VU_MAX_RPM: ${VU_MAX_RPM:-40}
+
 volumes:
   pgdata:
   redisdata:

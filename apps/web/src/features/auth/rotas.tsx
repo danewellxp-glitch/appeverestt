@@ -58,13 +58,16 @@ export function RotaPerfilCompleto() {
 /**
  * Exige inscrição no desafio ativo com pagamento confirmado (use dentro de RotaProtegida).
  * Sem vaga → "/"; vaga ainda não paga/confirmada → /pagamento (fica fora deste guard).
+ * Admin sem vaga confirmada volta para o painel (não paga a inscrição).
  */
 export function RotaInscrito() {
   const { data: me, isPending, isError } = useMe();
   if (isPending) return <Carregando />;
   if (isError) return <Falha />;
   const destino = destinoDaParticipacao(me?.participacao);
-  if (destino !== '/desafio') return <Navigate to={destino} replace />;
+  if (destino !== '/desafio') {
+    return <Navigate to={me?.usuario.papel === 'ADMIN' ? '/admin' : destino} replace />;
+  }
   return <Outlet />;
 }
 

@@ -6,6 +6,7 @@ import { RouterProvider } from 'react-router/dom';
 import { router } from './app/router';
 import { ToastProvider } from './components/ui/Toast';
 import { PwaGlobais } from './features/pwa/PwaGlobais';
+import { aplicarModoApp } from './features/pwa/standalone';
 import { iniciarCapturaInstalacao } from './features/pwa/useInstallPrompt';
 import { definirAoNaoAutenticado } from './lib/api';
 import { chaves } from './lib/queries';
@@ -21,6 +22,8 @@ definirAoNaoAutenticado(() => {
 // O `beforeinstallprompt` pode chegar antes do botão "Baixar o app" montar.
 iniciarCapturaInstalacao();
 iniciarTema();
+// App instalado: sem zoom por pinça/duplo toque e sem "bounce" (no navegador o zoom continua).
+aplicarModoApp();
 
 const raiz = document.getElementById('root');
 if (!raiz) throw new Error('Elemento #root não encontrado');

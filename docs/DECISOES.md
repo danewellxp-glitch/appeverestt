@@ -6,7 +6,7 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | Q | Questão | Default assumido | Onde configurar | Status |
 |---|---|---|---|---|
 | Q1 🚫 | @ do Instagram | Sem default em produção. No seed de dev, `everest_dev` | `Desafio.instagramHandle` (banco) | ASSUMIDO |
-| Q2 🚫 | Link de publicação | — | env `VITE_APP_URL` | ASSUMIDO |
+| Q2 | Link de publicação | `https://everestt.app.br` (o build de produção recebe `VITE_APP_URL=https://${DOMINIO_APP}` do `docker-compose.prod.yml`) | `.env` do servidor (`DOMINIO_APP`) | CONFIRMADO |
 | Q3 | As 50 vagas incluem o embaixador? | Sim | `Desafio.embaixadorOcupaVaga` (default `true`) | ASSUMIDO |
 | Q4 | Critério de "melhor evolução" | Mais dias concluídos e não invalidados; prêmio para o 1º do ranking no fim | `ordenarRanking` (shared) | ASSUMIDO |
 | Q5 | Desempate | 1) maior melhor sequência → 2) maior sequência atual → 3) inscrição mais antiga | `ordenarRanking` (shared) | ASSUMIDO |
@@ -19,7 +19,7 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | Q12 | Login | Firebase Auth (Google + e-mail/senha) com cookie da API: o front troca o `idToken` por `POST /auth/sessao`, que grava o mesmo cookie httpOnly (JWT). Senha local (argon2) fica só como legado atrás de `AUTH_SENHA_LEGADO` | `docs/FRONTEND.md` §4.2 e §5 | CONFIRMADO |
 | Q13 | Fuso horário | `America/Sao_Paulo` | `Desafio.timezone` | ASSUMIDO |
 | Q14 | Notificações | Fora do MVP | — | ASSUMIDO |
-| Q15 🚫 | Domínio | — | env | ASSUMIDO |
+| Q15 | Domínio | `everestt.app.br` (app) e `arquivos.everestt.app.br` (fotos), atrás do túnel da Cloudflare | `.env` do servidor (`DOMINIO_APP`, `DOMINIO_ARQUIVOS`) | CONFIRMADO |
 | X1 | Editar dias anteriores? | Não. Só o dia atual é editável | env `PERMITIR_EDITAR_DIAS_ANTERIORES=false` | ASSUMIDO |
 | X2 | Até quando dá para se inscrever? | Enquanto `inscricoesAbertas = true` e o desafio não terminou | banco + endpoint admin | ASSUMIDO |
 | X3 | Recuperação de senha | Firebase `sendPasswordResetEmail` (tela `/recuperar-senha`, sempre a mesma confirmação, exista ou não a conta). O script `redefinir-senha` continua só para usuários legados | `docs/FRONTEND.md` §5.3 | CONFIRMADO |
@@ -36,6 +36,10 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | X14 | Relógio do pagamento | 5 min só visuais: ao zerar, avisa e mantém o QR (o código fixo não expira). Conta por aba (`sessionStorage`) | `useTemporizador` | CONFIRMADO |
 | X15 | Número da vaga | Menor número livre de 1 a `totalVagas` (antes `count + 1`), calculado dentro da trava do desafio, porque a remoção de inscrição não paga libera números | `menorVagaLivre` (`inscrever.ts`) | ASSUMIDO |
 | X16 | Vagas reservadas contam | Inscrição pendente ou informada ocupa vaga no contador da capa; ranking e feed mostram só confirmados | `DesafioService.vagasOcupadas`, `RankingService` | ASSUMIDO |
+| X17 | App instalado e barra de abas | Barra de abas fixa embaixo em todas as telas de quem tem o pagamento confirmado (menos login/cadastro/pagamento), no navegador e no app instalado. **No app instalado (standalone)** o zoom por pinça e por duplo toque fica travado e não há "bounce" (`aplicarModoApp`); **no navegador o zoom continua liberado** (WCAG 1.4.4) | `features/pwa/standalone.ts`, `BarraAbas.ROTAS_SEM_ABAS` | CONFIRMADO |
+| X18 | Tolerância da virada do dia | Até 5 min depois da meia-noite, o dia que acabou ainda aceita check-in e fotos (inclusive o último dia, com o desafio já encerrado). A confirmação da foto também respeita a janela | `TOLERANCIA_VIRADA_MS` (shared), `DiaService.ehEditavel` | ASSUMIDO |
+| X19 | Troca de foto | A foto nova fica pendente ao lado da antiga; a antiga só sai quando a nova é confirmada. Se o envio falhar, o dia continua com a foto anterior. Limite conhecido: se o worker rejeitar a nova depois da confirmação (arquivo corrompido; raro, porque o app sempre manda JPEG comprimido), a antiga já saiu | `FotosService.confirmar`, índice `FotoProva_diaId_tipo_recebida_key` | ASSUMIDO |
+| X20 | Sinal de foto parecida (antifraude) | O worker grava o hash perceptual (dHash de 64 bits) da versão processada de cada foto. No painel, cada foto do dia mostra a mais parecida já enviada no desafio (até **5 de 64 bits** de diferença, de qualquer participante, inclusive da mesma pessoa em outro dia ou tipo), com link para o dia dela; a lista de participantes mostra os dias **para revisar** com foto parecida. **Só sinal**: nada é rejeitado nem invalidado sozinho (X8). A rota do participante não expõe nada. Imagem lisa (cor sólida, tela preta) fica sem hash. Data da foto (EXIF) fica de fora: o worker apaga o EXIF e muitos celulares e apps de mensagem não mandam | `FotoProva.hashPerceptual`, `DISTANCIA_MAX_PARECIDA` (`fotos/hash-perceptual.ts`), `scripts/hash-fotos.ts` (fotos antigas) | ASSUMIDO |
 | LOGO | Logo final | Logo oficial recebida em 2026-10-30 (montanha em traço + "EVEREST" vermelho): máscaras em `public/marca/` e `public/logo.png` (ícones do PWA) gerados por `node scripts/marca.cjs` a partir de `apps/web/design/logo-original.jpg` | `components/layout/Marca.tsx` | CONFIRMADO |
 
 ## Decisões técnicas tomadas durante a construção
@@ -124,4 +128,9 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | 2026-10-30 | v2 R13 | `criar-admin --senha` passou a ser opcional: o admin de produção entra com Google do mesmo e-mail | O login por senha local está desligado e só e-mail verificado vincula a conta |
 | 2026-10-30 | v2 R14 | `/pagamento` consulta o status a cada 30 s (informado) ou 60 s (pendente), só com a aba visível; 403 `PAGAMENTO_PENDENTE` em qualquer tela invalida o `me` e o pagamento em cache | A confirmação é manual e pode acontecer com o app aberto; o admin pode voltar alguém para pendente |
 | 2026-10-30 | v2 R14 | QR gerado no cliente com `uqr` (SVG, ~2 KB gzip, só no chunk da `/pagamento`), sempre preto sobre branco | Funciona nos dois temas e não carrega peso na capa |
+| 2026-11-04 | v2 R20 | Hash calculado da versão processada (`.full.webp`), não do original | É o arquivo que fica no storage (o script das fotos antigas lê o mesmo) e já vem girado pelo EXIF. O mesmo conteúdo em JPEG passa pelo *shrink-on-load* do sharp e chegou a dar 8 bits de diferença; webp contra webp ficou entre 0 e 5 |
+| 2026-11-04 | v2 R20 | Imagem com menos de 8 tons de amplitude no 9×8 cinza fica sem hash | O dHash de cor sólida é 64 zeros: vermelho e azul virariam "parecidas" |
+| 2026-11-04 | v2 R20 | Comparação em memória (1 consulta com as fotos do desafio) e índice por blocos (casa dos pombos: 6 blocos para distância ≤ 5) | Sem extensão no Postgres. A lista do painel compara todas as fotos com todas; com o índice fica quase linear (com 4.500 fotos seriam ~10 milhões de pares) |
+| 2026-11-04 | v2 R20 | Na lista, `diasFotoParecida` só conta dias **para revisar**; no dia, o aviso aparece sempre | Depois de aprovar ou invalidar, o sinal sai da fila; quem copiou a foto de um dia já aprovado continua sinalizado no dia dele. Empate de distância aponta a foto mais antiga (a original) |
+| 2026-11-04 | v2 R20 | Migration `hash_foto` escrita à mão (só `ADD COLUMN`) | `prisma migrate dev` recusa ambiente não interativo; o índice parcial da R17 continua só no SQL |
 

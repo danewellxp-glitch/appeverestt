@@ -9,6 +9,7 @@ import {
   limparTudo,
   novoUsuarioLogado,
   sessaoFirebase,
+  tornarAdmin,
 } from './helpers';
 
 describe('Desafio e inscrição (e2e)', () => {
@@ -89,6 +90,15 @@ describe('Desafio e inscrição (e2e)', () => {
       vagaNumero: 1,
       pagamentoStatus: 'PENDENTE',
     });
+  });
+
+  it('admin se inscreve sem pagar: a vaga já nasce CONFIRMADO', async () => {
+    await criarDesafio(ctx.prisma, { totalVagas: 50 });
+    const { agente, id } = await novoUsuarioLogado(ctx.http);
+    await tornarAdmin(ctx.prisma, id);
+    const r = await agente.post('/api/desafios/desafio-teste/inscricao');
+    expect(r.status).toBe(201);
+    expect(r.body.participacao).toMatchObject({ vagaNumero: 1, pagamentoStatus: 'CONFIRMADO' });
   });
 
   it('concorrência: 60 inscrições em paralelo com 50 vagas → 50 sucessos, 10 VAGAS_ESGOTADAS', async () => {

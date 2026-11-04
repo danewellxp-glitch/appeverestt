@@ -158,6 +158,15 @@ describe('Conferência do embaixador (e2e)', () => {
     expect(dia.conferidoPorId).toBeNull();
   });
 
+  it('salvar o mesmo check-in de novo depois da aprovação → continua aprovado', async () => {
+    const { eu, admin, diaId } = await cenario();
+    await admin.agente.patch(`/api/admin/dias/${diaId}/conferencia`).send({ conferido: true });
+    const r = await eu.agente.put(`/api/desafios/${SLUG}/dias/${eu.hoje}`).send(CHECKIN_COMPLETO);
+    expect(r.status).toBe(200);
+    expect((await paraRevisar(admin)).total).toBe(0);
+    expect((await ctx.prisma.diaDesafio.findUniqueOrThrow({ where: { id: diaId } })).conferidoEm).not.toBeNull();
+  });
+
   it('remover uma foto depois da aprovação → zera a conferência', async () => {
     const { eu, admin, diaId } = await cenario();
     await admin.agente.patch(`/api/admin/dias/${diaId}/conferencia`).send({ conferido: true });

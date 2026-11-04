@@ -1,42 +1,13 @@
 import { TOTAL_DIAS_PADRAO } from '@everest/shared';
-import {
-  ArrowRight,
-  AtSign,
-  BookOpen,
-  Camera,
-  ChartLine,
-  Droplets,
-  Dumbbell,
-  QrCode,
-  ShieldCheck,
-  Trophy,
-  Users,
-  type LucideIcon,
-} from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { BotaoVoltar } from '../components/layout/BotaoVoltar';
 import { Skeleton } from '../components/ui/basicos';
-import { regrasDiarias, regrasVagasEPremio, textosRegras, type IdRegra, type Regra } from '../content/regras';
+import { regrasVagasEPremio, textosRegras } from '../content/regras';
+import { BotaoQueroParticipar } from '../features/desafio/EntrarNoDesafio';
+import { ListaRegras, RegrasDoDia } from '../features/desafio/ListaRegras';
+import { VideoDesafio } from '../features/desafio/VideoDesafio';
 import { formatarData } from '../lib/datas';
-import { LinkNav } from '../components/layout/LinkNav';
 import { useDesafioAtual, useMe } from '../lib/queries';
-
-const ICONES: Record<IdRegra, LucideIcon> = {
-  AGUA: Droplets,
-  EXERCICIO: Dumbbell,
-  LEITURA: BookOpen,
-  FOTOS: Camera,
-  STORY: AtSign,
-  VAGAS: Users,
-  PAGAMENTO: QrCode,
-  PREMIO: Trophy,
-  DESEMPATE: ChartLine,
-  CONFERENCIA: ShieldCheck,
-};
-
-function semPrefixo(valor: string, prefixo: '@' | '#'): string {
-  return valor.trim().replace(prefixo === '@' ? /^@+/ : /^#+/, '');
-}
 
 function Secao({ titulo, i, children }: { titulo: string; i: number; children: ReactNode }) {
   return (
@@ -47,33 +18,11 @@ function Secao({ titulo, i, children }: { titulo: string; i: number; children: R
   );
 }
 
-function ListaRegras({ regras }: { regras: Regra[] }) {
-  return (
-    <ul className="overflow-hidden rounded-3xl bg-superficie shadow-[inset_0_0_0_1px_var(--borda)]">
-      {regras.map((r) => {
-        const Icone = ICONES[r.id];
-        return (
-          <li key={r.id} className="grid grid-cols-[auto_1fr] items-start gap-3 border-borda px-4 py-3.5 [&+&]:border-t">
-            <span aria-hidden className="grid size-[42px] place-items-center rounded-full bg-superficie-2 text-vermelho-texto">
-              <Icone className="size-5" />
-            </span>
-            <div>
-              <b className="block text-[15px]">{r.titulo}</b>
-              <p className="text-[13px] text-texto-2">{r.texto}</p>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
+/** /regras: o vídeo do TT, as regras completas e, no fim, o mesmo "Quero participar" da landing. */
 export default function Regras() {
   const desafioQ = useDesafioAtual();
   const { data: me } = useMe();
   const desafio = desafioQ.data;
-  const instagram = desafio ? `@${semPrefixo(desafio.instagramHandle, '@')}` : 'o perfil do desafio';
-  const hashtag = desafio ? `#${semPrefixo(desafio.hashtag, '#')}` : 'a hashtag do desafio';
   const totalDias = desafio?.totalDias ?? TOTAL_DIAS_PADRAO;
 
   return (
@@ -86,16 +35,20 @@ export default function Regras() {
         </div>
       </header>
 
-      <Secao titulo="Todos os dias" i={1}>
-        <ListaRegras regras={regrasDiarias(instagram, hashtag)} />
+      <Secao titulo="O desafio em vídeo" i={1}>
+        <VideoDesafio />
+      </Secao>
+
+      <Secao titulo="Todos os dias" i={2}>
+        <RegrasDoDia desafio={desafio} />
         <p className="text-[13px] text-texto-2">{textosRegras.notaDiaria}</p>
       </Secao>
 
-      <Secao titulo="Vagas e prêmio" i={2}>
+      <Secao titulo="Vagas e prêmio" i={3}>
         <ListaRegras regras={regrasVagasEPremio(desafio?.totalVagas ?? null, totalDias, desafio?.inscricao?.valorCentavos ?? null)} />
       </Secao>
 
-      <Secao titulo="Datas" i={3}>
+      <Secao titulo="Datas" i={4}>
         {desafioQ.isPending ? (
           <Skeleton className="h-16 rounded-3xl" />
         ) : desafio ? (
@@ -111,15 +64,8 @@ export default function Regras() {
 
       <p className="text-xs text-texto-2">{textosRegras.rodape}</p>
 
-      {!me?.participacao && (
-        <LinkNav
-          to="/"
-          className="press inline-flex h-[54px] w-full items-center justify-center gap-2.5 rounded-full bg-vermelho px-5 font-semibold text-sobre-vermelho hover:bg-vermelho-escuro"
-        >
-          Quero participar
-          <ArrowRight className="size-5" aria-hidden />
-        </LinkNav>
-      )}
+      {/* Fim da página: o mesmo CTA da landing (ou o próximo passo de quem já tem vaga). */}
+      <BotaoQueroParticipar />
     </article>
   );
 }

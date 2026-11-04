@@ -209,6 +209,22 @@ function Acoes({ dia, situacao }: { dia: AdminDiaDetalhe; situacao: Situacao }) 
   );
 }
 
+/** Sinal de foto repetida no dia (X20): só alerta; a decisão continua manual (X8). */
+function AvisoFotosParecidas({ dia }: { dia: AdminDiaDetalhe }) {
+  const n = dia.fotos.filter((f) => f.parecida).length;
+  if (n === 0) return null;
+  return (
+    <Alerta tipo="aviso">
+      <p className="font-semibold">
+        {n === 1
+          ? 'Uma foto deste dia é parecida com outra já enviada no desafio.'
+          : `${n} fotos deste dia são parecidas com outras já enviadas no desafio.`}
+      </p>
+      <p className="mt-1">É só um sinal: compare as fotos antes de aprovar ou invalidar.</p>
+    </Alerta>
+  );
+}
+
 /** Dia do participante para o embaixador: situação, fotos em tamanho cheio, valores e ações. */
 export function PainelDia({
   slug,
@@ -267,6 +283,7 @@ export function PainelDia({
         <p className="text-sm text-texto-2">Sem registro neste dia: o participante não fez check-in.</p>
       ) : (
         <>
+          <AvisoFotosParecidas dia={dia} />
           <FotosDia fotos={dia.fotos} numeroDia={dia.numeroDia} />
           <Valores dia={dia} />
           {dia.conferidoEm && situacao === 'CONFERIDO' && (

@@ -20,8 +20,10 @@ export const MENSAGENS_ERRO: Record<CodigoErro | 'REDE', string> = {
   PERFIL_INCOMPLETO: 'Complete seu cadastro para garantir a vaga.',
   PAGAMENTO_PENDENTE: 'Seu acesso é liberado quando o embaixador confirmar o pagamento.',
   PAGAMENTO_JA_CONFIRMADO: 'Seu pagamento já foi confirmado.',
-  PARTICIPANTE_NAO_REMOVIVEL:
-    'Só dá para remover inscrições não confirmadas, sem check-ins e que não sejam do embaixador.',
+  PARTICIPANTE_NAO_REMOVIVEL: 'Só dá para remover inscrições sem check-ins e que não sejam do embaixador.',
+  JA_INSCRITO: 'Essa pessoa já está inscrita neste desafio.',
+  DESAFIO_JA_EXISTE: 'Já existe um desafio com esse identificador.',
+  DESAFIO_NAO_EDITAVEL: 'Essa mudança não é mais possível neste desafio.',
   PAGAMENTO_INDISPONIVEL: 'O pagamento ainda não está disponível. Tente de novo mais tarde.',
   ERRO_INTERNO: 'Algo deu errado do nosso lado. Tente novamente.',
   REDE: 'Sem conexão. Verifique sua internet.',
@@ -38,6 +40,9 @@ export function mensagemDoErro(codigo: CodigoErro | 'REDE', doServidor?: string)
     'FOTO_INVALIDA',
     'NAO_ENCONTRADO',
     'PARTICIPANTE_NAO_REMOVIVEL',
+    'JA_INSCRITO',
+    'DESAFIO_JA_EXISTE',
+    'DESAFIO_NAO_EDITAVEL',
   ];
   if (doServidor && usarServidor.includes(codigo)) return doServidor;
   return MENSAGENS_ERRO[codigo];

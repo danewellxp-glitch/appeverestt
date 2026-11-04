@@ -1,5 +1,14 @@
-import { TIPOS_FOTO, type FotoDia, type StatusFoto, type TipoFoto } from '@everest/shared';
-import { ExternalLink, ImageOff, Loader2 } from 'lucide-react';
+import {
+  TIPOS_FOTO,
+  type AdminFotoDia,
+  type FotoParecida,
+  type StatusFoto,
+  type TipoFoto,
+} from '@everest/shared';
+import { AlertTriangle, ExternalLink, ImageOff, Loader2 } from 'lucide-react';
+import { Link } from 'react-router';
+import { marcarDirecao } from '../../lib/transicoes';
+import { descreverParecida } from './fotoParecida';
 
 const NOME_TIPO: Record<TipoFoto, string> = {
   AGUA: 'Água',
@@ -28,13 +37,38 @@ function SeloStatus({ status }: { status: StatusFoto }) {
   );
 }
 
+/**
+ * Sinal de foto repetida (X20): a foto é quase igual a outra já enviada no desafio. Só ajuda a
+ * conferência; quem aprova ou invalida é o embaixador. Leva ao dia da outra foto para comparar.
+ */
+function AvisoParecida({ parecida, numeroDia }: { parecida: FotoParecida; numeroDia: number }) {
+  const { texto, mesmoDia } = descreverParecida(parecida, numeroDia);
+  return (
+    <p className="flex items-start gap-2 rounded-xl border border-aviso-borda bg-aviso-fundo px-3 py-2 text-sm font-semibold text-aviso-texto">
+      <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+      {mesmoDia ? (
+        <span>{texto}</span>
+      ) : (
+        <Link
+          to={`/admin/participantes/${encodeURIComponent(parecida.participanteId)}?dia=${parecida.numeroDia}`}
+          viewTransition
+          onClick={() => marcarDirecao('avancar')}
+          className="underline decoration-1 underline-offset-2 hover:decoration-2"
+        >
+          {texto}
+        </Link>
+      )}
+    </p>
+  );
+}
+
 function SlotFoto({
   tipo,
   foto,
   numeroDia,
 }: {
   tipo: TipoFoto;
-  foto: FotoDia | undefined;
+  foto: AdminFotoDia | undefined;
   numeroDia: number;
 }) {
   const nome = NOME_TIPO[tipo];
@@ -49,6 +83,7 @@ function SlotFoto({
           <span className="text-xs text-texto-2">sem foto</span>
         )}
       </div>
+      {foto?.parecida && <AvisoParecida parecida={foto.parecida} numeroDia={numeroDia} />}
       {foto && src ? (
         <a
           href={src}
@@ -94,8 +129,11 @@ function SlotFoto({
   );
 }
 
-/** As 3 fotos do dia em tamanho cheio (clique abre em nova aba). Slots vazios mostram "sem foto". */
-export function FotosDia({ fotos, numeroDia }: { fotos: FotoDia[]; numeroDia: number }) {
+/**
+ * As 3 fotos do dia em tamanho cheio (clique abre em nova aba). Slots vazios mostram "sem foto".
+ * Foto quase igual a outra do desafio ganha o aviso "Parecida com…" (X20).
+ */
+export function FotosDia({ fotos, numeroDia }: { fotos: AdminFotoDia[]; numeroDia: number }) {
   return (
     <ul className="flex flex-col gap-4">
       {TIPOS_FOTO.map((tipo) => (

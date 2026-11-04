@@ -1,15 +1,11 @@
 import { useCallback, useSyncExternalStore } from 'react';
+import { rodandoStandalone } from './standalone';
 
 /** Evento `beforeinstallprompt` (Chromium); não está no lib.dom do TypeScript. */
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: readonly string[];
   readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
   prompt(): Promise<void>;
-}
-
-/** `navigator.standalone` só existe no Safari do iOS. */
-interface NavigatorIOS extends Navigator {
-  readonly standalone?: boolean;
 }
 
 interface EstadoInstalacao {
@@ -26,14 +22,6 @@ let iniciado = false;
 function definir(parcial: Partial<EstadoInstalacao>): void {
   estado = { ...estado, ...parcial };
   ouvintes.forEach((cb) => cb());
-}
-
-function rodandoStandalone(): boolean {
-  const ios = (navigator as NavigatorIOS).standalone === true;
-  const mql =
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(display-mode: standalone)').matches;
-  return ios || mql;
 }
 
 /**
@@ -59,7 +47,7 @@ export function iniciarCapturaInstalacao(): void {
 
   if (typeof window.matchMedia === 'function') {
     window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
-      definir({ instalado: e.matches || (navigator as NavigatorIOS).standalone === true });
+      definir({ instalado: e.matches || rodandoStandalone() });
     });
   }
 }

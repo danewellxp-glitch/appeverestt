@@ -133,18 +133,25 @@ model DiaDesafio {
 }
 
 model FotoProva {
-  id           String     @id @default(cuid())
-  diaId        String
-  tipo         TipoFoto
-  storageKey   String
-  thumbKey     String?
-  mimeType     String
-  tamanhoBytes Int
-  status       StatusFoto @default(PENDENTE)
-  criadoEm     DateTime   @default(now())
-  dia          DiaDesafio @relation(fields: [diaId], references: [id], onDelete: Cascade)
+  id             String     @id @default(cuid())
+  diaId          String
+  tipo           TipoFoto
+  storageKey     String
+  thumbKey       String?
+  mimeType       String
+  tamanhoBytes   Int
+  status         StatusFoto @default(PENDENTE)
+  criadoEm       DateTime   @default(now())
+  /// dHash de 64 bits (16 hex) da versão processada, calculado pelo worker (X20): só sinal de foto
+  /// repetida para o embaixador. Null enquanto não processa, em imagem lisa e nas fotos de antes da
+  /// R20 (preencher com `scripts/hash-fotos.ts`).
+  hashPerceptual String?
+  dia            DiaDesafio @relation(fields: [diaId], references: [id], onDelete: Cascade)
 
-  @@unique([diaId, tipo])
+  /// Única por (dia, tipo) só entre as fotos que já chegaram (status <> PENDENTE): índice parcial
+  /// "FotoProva_diaId_tipo_recebida_key" no SQL (migration troca_foto_sem_perda). Uma troca deixa a
+  /// nova PENDENTE ao lado da antiga até a confirmação.
+  @@index([diaId, tipo])
   @@index([status, criadoEm])
 }
 

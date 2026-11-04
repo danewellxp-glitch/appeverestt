@@ -19,11 +19,16 @@
 	header {
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
-		X-Frame-Options DENY
 		Permissions-Policy "camera=(self), microphone=(), geolocation=(), payment=(), usb=()"
 		Strict-Transport-Security "max-age=31536000"
 		-Server
 	}
+	# O Firebase abre /__/auth/iframe num iframe escondido do próprio app (authDomain = domínio
+	# do app). Com DENY o login com Google não recebe o resultado do popup.
+	@authFirebase path /__/*
+	header @authFirebase X-Frame-Options SAMEORIGIN
+	@foraDoAuth not path /__/*
+	header @foraDoAuth X-Frame-Options DENY
 }
 
 {$SITE_APP} {

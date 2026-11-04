@@ -17,7 +17,8 @@
     "criar-desafio": "ts-node -T scripts/criar-desafio.ts",
     "criar-admin": "ts-node -T scripts/criar-admin.ts",
     "redefinir-senha": "ts-node -T scripts/redefinir-senha.ts",
-    "seed:firebase": "ts-node -T scripts/seed-firebase.ts"
+    "seed:firebase": "ts-node -T scripts/seed-firebase.ts",
+    "hash-fotos": "ts-node -T scripts/hash-fotos.ts"
   },
   "prisma": {
     "seed": "ts-node -T prisma/seed.ts"

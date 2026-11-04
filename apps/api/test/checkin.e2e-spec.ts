@@ -73,6 +73,15 @@ describe('Check-in diário e progresso (e2e)', () => {
     expect(dia?.concluido).toBe(false);
   });
 
+  it('inscrito sem o aceite dos termos (ex.: incluído pelo embaixador) → PERFIL_INCOMPLETO', async () => {
+    const { agente, hoje, usuarioId } = await cenarioInscrito(ctx);
+    await ctx.prisma.usuario.update({ where: { id: usuarioId }, data: { aceitouTermosEm: null } });
+    const r = await agente.put(`/api/desafios/desafio-teste/dias/${hoje}`).send(CHECKIN_COMPLETO);
+    expect(r.status).toBe(403);
+    expect(r.body.codigo).toBe('PERFIL_INCOMPLETO');
+    expect((await agente.get('/api/desafios/desafio-teste/meu-progresso')).body.codigo).toBe('PERFIL_INCOMPLETO');
+  });
+
   it('editar o dia anterior → DIA_NAO_EDITAVEL', async () => {
     const { agente, hoje } = await cenarioInscrito(ctx);
     const r = await agente.put(`/api/desafios/desafio-teste/dias/${hoje - 1}`).send(CHECKIN_COMPLETO);

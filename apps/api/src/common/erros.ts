@@ -21,6 +21,9 @@ const STATUS_PADRAO: Record<CodigoErro, HttpStatus> = {
   PAGAMENTO_PENDENTE: HttpStatus.FORBIDDEN,
   PAGAMENTO_JA_CONFIRMADO: HttpStatus.CONFLICT,
   PARTICIPANTE_NAO_REMOVIVEL: HttpStatus.CONFLICT,
+  JA_INSCRITO: HttpStatus.CONFLICT,
+  DESAFIO_JA_EXISTE: HttpStatus.CONFLICT,
+  DESAFIO_NAO_EDITAVEL: HttpStatus.CONFLICT,
   PAGAMENTO_INDISPONIVEL: HttpStatus.SERVICE_UNAVAILABLE,
   ERRO_INTERNO: HttpStatus.INTERNAL_SERVER_ERROR,
 };
@@ -44,8 +47,10 @@ export const MENSAGENS_PADRAO: Record<CodigoErro, string> = {
   PERFIL_INCOMPLETO: 'Complete seu cadastro para garantir a vaga.',
   PAGAMENTO_PENDENTE: 'Seu acesso é liberado quando o embaixador confirmar o pagamento.',
   PAGAMENTO_JA_CONFIRMADO: 'Seu pagamento já foi confirmado.',
-  PARTICIPANTE_NAO_REMOVIVEL:
-    'Só dá para remover inscrições não confirmadas, sem check-ins e que não sejam do embaixador.',
+  PARTICIPANTE_NAO_REMOVIVEL: 'Só dá para remover inscrições sem check-ins e que não sejam do embaixador.',
+  JA_INSCRITO: 'Essa pessoa já está inscrita neste desafio.',
+  DESAFIO_JA_EXISTE: 'Já existe um desafio com esse identificador.',
+  DESAFIO_NAO_EDITAVEL: 'Essa mudança não é mais possível neste desafio.',
   PAGAMENTO_INDISPONIVEL: 'O pagamento não está configurado neste ambiente.',
   ERRO_INTERNO: 'Algo deu errado. Tente novamente.',
 };

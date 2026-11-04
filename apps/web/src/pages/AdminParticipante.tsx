@@ -1,4 +1,5 @@
 import type { MeuProgresso } from '@everest/shared';
+import { AlertTriangle } from 'lucide-react';
 import { useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router';
 import { BotaoVoltar } from '../components/layout/BotaoVoltar';
@@ -30,7 +31,7 @@ function diaDaUrl(valor: string | null, progresso: MeuProgresso): number | null 
 function Topo({ titulo, subtitulo }: { titulo: string; subtitulo?: string }) {
   return (
     <header className="surgir flex items-center gap-3">
-      <BotaoVoltar para="/admin" />
+      <BotaoVoltar para="/admin/participantes" />
       <div className="min-w-0 flex-1">
         <p className="rotulo">{subtitulo ?? 'Participante'}</p>
         <h1 className="font-display text-[38px] leading-[0.9] font-black uppercase [overflow-wrap:anywhere]">{titulo}</h1>
@@ -153,6 +154,27 @@ export default function AdminParticipante() {
           rotulo={`Dias de ${participante.nome}`}
         />
         <LegendaDias comConferencia />
+        {participante.diasFotoParecida.length > 0 && (
+          <div className="grid gap-2 rounded-xl border border-aviso-borda bg-aviso-fundo p-3 text-sm text-aviso-texto">
+            <p className="flex items-start gap-2 font-semibold">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+              Foto parecida com outra do desafio em dias para revisar. É só um sinal: compare antes de aprovar.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {participante.diasFotoParecida.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => selecionar(n)}
+                  aria-current={selecionado === n ? 'true' : undefined}
+                  className="press min-h-11 rounded-full bg-superficie px-4 font-semibold text-texto shadow-[inset_0_0_0_1px_var(--aviso-borda)] aria-[current=true]:shadow-[inset_0_0_0_2px_var(--texto)]"
+                >
+                  Dia {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {selecionado === null ? (

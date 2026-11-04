@@ -3,13 +3,13 @@ import { Prisma, type Desafio } from '@prisma/client';
 import {
   hojeNoFuso,
   idadeEm,
+  type AdicionarParticipanteInput,
   type AdminDiaDetalhe,
   type AdminFeedbacksResposta,
   type AdminPagamento,
   type AdminParticipante,
   type AdminParticipanteDetalhe,
   type AdminParticipantesResposta,
-  type AtualizarDesafioInput,
   type ConferenciaInput,
   type ConferenciaResposta,
   type InvalidacaoInput,
@@ -22,7 +22,9 @@ import { CacheService, chaveVagas, chavesDoRanking } from '../../redis/redis.mod
 import { DesafioService, dataIso } from '../desafios/desafio.service';
 import { DiaService, recalcularDia } from '../dias/dia.service';
 import { paraFeedback } from '../feedback/feedback.service';
+import { inscreverPeloAdmin } from '../inscricoes/inscrever';
 import { csvParticipantes } from './csv';
+import { FotosParecidas, fotosComHash } from './fotos-parecidas';
 
 const SELECAO_USUARIO = {
   id: true,
@@ -69,7 +71,7 @@ export class AdminService {
       orderBy: [{ vagaNumero: { sort: 'asc', nulls: 'first' } }, { dataInscricao: 'asc' }],
     });
     const ids = participantes.map((p) => p.id);
-    const [concluidos, invalidados, aRevisar, todos] = await Promise.all([
+    const [concluidos, invalidados, aRevisar, todos, fotos] = await Promise.all([
       this.prisma.diaDesafio.groupBy({
         by: ['participanteId'],
         where: { participanteId: { in: ids }, concluido: true, invalidado: false },
@@ -90,6 +92,8 @@ export class AdminService {
         where: { participanteId: { in: ids } },
         _count: { _all: true },
       }),
+      // Todas do desafio (mesmo filtrando um participante): a parecida pode ser de outra pessoa.
+      fotosComHash(this.prisma, desafio.id),
     ]);
     const mapa = (linhas: { participanteId: string; _count: { _all: number } }[]) =>
       new Map(linhas.map((l) => [l.participanteId, l._count._all]));
@@ -97,6 +101,7 @@ export class AdminService {
     const nInvalidados = mapa(invalidados);
     const nParaRevisar = mapa(aRevisar);
     const nTotal = mapa(todos);
+    const diasFotoParecida = new FotosParecidas(fotos).diasParaRevisar();
     return participantes.map((p) => ({
       linha: p,
       totalDias: nTotal.get(p.id) ?? 0,
@@ -117,6 +122,7 @@ export class AdminService {
         diasConcluidos: nConcluidos.get(p.id) ?? 0,
         diasInvalidados: nInvalidados.get(p.id) ?? 0,
         paraRevisar: nParaRevisar.get(p.id) ?? 0,
+        diasFotoParecida: diasFotoParecida.get(p.id) ?? [],
         temFeedback: p.feedback !== null,
       },
     }));
@@ -163,7 +169,7 @@ export class AdminService {
       },
       feedback: p.feedback ? paraFeedback(p.feedback) : null,
       progresso: await this.dias.progresso(d, p.id, new Date(), { paraAdmin: true }),
-      removivel: p.pagamentoStatus !== 'CONFIRMADO' && !p.ehEmbaixador && totalDias === 0,
+      removivel: !p.ehEmbaixador && totalDias === 0,
     };
   }
 
@@ -208,7 +214,32 @@ export class AdminService {
   }
 
   /**
-   * Remove uma inscrição não confirmada, sem check-ins e que não é do embaixador (libera a vaga; o
+   * Inscreve pelo painel quem já tem conta (pelo e-mail): menor vaga livre, mesma trava da inscrição
+   * normal, mesmo com inscrições fechadas (ver `inscreverPeloAdmin`).
+   */
+  async adicionar(slug: string, adminId: string, input: AdicionarParticipanteInput): Promise<AdminParticipante> {
+    const d = await this.desafios.porSlug(slug);
+    const usuario = await this.prisma.usuario.findFirst({
+      where: { email: input.email, excluidoEm: null },
+      select: { id: true },
+    });
+    if (!usuario) {
+      throw new ErroApp('NAO_ENCONTRADO', 'Não há conta com esse e-mail. A pessoa precisa criar a conta no app primeiro.');
+    }
+    const p = await inscreverPeloAdmin(this.prisma, {
+      slug: d.slug,
+      usuarioId: usuario.id,
+      adminId,
+      pagamentoStatus: input.pagamentoStatus,
+    });
+    await this.cache.apagar(chaveVagas(d.id), ...chavesDoRanking(d.id));
+    const [c] = await this.carregar(d, p.id);
+    if (!c) throw new ErroApp('NAO_ENCONTRADO', 'Participante não encontrado.');
+    return c.resumo;
+  }
+
+  /**
+   * Remove uma inscrição sem check-ins e que não é do embaixador, paga ou não (libera a vaga; o
    * número volta a ser o menor livre). Mesma trava do `inscrever` para não correr com uma inscrição.
    */
   async remover(slug: string, participanteId: string): Promise<{ ok: true }> {
@@ -221,7 +252,6 @@ export class AdminService {
             where: {
               id: participanteId,
               desafioId: d.id,
-              pagamentoStatus: { not: 'CONFIRMADO' },
               ehEmbaixador: false,
               dias: { none: {} },
             },
@@ -311,8 +341,18 @@ export class AdminService {
       include: { usuario: { select: { nome: true } } },
     });
     if (!p) throw new ErroApp('NAO_ENCONTRADO', 'Participante não encontrado.');
-    const detalhe = await this.dias.detalhe(d, p.id, numeroDia);
-    return { ...detalhe, participanteId: p.id, nomeParticipante: p.usuario.nome };
+    const [detalhe, fotos] = await Promise.all([
+      this.dias.detalhe(d, p.id, numeroDia),
+      fotosComHash(this.prisma, d.id),
+    ]);
+    // Sinal de foto repetida (X20): só nesta rota do admin, nunca na do participante.
+    const parecidas = new FotosParecidas(fotos);
+    return {
+      ...detalhe,
+      participanteId: p.id,
+      nomeParticipante: p.usuario.nome,
+      fotos: detalhe.fotos.map((f) => ({ ...f, parecida: parecidas.daFoto(f.id) })),
+    };
   }
 
   async invalidacao(diaId: string, adminId: string, input: InvalidacaoInput): Promise<InvalidacaoResposta> {
@@ -384,20 +424,5 @@ export class AdminService {
       );
     }
     return { diaId, conferidoEm: conferidoEm.toISOString() };
-  }
-
-  async atualizarDesafio(slug: string, input: AtualizarDesafioInput): Promise<AdminParticipantesResposta['desafio']> {
-    const d = await this.desafios.porSlug(slug);
-    const atualizado = await this.prisma.desafio.update({
-      where: { id: d.id },
-      data: { inscricoesAbertas: input.inscricoesAbertas },
-    });
-    await this.cache.apagar(chaveVagas(d.id));
-    return {
-      slug: atualizado.slug,
-      nome: atualizado.nome,
-      inscricoesAbertas: atualizado.inscricoesAbertas,
-      totalVagas: atualizado.totalVagas,
-    };
   }
 }

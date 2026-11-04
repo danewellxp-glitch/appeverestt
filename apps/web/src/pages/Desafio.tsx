@@ -1,5 +1,5 @@
-import { altitudeSimbolica, type DesafioAtual, type MeuProgresso } from '@everest/shared';
-import { BookOpen, CalendarClock } from 'lucide-react';
+import { altitudeSimbolica, type MeuProgresso } from '@everest/shared';
+import { BookOpen } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Avatar } from '../components/ui/Avatar';
@@ -9,10 +9,11 @@ import { CardEscalada, CardStoryDoDia, CarrosselDestaque } from '../features/des
 import { CardSeuDia } from '../features/desafio/CardSeuDia';
 import { CardsAtividade } from '../features/desafio/CardsAtividade';
 import { CtaFixo } from '../features/desafio/CtaFixo';
+import { FiqueLigado } from '../features/desafio/FiqueLigado';
 import { CardFeedback } from '../features/feedback/CardFeedback';
 import { FaixaDias } from '../features/desafio/FaixaDias';
 import { caminhoDoDia, preCarregarDia } from '../features/desafio/navegacao';
-import { formatarDataCurta, formatarDiaCurto } from '../lib/datas';
+import { formatarDiaCurto } from '../lib/datas';
 import { useDesafioAtual, useDia, useFeed, useMe, useMeuProgresso, useRanking } from '../lib/queries';
 import { abrirComTransformacao, marcarDirecao } from '../lib/transicoes';
 
@@ -40,36 +41,12 @@ function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
   );
 }
 
-function eyebrow(progresso: MeuProgresso, desafio: DesafioAtual | undefined): string {
-  if (progresso.status === 'NAO_INICIADO') {
-    const n = Math.max(0, desafio?.diasParaInicio ?? 0);
-    const quando = n <= 1 ? 'começa amanhã' : `começa em ${n} dias`;
-    return desafio ? `Desafio ${quando} · ${formatarDataCurta(desafio.dataInicio)}` : 'Desafio ainda não começou';
-  }
+/** Eyebrow do topo (em andamento ou encerrado; antes do início a tela é a FiqueLigado). */
+function eyebrow(progresso: MeuProgresso): string {
   if (progresso.status === 'ENCERRADO') return 'Desafio encerrado';
   const hoje = progresso.dias.find((d) => d.numeroDia === progresso.diaAtual);
   const data = hoje ? ` · ${formatarDiaCurto(hoje.data)}` : '';
   return `Dia ${progresso.diaAtual ?? 1} de ${progresso.totalDias}${data}`;
-}
-
-/** Antes do início: contagem regressiva no lugar do "Seu dia" (conteúdo da antiga TelaAntesInicio). */
-function CardContagem({ desafio }: { desafio: DesafioAtual | undefined }) {
-  const dias = Math.max(0, desafio?.diasParaInicio ?? 0);
-  return (
-    <div className="grid gap-2 rounded-[28px] bg-superficie p-[18px] shadow-[inset_0_0_0_1px_var(--borda)]">
-      <span className="flex items-center gap-2">
-        <CalendarClock className="size-4 text-texto-2" aria-hidden />
-        <span className="rotulo">Começa em {dias === 1 ? '1 dia' : `${dias} dias`}</span>
-      </span>
-      <p className="font-display text-[52px] leading-[0.9] font-extrabold tabular-nums">
-        {desafio ? formatarDataCurta(desafio.dataInicio) : '—'}
-      </p>
-      <p className="text-sm text-texto-2">
-        Você já está inscrito. No primeiro dia, este card vira o seu check-in: água, treino, leitura, 3 fotos de prova
-        e o story.
-      </p>
-    </div>
-  );
 }
 
 /** Depois do fim: resumo final (conteúdo da antiga TelaEncerrado). */
@@ -142,6 +119,9 @@ export default function Desafio() {
 
   const progresso = progressoQ.data;
   const desafio = desafioQ.data;
+  // Pagamento confirmado e o desafio ainda não começou: "Fiquem ligados" (avisos pelo WhatsApp).
+  if (progresso.status === 'NAO_INICIADO') return <FiqueLigado me={me} desafio={desafio} />;
+
   const dia = diaQ.data;
   const emAndamento = progresso.status === 'EM_ANDAMENTO';
   const encerrado = progresso.status === 'ENCERRADO';
@@ -159,7 +139,7 @@ export default function Desafio() {
       <Surgir i={0}>
         <header className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="rotulo">{eyebrow(progresso, desafio)}</p>
+            <p className="rotulo">{eyebrow(progresso)}</p>
             <h1 className="mt-1 font-display text-[38px] leading-[0.9] font-black uppercase">
               Bora, {primeiroNome(me.usuario.nome)}.
             </h1>
@@ -197,9 +177,7 @@ export default function Desafio() {
 
       <Surgir i={3}>
         <Secao titulo={encerrado ? 'Seu resultado' : 'Seu dia'}>
-          {progresso.status === 'NAO_INICIADO' ? (
-            <CardContagem desafio={desafio} />
-          ) : encerrado ? (
+          {encerrado ? (
             <CardResumoFinal progresso={progresso} posicao={rankingQ.data?.minhaPosicao ?? null} />
           ) : dia ? (
             <CardSeuDia dia={dia} />

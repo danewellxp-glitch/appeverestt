@@ -184,6 +184,25 @@
   button:disabled {
     cursor: not-allowed;
   }
+
+  /*
+   * App instalado (html[data-app], ligado por features/pwa/standalone.ts): comporta-se como app
+   * nativo. Sem zoom por pinça/duplo toque (touch-action), sem "bounce" nem puxar-para-atualizar
+   * revelando o fundo (overscroll) e sem selecionar texto ao segurar a barra de abas ou botões.
+   * No navegador comum nada disso vale: o zoom continua disponível (WCAG 1.4.4).
+   */
+  html[data-app],
+  html[data-app] body {
+    touch-action: pan-x pan-y;
+    overscroll-behavior: none;
+  }
+  html[data-app] nav,
+  html[data-app] button,
+  html[data-app] a {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
 }
 
 @utility pt-safe {

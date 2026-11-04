@@ -183,7 +183,7 @@ test.describe('acessibilidade (axe)', () => {
 
           await informarPagamento(page.request);
           await page.reload();
-          await expect(page.getByRole('heading', { level: 2, name: 'Recebemos seu aviso' })).toBeVisible({
+          await expect(page.getByRole('heading', { level: 2, name: 'Pagamento em análise' })).toBeVisible({
             timeout: 20_000,
           });
           await auditar(page, `Pagamento informado /pagamento [${tema}]`);
@@ -192,12 +192,22 @@ test.describe('acessibilidade (axe)', () => {
         }
       });
 
-      test('admin: Admin (/admin) Participante (/admin/participantes/:id) e Feedbacks (/admin/feedbacks)', async ({ browser }) => {
+      test('admin: Indicadores, Participantes, Desafio, Novo desafio, Participante e Feedbacks', async ({ browser }) => {
         const { ctx, page } = await abrir(browser, tema, admin);
         try {
           await page.goto('/admin');
           await expect(page).toHaveURL(/\/admin$/);
-          await auditar(page, `Admin /admin [${tema}]`);
+          await auditar(page, `Admin indicadores /admin [${tema}]`);
+
+          await page.goto('/admin/desafio');
+          await auditar(page, `Admin desafio /admin/desafio [${tema}]`);
+
+          await page.goto('/admin/desafios/novo');
+          await auditar(page, `Admin novo desafio /admin/desafios/novo [${tema}]`);
+
+          await page.goto('/admin/participantes');
+          await expect(page).toHaveURL(/\/admin\/participantes$/);
+          await auditar(page, `Admin participantes /admin/participantes [${tema}]`);
 
           await page.getByRole('link', { name: /Bruno Acessível/ }).first().click();
           await expect(page).toHaveURL(/\/admin\/participantes\/[^/]+$/);

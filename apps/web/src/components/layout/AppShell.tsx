@@ -3,10 +3,12 @@ import { Outlet, ScrollRestoration, useLocation } from 'react-router';
 import { useMe } from '../../lib/queries';
 import { nomeTransicaoDoEstado } from '../../lib/transicoes';
 import { Carregando } from '../ui/basicos';
-import { BarraAbas, ROTAS_COM_ABAS } from './BarraAbas';
+import { BarraAbas, casaRota, ROTAS_SEM_ABAS } from './BarraAbas';
 import { Watermark } from './Watermark';
 
 const SELETOR_CARREGANDO = 'main [role="status"][aria-label^="Carregando"]';
+/** Abas do painel do embaixador: trocar entre elas mantém o foco na aba (não volta ao h1). */
+const ABAS_DO_PAINEL = new Set(['/admin', '/admin/participantes', '/admin/desafio']);
 
 /**
  * Depois de cada navegação (não na primeira carga), move o foco para o h1 da página nova
@@ -15,11 +17,15 @@ const SELETOR_CARREGANDO = 'main [role="status"][aria-label^="Carregando"]';
  */
 function useFocoNoTitulo(pathname: string) {
   const primeira = useRef(true);
+  const anterior = useRef(pathname);
   useEffect(() => {
+    const vinhaDe = anterior.current;
+    anterior.current = pathname;
     if (primeira.current) {
       primeira.current = false;
       return;
     }
+    if (ABAS_DO_PAINEL.has(vinhaDe) && ABAS_DO_PAINEL.has(pathname)) return;
     let tentativas = 0;
     let quadro = 0;
     const focar = () => {
@@ -47,8 +53,10 @@ export function AppShell() {
   // Container transform: a tela de destino herda o nome do card tocado (abrir-dia, abrir-ranking).
   const nomeTransicao = nomeTransicaoDoEstado(state);
   useFocoNoTitulo(pathname);
-  // Abas só para quem já teve o pagamento confirmado (pendente não acessa as telas das abas).
-  const comAbas = me?.participacao?.pagamentoStatus === 'CONFIRMADO' && ROTAS_COM_ABAS.includes(pathname);
+  // Barra fixa em todas as telas de quem já teve o pagamento confirmado (pendente não acessa as
+  // telas das abas), exceto no fluxo de login/cadastro/pagamento.
+  const comAbas =
+    me?.participacao?.pagamentoStatus === 'CONFIRMADO' && !ROTAS_SEM_ABAS.some((r) => casaRota(pathname, r));
 
   return (
     <div className="relative min-h-dvh">

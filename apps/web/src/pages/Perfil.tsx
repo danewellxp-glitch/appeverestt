@@ -120,6 +120,8 @@ export default function Perfil() {
   const u = me.usuario;
   const p = me.participacao;
   const confirmado = p?.pagamentoStatus === 'CONFIRMADO';
+  // Mesmo vocabulário da /pagamento: depois do "Já fiz o pagamento" é "em análise".
+  const textoPagamento = p?.pagamentoStatus === 'INFORMADO' ? 'Pagamento em análise' : 'Pagamento pendente';
 
   function salvarDados(dados: AtualizarPerfilInput) {
     setErroDados(null);
@@ -169,7 +171,7 @@ export default function Perfil() {
         {p && (
           <p className="rounded-full bg-superficie-2 px-3 py-1 text-xs font-semibold">
             {p.vagaNumero !== null ? `Vaga nº ${p.vagaNumero} · ` : ''}
-            {confirmado ? `inscrição em ${DIA_MES.format(new Date(p.dataInscricao))}` : 'pagamento pendente'}
+            {confirmado ? `inscrição em ${DIA_MES.format(new Date(p.dataInscricao))}` : textoPagamento.toLowerCase()}
           </p>
         )}
       </header>
@@ -194,7 +196,7 @@ export default function Perfil() {
       </section>
 
       <Lista titulo="Atalhos">
-        {p && !confirmado && <LinhaLink para="/pagamento" Icone={QrCode} rotulo="Pagamento pendente" />}
+        {p && !confirmado && <LinhaLink para="/pagamento" Icone={QrCode} rotulo={textoPagamento} />}
         <LinhaBotao Icone={IdCard} rotulo="Meus dados" haspopup aoClicar={() => setFolha('dados')} />
         {!instalacao.instalado && <LinhaBotao Icone={Download} rotulo="Instalar o app" haspopup aoClicar={() => setFolha('instalar')} />}
         {confirmado && <LinhaLink para="/feedback" Icone={MessageSquareHeart} rotulo="Dar feedback" />}

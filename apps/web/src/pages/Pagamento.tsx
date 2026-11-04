@@ -1,5 +1,5 @@
 import type { PagamentoResposta, PixPagamento } from '@everest/shared';
-import { Copy, Hourglass } from 'lucide-react';
+import { Check, Copy, Hourglass } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { Navigate } from 'react-router';
 import { BotaoVoltar } from '../components/layout/BotaoVoltar';
@@ -7,14 +7,20 @@ import { LinkNav } from '../components/layout/LinkNav';
 import { Alerta, Skeleton } from '../components/ui/basicos';
 import { Botao } from '../components/ui/Botao';
 import { useToast } from '../components/ui/Toast';
+import { tt } from '../content/landing';
 import { mensagemGeral } from '../features/auth/formulario';
 import { copiarTexto } from '../features/desafio/navegacao';
 import { RevelacaoVaga } from '../features/desafio/RevelacaoVaga';
+import { finalDoWhatsapp } from '../features/landing/contato';
+import { EtapasInscricao } from '../features/pagamento/EtapasInscricao';
 import { QrPix } from '../features/pagamento/QrPix';
 import { useInformarPagamento, usePagamento } from '../features/pagamento/usePagamento';
 import { chaveInicioPix, useTemporizador } from '../features/pagamento/useTemporizador';
 import { useDesafioAtual, useMe } from '../lib/queries';
 import { formatarReais } from '../lib/moeda';
+
+/** Vagas quando o desafio ainda não carregou. */
+const VAGAS_PADRAO = 50;
 
 /** Tempo do relógio (só visual: o código não expira). */
 const SEGUNDOS_PARA_PAGAR = 5 * 60;
@@ -137,11 +143,13 @@ function EstadoPendente({
   pix,
   participanteId,
   slug,
+  totalVagas,
 }: {
   pagamento: PagamentoResposta;
   pix: PixPagamento;
   participanteId: string;
   slug: string;
+  totalVagas: number;
 }) {
   const informar = useInformarPagamento(slug);
   const naoLocalizado = pagamento.informadoEm !== null;
@@ -155,7 +163,10 @@ function EstadoPendente({
           <h2 id="titulo-pix" className="text-[17px] font-bold">
             {pagamento.vagaNumero !== null ? `Vaga nº ${pagamento.vagaNumero} reservada para você` : 'Vaga reservada para você'}
           </h2>
-          <p className="font-display text-[52px] leading-[0.9] font-extrabold tabular-nums">
+          <p className="text-sm text-texto-2">
+            Seu lugar entre os {totalVagas} desafiados já está garantido. Falta só o Pix.
+          </p>
+          <p className="mt-2 font-display text-[52px] leading-[0.9] font-extrabold tabular-nums">
             {formatarReais(pix.valorCentavos)}
           </p>
           <p className="text-sm text-texto-2">Inscrição no desafio, via Pix</p>
@@ -184,10 +195,19 @@ function EstadoPendente({
   );
 }
 
-function EstadoInformado({ pagamento }: { pagamento: PagamentoResposta }) {
+function EstadoInformado({
+  pagamento,
+  totalVagas,
+  whatsapp,
+}: {
+  pagamento: PagamentoResposta;
+  totalVagas: number;
+  whatsapp: string | null;
+}) {
   const [verQr, setVerQr] = useState(false);
   const idQr = useId();
   const titulo = useRef<HTMLHeadingElement>(null);
+  const final = finalDoWhatsapp(whatsapp);
   // Acabou de avisar: leva o foco para a confirmação (o botão que tinha o foco sumiu).
   useEffect(() => {
     if (document.activeElement === document.body) titulo.current?.focus();
@@ -203,18 +223,37 @@ function EstadoInformado({ pagamento }: { pagamento: PagamentoResposta }) {
           <Hourglass className="size-6" />
         </span>
         <h2 id="titulo-aviso" ref={titulo} tabIndex={-1} className="text-xl font-bold focus:outline-none">
-          Recebemos seu aviso
+          Pagamento em análise
         </h2>
         <p className="text-sm text-texto-2">
-          O embaixador confirma os pagamentos manualmente, em algumas horas. Assim que confirmar, seu acesso é liberado
-          aqui.
+          O {tt.apelido} confere o Pix manualmente. Assim que ele confirmar, seu acesso é liberado aqui e você recebe a
+          confirmação pelo WhatsApp
+          {final && (
+            <>
+              {' '}
+              <span className="whitespace-nowrap">
+                (<span aria-hidden>•••• </span>final {final})
+              </span>
+            </>
+          )}
+          .
         </p>
-        {pagamento.vagaNumero !== null && (
-          <p className="rounded-full bg-superficie-2 px-3 py-1 text-xs font-semibold">
-            Vaga nº {pagamento.vagaNumero} reservada
-          </p>
-        )}
+        <p className="inline-flex items-center gap-1.5 rounded-full bg-superficie-2 px-3 py-1 text-xs font-semibold">
+          <Check className="size-3.5 text-vermelho-texto" aria-hidden />
+          {pagamento.vagaNumero !== null
+            ? `Vaga nº ${pagamento.vagaNumero} garantida entre os ${totalVagas} desafiados`
+            : `Vaga garantida entre os ${totalVagas} desafiados`}
+        </p>
       </section>
+
+      <div className="surgir" style={{ '--i': 2 } as CSSProperties}>
+        <EtapasInscricao
+          vagaNumero={pagamento.vagaNumero}
+          totalVagas={totalVagas}
+          informadoEm={pagamento.informadoEm}
+          apelido={tt.apelido}
+        />
+      </div>
 
       {pagamento.pix && (
         <div className="grid gap-3">
@@ -237,9 +276,10 @@ function EstadoInformado({ pagamento }: { pagamento: PagamentoResposta }) {
 }
 
 /**
- * /pagamento (X12): vaga reservada → Pix de R$ 50 (QR fixo + copia e cola, relógio de 5 min só
- * visual) → "Já fiz o pagamento" → espera a conferência manual do embaixador (polling) →
- * revelação da vaga. Fica fora do RotaInscrito; sem vaga volta para a capa.
+ * /pagamento (X12): vaga reservada (já garantida entre as N) → Pix de R$ 50 (QR fixo + copia e
+ * cola, relógio de 5 min só visual) → "Já fiz o pagamento" → "Pagamento em análise" enquanto o TT
+ * confere manualmente (polling) → revelação da vaga. Fica fora do RotaInscrito; sem vaga volta
+ * para a capa.
  */
 export default function Pagamento() {
   const { data: me } = useMe();
@@ -251,9 +291,10 @@ export default function Pagamento() {
   if (!participacao) return <Navigate to="/" replace />;
 
   const pagamento = consulta.data;
+  const totalVagas = desafioQ.data?.totalVagas ?? VAGAS_PADRAO;
   if (pagamento?.status === 'CONFIRMADO') {
     if (pagamento.vagaNumero === null) return <Navigate to="/desafio" replace />;
-    return <RevelacaoVaga vaga={pagamento.vagaNumero} totalVagas={desafioQ.data?.totalVagas ?? 50} />;
+    return <RevelacaoVaga vaga={pagamento.vagaNumero} totalVagas={totalVagas} />;
   }
 
   return (
@@ -276,7 +317,7 @@ export default function Pagamento() {
           {mensagemGeral(consulta.error)}
         </Alerta>
       ) : pagamento?.status === 'INFORMADO' ? (
-        <EstadoInformado pagamento={pagamento} />
+        <EstadoInformado pagamento={pagamento} totalVagas={totalVagas} whatsapp={me?.usuario.whatsapp ?? null} />
       ) : pagamento && !pagamento.pix ? (
         <Alerta tipo="aviso">
           O pagamento ainda não está disponível. Sua vaga continua reservada; tente de novo mais tarde.
@@ -287,6 +328,7 @@ export default function Pagamento() {
           pix={pagamento.pix}
           participanteId={participacao.participanteId}
           slug={slug}
+          totalVagas={totalVagas}
         />
       ) : null}
       {pagamento && <Contato handle={pagamento.contatoInstagram} />}

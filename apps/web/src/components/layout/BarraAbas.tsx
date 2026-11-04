@@ -15,14 +15,32 @@ export const ABAS: readonly ItemAba[] = [
   { para: '/desafio', rotulo: 'Desafio', Icone: Flag },
   { para: '/progresso', rotulo: 'Progresso', Icone: ChartLine },
   { para: '/ranking', rotulo: 'Ranking', Icone: Trophy },
-  { para: '/perfil', rotulo: 'Perfil', Icone: User },
+  // Telas abertas a partir do Perfil acendem a aba Perfil.
+  { para: '/perfil', rotulo: 'Perfil', Icone: User, tambem: ['/regras', '/privacidade', '/feedback', '/admin'] },
 ];
 
-/** Rotas que mostram a barra de abas (para inscritos). */
-export const ROTAS_COM_ABAS: readonly string[] = ABAS.flatMap((a) => [a.para, ...(a.tambem ?? [])]);
+/**
+ * Rotas em que a barra NÃO aparece, mesmo para quem tem o pagamento confirmado: fluxo de login,
+ * cadastro e pagamento (telas de passo a passo, com o próprio botão de voltar). Em todas as
+ * outras telas do AppShell a barra fica fixa embaixo (no navegador e no app instalado).
+ */
+export const ROTAS_SEM_ABAS: readonly string[] = [
+  '/entrar',
+  '/criar-conta',
+  '/recuperar-senha',
+  '/bem-vindo',
+  '/pagamento',
+  '/login',
+  '/cadastro',
+];
+
+/** `pathname` é a rota ou uma sub-rota dela (`/admin` cobre `/admin/participantes`). */
+export function casaRota(pathname: string, rota: string): boolean {
+  return pathname === rota || pathname.startsWith(`${rota}/`);
+}
 
 function abaAtiva(pathname: string): number {
-  return ABAS.findIndex((a) => [a.para, ...(a.tambem ?? [])].some((p) => pathname === p || pathname.startsWith(`${p}/`)));
+  return ABAS.findIndex((a) => [a.para, ...(a.tambem ?? [])].some((p) => casaRota(pathname, p)));
 }
 
 /**

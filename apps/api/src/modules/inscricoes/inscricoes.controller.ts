@@ -49,7 +49,12 @@ export class InscricoesController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<InscricaoResposta> {
     await this.auth.exigirPerfilCompleto(usuario.id);
-    const r = await inscrever(this.prisma, { slug, usuarioId: usuario.id });
+    // Admin não paga a inscrição: a vaga já nasce com o pagamento confirmado.
+    const r = await inscrever(this.prisma, {
+      slug,
+      usuarioId: usuario.id,
+      ...(usuario.papel === 'ADMIN' ? { pagamentoStatus: 'CONFIRMADO' as const } : {}),
+    });
     if (r.criada) {
       await this.cache.apagar(chaveVagas(r.desafioId), ...chavesDoRanking(r.desafioId));
     }

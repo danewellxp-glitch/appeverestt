@@ -96,9 +96,13 @@ export function FaixaDias({ progresso, diasParaInicio }: { progresso: MeuProgres
           {progresso.diasConcluidos} de {progresso.totalDias} concluídos
         </span>
       </div>
+      {/* `relative`: os textos sr-only (position:absolute) ficam presos ao trilho. Sem isso eles
+          escapavam do recorte, a página ganhava ~1.500 px de largura e, no Chrome do celular, a
+          barra de abas e o botão de check-in saíam da tela. Também faz do trilho o offsetParent
+          dos chips, que é a referência certa para centralizar o dia atual. */}
       <ol
         ref={trilho}
-        className="flex snap-x snap-proximity gap-1.5 overflow-x-auto p-[3px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="relative flex snap-x snap-proximity gap-1.5 overflow-x-auto p-[3px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {progresso.dias.map((d) => {
           const estado = estadoDoChip(d, progresso.diaAtual);

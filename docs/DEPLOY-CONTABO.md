@@ -93,6 +93,15 @@ docker compose -f docker-compose.prod.yml up -d --build
 docker image prune -f
 ```
 
+A API aplica as migrations sozinha ao subir (`prisma migrate deploy` antes do `node dist/main`).
+
+Uma vez, depois da atualização que trouxe o sinal de foto parecida (R20, X20), calcule o hash das fotos
+já enviadas. Pode repetir: só mexe em foto sem hash.
+
+```bash
+docker compose -f docker-compose.prod.yml exec api node dist/cli/scripts/hash-fotos.js
+```
+
 ## Backup
 
 ```bash

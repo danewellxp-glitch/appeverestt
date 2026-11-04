@@ -5,6 +5,7 @@ import { CacheService, chavesDoRanking } from '../../redis/redis.module';
 import { StorageService } from '../../storage/storage.service';
 import { recalcularDia } from '../dias/dia.service';
 import { IDADE_MAX_PENDENTE_MS, LADO_MAX_FOTO, LADO_THUMB, chavesProcessadas } from './fotos.constantes';
+import { hashPerceptual } from './hash-perceptual';
 
 const FORMATOS_ACEITOS = new Set(['jpeg', 'png', 'webp']);
 
@@ -42,7 +43,8 @@ export class ProcessamentoFotoService {
 
   /**
    * 1) baixa o original; 2) valida o formato real; 3) gira/redimensiona para webp (remove EXIF/GPS);
-   * 4) gera thumb; 5) sobe as duas, apaga o original e marca CONFIRMADA; 6) se inválida, REJEITADA.
+   * 4) gera thumb e o hash perceptual da versão cheia (X20); 5) sobe as duas, apaga o original e marca
+   * CONFIRMADA; 6) se inválida, REJEITADA.
    */
   async processar(fotoId: string): Promise<ResultadoProcessamento> {
     const foto = await this.prisma.fotoProva.findUnique({ where: { id: fotoId } });
@@ -86,6 +88,14 @@ export class ProcessamentoFotoService {
       return this.rejeitar(foto.id, foto.diaId, original, 'falha ao decodificar a imagem');
     }
 
+    // Da versão processada (a mesma que o script hash-fotos lê do storage). Só sinal: se falhar, segue sem.
+    let hash: string | null = null;
+    try {
+      hash = await hashPerceptual(cheia);
+    } catch (e) {
+      this.logger.warn(`Foto ${foto.id}: hash perceptual falhou (${e instanceof Error ? e.message : String(e)})`);
+    }
+
     const chaves = chavesProcessadas(original);
     await Promise.all([
       this.storage.enviar(chaves.cheia, cheia, 'image/webp'),
@@ -101,6 +111,7 @@ export class ProcessamentoFotoService {
           status: 'CONFIRMADA',
           mimeType: 'image/webp',
           tamanhoBytes: cheia.length,
+          hashPerceptual: hash,
         },
       });
       if (r.count > 0) await recalcularDia(tx, foto.diaId);

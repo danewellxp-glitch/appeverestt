@@ -1,11 +1,13 @@
 import type { AdminParticipante, StatusPagamento } from '@everest/shared';
-import { ChevronRight, Search } from 'lucide-react';
+import { AlertTriangle, ChevronRight, MessageCircle, Search } from 'lucide-react';
 import { useDeferredValue, useId, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Avatar } from '../../components/ui/Avatar';
 import { Segmentado } from '../../components/ui/Segmentado';
 import { marcarDirecao } from '../../lib/transicoes';
 import { SeloEmbaixador } from '../ranking/TabelaRanking';
+import { linkWhatsapp } from './FilaPagamentos';
+import { listarDias } from './fotoParecida';
 import { PilulaPagamento } from './PilulaPagamento';
 
 type FiltroPagamento = 'TODOS' | StatusPagamento;
@@ -87,12 +89,15 @@ export function ListaParticipantes({ participantes }: { participantes: AdminPart
       ) : (
         <ul className="grid gap-2">
           {filtrados.map((p) => (
-            <li key={p.participanteId}>
+            <li
+              key={p.participanteId}
+              className="flex items-center gap-1 rounded-[20px] bg-superficie pr-1.5 shadow-[inset_0_0_0_1px_var(--borda)]"
+            >
               <Link
                 to={`/admin/participantes/${p.participanteId}`}
                 viewTransition
                 onClick={() => marcarDirecao('avancar')}
-                className="press flex min-h-11 items-center gap-3 rounded-[20px] bg-superficie py-2.5 pr-3 pl-2.5 shadow-[inset_0_0_0_1px_var(--borda)]"
+                className="press flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-[20px] py-2.5 pr-1.5 pl-2.5"
               >
                 <Avatar nome={p.nome} />
                 <span className="grid min-w-0 flex-1">
@@ -106,6 +111,12 @@ export function ListaParticipantes({ participantes }: { participantes: AdminPart
                     {p.diasConcluidos} {p.diasConcluidos === 1 ? 'dia concluído' : 'dias concluídos'}
                     {p.diasInvalidados > 0 ? ` · ${p.diasInvalidados} invalidado${p.diasInvalidados === 1 ? '' : 's'}` : ''}
                   </small>
+                  {p.diasFotoParecida.length > 0 && (
+                    <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full border border-aviso-borda bg-aviso-fundo px-2 py-0.5 text-xs font-semibold text-aviso-texto">
+                      <AlertTriangle className="size-3 shrink-0" aria-hidden />
+                      Foto parecida no {listarDias(p.diasFotoParecida)}
+                    </span>
+                  )}
                 </span>
                 {p.paraRevisar > 0 && (
                   <span className="shrink-0 rounded-full bg-laranja px-2.5 py-1 text-xs font-bold text-texto escuro:text-fundo">
@@ -114,6 +125,17 @@ export function ListaParticipantes({ participantes }: { participantes: AdminPart
                 )}
                 <ChevronRight className="size-4 shrink-0 text-texto-2" aria-hidden />
               </Link>
+              {p.whatsapp && !p.contaExcluida && (
+                <a
+                  href={linkWhatsapp(p.whatsapp)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="press grid size-11 shrink-0 place-items-center rounded-full bg-superficie-2 hover:shadow-[inset_0_0_0_1px_var(--borda-campo)]"
+                >
+                  <MessageCircle className="size-[18px]" aria-hidden />
+                  <span className="sr-only">WhatsApp de {p.nome}</span>
+                </a>
+              )}
             </li>
           ))}
         </ul>

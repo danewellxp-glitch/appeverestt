@@ -120,7 +120,7 @@ export function SecaoPagamento({ slug, detalhe }: { slug: string; detalhe: Admin
       onSuccess: () => {
         setFolhaAberta(false);
         toast('Inscrição removida. A vaga voltou para a fila.');
-        void navegar('/admin', { replace: true, viewTransition: true });
+        void navegar('/admin/participantes', { replace: true, viewTransition: true });
       },
     });
   }
@@ -193,6 +193,12 @@ export function SecaoPagamento({ slug, detalhe }: { slug: string; detalhe: Admin
           A vaga{vaga} volta para a fila e {participante.nome} precisa se inscrever de novo para participar. Essa ação
           não pode ser desfeita.
         </p>
+        {pagamento.status === 'CONFIRMADO' && (
+          <Alerta tipo="aviso">
+            O pagamento já foi confirmado. Se for o caso, combine a devolução do Pix direto com {participante.nome}: o
+            app não faz estornos.
+          </Alerta>
+        )}
         {remover.isError && <Alerta tipo="erro">{mensagemGeral(remover.error)}</Alerta>}
         <Botao variante="secundario" larguraTotal onClick={() => setFolhaAberta(false)} disabled={remover.isPending}>
           Cancelar

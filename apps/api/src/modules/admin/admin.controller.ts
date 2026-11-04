@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Header, Param, Patch, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Res, UseGuards } from '@nestjs/common';
 import {
   ApiConflictResponse,
   ApiCookieAuth,
+  ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiProduces,
@@ -9,18 +10,18 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import {
-  atualizarDesafioSchema,
+  adicionarParticipanteSchema,
   conferenciaSchema,
   invalidacaoSchema,
   numeroDiaSchema,
   pagamentoAdminSchema,
+  type AdicionarParticipanteInput,
   type AdminDiaDetalhe,
   type AdminFeedbacksResposta,
   type AdminPagamento,
   type AdminParticipante,
   type AdminParticipanteDetalhe,
   type AdminParticipantesResposta,
-  type AtualizarDesafioInput,
   type ConferenciaInput,
   type ConferenciaResposta,
   type InvalidacaoInput,
@@ -53,6 +54,7 @@ const EXEMPLO_PARTICIPANTE = {
   diasConcluidos: 3,
   diasInvalidados: 0,
   paraRevisar: 2,
+  diasFotoParecida: [3],
   temFeedback: false,
 } satisfies AdminParticipante;
 
@@ -86,6 +88,35 @@ export class AdminController {
     return this.admin.participantes(slug);
   }
 
+  @Post('desafios/:slug/participantes')
+  @ApiZodBody(adicionarParticipanteSchema, { email: 'maria@exemplo.com', pagamentoStatus: 'CONFIRMADO' })
+  @ApiCreatedResponse({
+    description:
+      'Inscreve quem já tem conta no app (pelo e-mail), na menor vaga livre, mesmo com as inscrições ' +
+      'fechadas ou o perfil incompleto. Padrão: pagamento CONFIRMADO (grava quando e qual admin); ' +
+      'INFORMADO grava o aviso agora.',
+    schema: {
+      example: {
+        ...EXEMPLO_PARTICIPANTE,
+        pagamentoStatus: 'CONFIRMADO',
+        pagamentoInformadoEm: null,
+        pagamentoConfirmadoEm: '2026-10-20T12:00:00.000Z',
+        diasConcluidos: 0,
+        paraRevisar: 0,
+        diasFotoParecida: [],
+      } satisfies AdminParticipante,
+    },
+  })
+  @ApiNotFoundResponse({ description: 'NAO_ENCONTRADO: desafio inexistente ou nenhuma conta com esse e-mail.' })
+  @ApiConflictResponse({ description: 'JA_INSCRITO, VAGAS_ESGOTADAS ou DESAFIO_ENCERRADO.' })
+  adicionar(
+    @Param('slug') slug: string,
+    @Body(new ZodValidationPipe(adicionarParticipanteSchema)) body: AdicionarParticipanteInput,
+    @UsuarioAtual() usuario: UsuarioSessao,
+  ): Promise<AdminParticipante> {
+    return this.admin.adicionar(slug, usuario.id, body);
+  }
+
   // Declarada ANTES de `participantes/:id` (senão "participantes.csv" cairia no :id).
   @Get('desafios/:slug/participantes.csv')
   @Header('Cache-Control', 'no-store')
@@ -110,7 +141,9 @@ export class AdminController {
 
   @Get('desafios/:slug/participantes/:id')
   @ApiOkResponse({
-    description: 'Dados de cadastro, pagamento, feedback e progresso. `removivel` = pode remover a inscrição.',
+    description:
+      'Dados de cadastro, pagamento, feedback e progresso. `removivel` = pode remover a inscrição ' +
+      '(não é do embaixador e não tem check-ins).',
     schema: {
       example: {
         participante: EXEMPLO_PARTICIPANTE,
@@ -175,10 +208,12 @@ export class AdminController {
 
   @Delete('desafios/:slug/participantes/:id')
   @ApiOkResponse({
-    description: 'Remove uma inscrição não confirmada (libera a vaga; o número volta a ser o menor livre).',
+    description:
+      'Remove uma inscrição sem check-ins, paga ou não (libera a vaga; o número volta a ser o menor livre). ' +
+      'O feedback vai junto.',
     schema: { example: { ok: true } },
   })
-  @ApiConflictResponse({ description: 'PARTICIPANTE_NAO_REMOVIVEL: confirmado, embaixador ou com check-ins.' })
+  @ApiConflictResponse({ description: 'PARTICIPANTE_NAO_REMOVIVEL: embaixador ou com check-ins.' })
   @ApiNotFoundResponse({ description: 'NAO_ENCONTRADO.' })
   remover(@Param('slug') slug: string, @Param('id') id: string): Promise<{ ok: true }> {
     return this.admin.remover(slug, id);
@@ -202,6 +237,13 @@ export class AdminController {
   }
 
   @Get('desafios/:slug/participantes/:id/dias/:n')
+  @ApiOkResponse({
+    description:
+      'Dia do participante para a conferência. Cada foto traz `parecida`: a foto mais parecida já enviada no ' +
+      'desafio (hash perceptual, até 5 de 64 bits de diferença), de qualquer participante (`mesmaPessoa` quando é ' +
+      'do próprio), ou null. Só um sinal para a revisão manual (X20): nada é rejeitado ou invalidado sozinho.',
+  })
+  @ApiNotFoundResponse({ description: 'NAO_ENCONTRADO.' })
   dia(
     @Param('slug') slug: string,
     @Param('id') id: string,
@@ -239,14 +281,5 @@ export class AdminController {
     @UsuarioAtual() usuario: UsuarioSessao,
   ): Promise<ConferenciaResposta> {
     return this.admin.conferencia(diaId, usuario.id, body);
-  }
-
-  @Patch('desafios/:slug')
-  @ApiZodBody(atualizarDesafioSchema, { inscricoesAbertas: false })
-  atualizarDesafio(
-    @Param('slug') slug: string,
-    @Body(new ZodValidationPipe(atualizarDesafioSchema)) body: AtualizarDesafioInput,
-  ): Promise<AdminParticipantesResposta['desafio']> {
-    return this.admin.atualizarDesafio(slug, body);
   }
 }

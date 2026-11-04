@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { Desafio, FotoProva, Participante, Prisma, PrismaClient } from '@prisma/client';
 import {
   TIPOS_FOTO,
+  TOLERANCIA_VIRADA_MS,
   calcularConcluido,
   calcularEvolucao,
   calcularMelhorSequencia,
@@ -32,6 +33,29 @@ export function diaReferenciaSequencia(info: InfoTempo, totalDias: number): numb
   if (info.status === 'EM_ANDAMENTO') return info.diaAtual ?? 0;
   if (info.status === 'ENCERRADO') return totalDias + 1;
   return 0;
+}
+
+/**
+ * Uma foto por tipo para a tela: durante uma troca há a recebida e a nova PENDENTE (R17). Mostra a
+ * recebida (é a que vale até a nova ser confirmada); só pendente, mostra a mais recente.
+ */
+export function umaFotoPorTipo<F extends Pick<FotoProva, 'tipo' | 'status' | 'criadoEm'>>(fotos: F[]): F[] {
+  const porTipo = new Map<TipoFoto, F>();
+  for (const f of fotos) {
+    const atual = porTipo.get(f.tipo);
+    const melhor =
+      !atual ||
+      (atual.status === 'PENDENTE' && f.status !== 'PENDENTE') ||
+      (atual.status === 'PENDENTE' && f.status === 'PENDENTE' && f.criadoEm > atual.criadoEm);
+    if (melhor) porTipo.set(f.tipo, f);
+  }
+  return [...porTipo.values()];
+}
+
+/** `numeroDia` é o dia corrente do desafio no instante `agora`. */
+function ehDiaCorrente(desafio: Desafio, numeroDia: number, agora: Date): boolean {
+  const t = infoTempo(desafio, agora);
+  return t.status === 'EM_ANDAMENTO' && t.diaAtual === numeroDia;
 }
 
 export interface OpcoesRecalculo {
@@ -80,24 +104,29 @@ export class DiaService {
   }
 
   ehEditavel(desafio: Desafio, numeroDia: number, agora = new Date()): boolean {
+    // O dia de hoje, ou o dia que era hoje há 5 min (tolerância da virada, X18). Cobre também o
+    // último dia logo depois da meia-noite em que o desafio passa a ENCERRADO.
+    if (ehDiaCorrente(desafio, numeroDia, agora)) return true;
+    if (ehDiaCorrente(desafio, numeroDia, new Date(agora.getTime() - TOLERANCIA_VIRADA_MS))) return true;
     const t = infoTempo(desafio, agora);
     if (t.status !== 'EM_ANDAMENTO' || t.diaAtual === null) return false;
-    if (numeroDia === t.diaAtual) return true;
     return this.config.get('PERMITIR_EDITAR_DIAS_ANTERIORES') && numeroDia < t.diaAtual;
   }
 
-  /** Janela de edição (X1): só o dia atual, a menos que PERMITIR_EDITAR_DIAS_ANTERIORES. */
+  /**
+   * Janela de edição (X1): só o dia atual (com a tolerância da virada, X18), a menos que
+   * PERMITIR_EDITAR_DIAS_ANTERIORES.
+   */
   exigirEditavel(desafio: Desafio, numeroDia: number, agora = new Date()): void {
     this.validarNumeroDia(desafio, numeroDia);
+    if (this.ehEditavel(desafio, numeroDia, agora)) return;
     const t = infoTempo(desafio, agora);
     if (t.status === 'NAO_INICIADO') throw new ErroApp('DESAFIO_NAO_INICIADO');
     if (t.status === 'ENCERRADO') throw new ErroApp('DESAFIO_ENCERRADO');
-    if (!this.ehEditavel(desafio, numeroDia, agora)) {
-      throw new ErroApp(
-        'DIA_NAO_EDITAVEL',
-        numeroDia > (t.diaAtual ?? 0) ? 'Este dia ainda não chegou.' : 'Só o dia de hoje pode ser editado.',
-      );
-    }
+    throw new ErroApp(
+      'DIA_NAO_EDITAVEL',
+      numeroDia > (t.diaAtual ?? 0) ? 'Este dia ainda não chegou.' : 'Só o dia de hoje pode ser editado.',
+    );
   }
 
   async invalidarRanking(desafioId: string): Promise<void> {
@@ -111,7 +140,22 @@ export class DiaService {
     dados: CheckinInput,
   ): Promise<void> {
     this.exigirEditavel(desafio, numeroDia);
-    await this.prisma.$transaction(async (tx) => {
+    const mudou = await this.prisma.$transaction(async (tx) => {
+      // Salvar o mesmo check-in de novo (autosave, outra aba) não é edição: não devolve o dia
+      // aprovado para a fila de conferência (X8).
+      const atual = await tx.diaDesafio.findUnique({
+        where: { participanteId_numeroDia: { participanteId: participante.id, numeroDia } },
+        select: { aguaMl: true, exercicio: true, paginasLidas: true, storyPostado: true },
+      });
+      if (
+        atual &&
+        atual.aguaMl === dados.aguaMl &&
+        atual.exercicio === dados.exercicio &&
+        atual.paginasLidas === dados.paginasLidas &&
+        atual.storyPostado === dados.storyPostado
+      ) {
+        return false;
+      }
       const dia = await tx.diaDesafio.upsert({
         where: { participanteId_numeroDia: { participanteId: participante.id, numeroDia } },
         update: {
@@ -130,8 +174,9 @@ export class DiaService {
         },
       });
       await recalcularDia(tx, dia.id, { zerarConferencia: true });
+      return true;
     });
-    await this.invalidarRanking(desafio.id);
+    if (mudou) await this.invalidarRanking(desafio.id);
   }
 
   /** `paraAdmin`: dias concluídos ainda não aprovados aparecem como AGUARDANDO_CONFERENCIA. */
@@ -199,7 +244,7 @@ export class DiaService {
       where: { participanteId_numeroDia: { participanteId, numeroDia } },
       include: { fotos: true },
     });
-    const fotosOrdenadas = (dia?.fotos ?? []).sort(
+    const fotosOrdenadas = umaFotoPorTipo(dia?.fotos ?? []).sort(
       (a, b) => TIPOS_FOTO.indexOf(a.tipo) - TIPOS_FOTO.indexOf(b.tipo),
     );
     const fotos = await Promise.all(

@@ -3,15 +3,13 @@ import {
   DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
-  NotFound,
   PutObjectCommand,
-  S3ServiceException,
   type S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Global, Injectable, Module } from '@nestjs/common';
 import { AppConfig } from '../config/app-config.service';
-import { criarClienteS3 } from './s3';
+import { criarClienteS3, ehNaoEncontrado } from './s3';
 
 /** Validade das URLs assinadas (GET e PUT): 10 minutos. */
 export const TTL_URL_ASSINADA_S = 600;
@@ -19,14 +17,6 @@ export const TTL_URL_ASSINADA_S = 600;
 export interface CabecalhoObjeto {
   tamanhoBytes: number;
   contentType: string | undefined;
-}
-
-function ehNaoEncontrado(e: unknown): boolean {
-  return (
-    e instanceof NotFound ||
-    (e instanceof S3ServiceException &&
-      (e.name === 'NotFound' || e.name === 'NoSuchKey' || e.$metadata.httpStatusCode === 404))
-  );
 }
 
 @Injectable()

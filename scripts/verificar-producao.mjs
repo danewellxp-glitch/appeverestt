@@ -98,10 +98,12 @@ await checar('PWA', async () => {
   const sw = await buscar('/sw.js');
   if (sw.status !== 200) {
     aviso(`/sw.js → HTTP ${sw.status} (service worker não publicado?)`);
-  } else if ((sw.headers.get('cache-control') ?? '').includes('no-cache')) {
-    ok('/sw.js → 200 com Cache-Control no-cache');
   } else {
-    aviso(`/sw.js sem no-cache (Cache-Control: ${sw.headers.get('cache-control')})`);
+    if ((sw.headers.get('cache-control') ?? '').includes('no-cache')) ok('/sw.js → 200 com Cache-Control no-cache');
+    else aviso(`/sw.js sem no-cache (Cache-Control: ${sw.headers.get('cache-control')})`);
+    // Sem isso o SW responde /__/auth/* com o index.html e o popup do Google mostra o 404 do app.
+    if (sw.corpo.includes('/^\\/__\\//')) ok('/sw.js deixa /__/* (login do Firebase) ir para a rede');
+    else falha('/sw.js responde /__/* com o index.html (navigateFallbackDenylist sem /^\\/__\\//)');
   }
 });
 
@@ -109,6 +111,10 @@ await checar('login (Firebase)', async () => {
   const h = await buscar('/__/auth/handler');
   if (h.status === 200) ok('/__/auth/handler → 200 (proxy do Firebase no domínio do app)');
   else falha(`/__/auth/handler → HTTP ${h.status} (proxy /__/* para <projeto>.firebaseapp.com)`);
+  // O SDK abre /__/auth/iframe num iframe do próprio app: DENY quebra o popup do Google.
+  const xfo = (await buscar('/__/auth/iframe')).headers.get('x-frame-options') ?? '';
+  if (xfo.toUpperCase() === 'DENY') falha('/__/auth/iframe com X-Frame-Options DENY (use SAMEORIGIN em /__/*)');
+  else ok(`/__/auth/iframe pode abrir num iframe do app (X-Frame-Options: ${xfo || 'ausente'})`);
   const r = await fetch(`${base}/api/auth/sessao`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Origin: base },

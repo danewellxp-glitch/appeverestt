@@ -5,6 +5,7 @@ import { ErroApp } from '../../common/erros';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService, chaveVagas } from '../../redis/redis.module';
 import { PixService } from '../pagamento/pix.service';
+import { perfilEstaCompleto } from '../auth/auth.service';
 
 export const TTL_VAGAS_S = 30;
 
@@ -20,6 +21,19 @@ export interface InfoTempo {
 export function dataIso(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
+
+/** Campos que decidem o perfil completo (`perfilEstaCompleto`). */
+const CAMPOS_DO_PERFIL = {
+  nome: true,
+  aceitouTermosEm: true,
+  excluidoEm: true,
+  instagram: true,
+  dataNascimento: true,
+  whatsapp: true,
+  bairro: true,
+  cidade: true,
+  uf: true,
+} as const;
 
 export function infoTempo(desafio: Desafio, agora = new Date()): InfoTempo {
   const dataInicio = dataIso(desafio.dataInicio);
@@ -56,7 +70,10 @@ export class DesafioService {
   /**
    * Desafio + inscrição do usuário. Único ponto que resolve o participante (gate do pagamento, X12).
    * Lança NAO_INSCRITO se ele não participa e PAGAMENTO_PENDENTE se o Pix ainda não foi confirmado
-   * (a não ser com `exigirPagamento: false`, usado só pelas rotas de pagamento).
+   * (a não ser com `exigirPagamento: false`, usado só pelas rotas de pagamento). Para participar
+   * (check-in, fotos, ranking, feed, feedback) também exige o perfil completo, com o aceite dos
+   * termos (X11): vale para quem o embaixador inscreveu pelo painel antes de a pessoa terminar o
+   * cadastro (o app já manda para a /bem-vindo; aqui é a garantia no servidor).
    */
   async exigirParticipante(
     slug: string,
@@ -64,11 +81,18 @@ export class DesafioService {
     { exigirPagamento = true }: { exigirPagamento?: boolean } = {},
   ): Promise<{ desafio: Desafio; participante: Participante }> {
     const desafio = await this.porSlug(slug);
-    const participante = await this.prisma.participante.findUnique({
+    const encontrado = await this.prisma.participante.findUnique({
       where: { desafioId_usuarioId: { desafioId: desafio.id, usuarioId } },
+      include: { usuario: { select: CAMPOS_DO_PERFIL } },
     });
-    if (!participante) throw new ErroApp('NAO_INSCRITO');
-    if (exigirPagamento && participante.pagamentoStatus !== 'CONFIRMADO') throw new ErroApp('PAGAMENTO_PENDENTE');
+    if (!encontrado) throw new ErroApp('NAO_INSCRITO');
+    const { usuario, ...participante } = encontrado;
+    if (exigirPagamento) {
+      if (participante.pagamentoStatus !== 'CONFIRMADO') throw new ErroApp('PAGAMENTO_PENDENTE');
+      if (!perfilEstaCompleto(usuario)) {
+        throw new ErroApp('PERFIL_INCOMPLETO', 'Complete seu cadastro (dados e aceite dos termos) para continuar.');
+      }
+    }
     return { desafio, participante };
   }
 

@@ -114,7 +114,8 @@ export function useFotosDia(slug: string, numeroDia: number) {
         atualizar(tipo, (a) => ({ ...a, upload: null, erro: null }));
       } catch (e) {
         atualizar(tipo, (a) => ({ ...a, upload: null, erro: mensagemErro(e) }));
-        // Pedir a upload-url já substitui a foto anterior no servidor: sincroniza o slot.
+        // A foto anterior continua valendo no servidor até a nova ser confirmada (R17): recarrega
+        // para o slot voltar a mostrá-la.
         if (pediuUrl) void recarregar();
       } finally {
         URL.revokeObjectURL(previewUrl);

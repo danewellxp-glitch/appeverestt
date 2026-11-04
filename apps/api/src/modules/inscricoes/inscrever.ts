@@ -8,7 +8,7 @@ export interface ResultadoInscricao {
   criada: boolean;
 }
 
-interface LinhaDesafio {
+export interface LinhaDesafio {
   id: string;
   totalVagas: number;
   totalDias: number;
@@ -19,7 +19,7 @@ interface LinhaDesafio {
 }
 
 /**
- * Menor número de vaga livre em 1..totalVagas (null = esgotado). Remover uma inscrição não paga
+ * Menor número de vaga livre em 1..totalVagas (null = esgotado). Remover uma inscrição (admin)
  * libera o número, então `count + 1` colidiria no índice único. Chamar dentro da transação,
  * depois do `FOR UPDATE` na linha do desafio (é o que serializa as inscrições concorrentes).
  */
@@ -37,6 +37,26 @@ export async function menorVagaLivre(
     ORDER BY g.n
     LIMIT 1`;
   return livre?.n ?? null;
+}
+
+/**
+ * Trava a linha do desafio até o fim da transação (`FOR UPDATE`): serializa inscrições, remoções
+ * e mudanças no total de vagas. `apenasAtivo`: a inscrição normal só vale no desafio ativo.
+ */
+export async function travarDesafio(
+  tx: Prisma.TransactionClient,
+  slug: string,
+  { apenasAtivo = false }: { apenasAtivo?: boolean } = {},
+): Promise<LinhaDesafio | null> {
+  const [d] = await tx.$queryRaw<LinhaDesafio[]>`
+    SELECT id, "totalVagas", "totalDias", "inscricoesAbertas", "embaixadorOcupaVaga", "dataInicio", timezone
+    FROM "Desafio" WHERE slug = ${slug} ${apenasAtivo ? Prisma.sql`AND ativo = true` : Prisma.empty} FOR UPDATE`;
+  return d ?? null;
+}
+
+function encerrado(d: LinhaDesafio, agora: Date): boolean {
+  const { status } = calcularDiaAtual(d.dataInicio.toISOString().slice(0, 10), agora, d.timezone, d.totalDias);
+  return status === 'ENCERRADO';
 }
 
 /**
@@ -64,9 +84,7 @@ export async function inscrever(
   try {
     return await prisma.$transaction(
       async (tx) => {
-        const [d] = await tx.$queryRaw<LinhaDesafio[]>`
-          SELECT id, "totalVagas", "totalDias", "inscricoesAbertas", "embaixadorOcupaVaga", "dataInicio", timezone
-          FROM "Desafio" WHERE slug = ${params.slug} AND ativo = true FOR UPDATE`;
+        const d = await travarDesafio(tx, params.slug, { apenasAtivo: true });
         if (!d) throw new ErroApp('NAO_ENCONTRADO', 'Desafio não encontrado ou inativo.');
 
         const existente = await tx.participante.findUnique({
@@ -89,13 +107,7 @@ export async function inscrever(
         }
 
         if (!embaixador) {
-          const { status } = calcularDiaAtual(
-            d.dataInicio.toISOString().slice(0, 10),
-            agora,
-            d.timezone,
-            d.totalDias,
-          );
-          if (status === 'ENCERRADO') throw new ErroApp('DESAFIO_ENCERRADO');
+          if (encerrado(d, agora)) throw new ErroApp('DESAFIO_ENCERRADO');
           if (!d.inscricoesAbertas) throw new ErroApp('INSCRICOES_FECHADAS');
         }
 
@@ -127,6 +139,56 @@ export async function inscrever(
       });
       if (existente) return { participante: existente, desafioId: existente.desafioId, criada: false };
     }
+    throw e;
+  }
+}
+
+/**
+ * Inscrição feita pelo admin no painel (quem já tem conta, achado pelo e-mail). Mesma trava e mesma
+ * numeração da inscrição normal, mas vale com inscrições fechadas, em desafio inativo e sem perfil
+ * completo; só não passa do total de vagas nem entra em desafio encerrado. Nunca é embaixador.
+ * Não é idempotente: quem já está inscrito → JA_INSCRITO (o admin precisa saber).
+ * Pagamento: CONFIRMADO grava quando e qual admin; INFORMADO grava o aviso agora.
+ */
+export async function inscreverPeloAdmin(
+  prisma: PrismaClient,
+  params: { slug: string; usuarioId: string; adminId: string; pagamentoStatus: StatusPagamento; agora?: Date },
+): Promise<Participante> {
+  const agora = params.agora ?? new Date();
+  const status = params.pagamentoStatus;
+  try {
+    return await prisma.$transaction(
+      async (tx) => {
+        const d = await travarDesafio(tx, params.slug);
+        if (!d) throw new ErroApp('NAO_ENCONTRADO', 'Desafio não encontrado.');
+
+        const existente = await tx.participante.findUnique({
+          where: { desafioId_usuarioId: { desafioId: d.id, usuarioId: params.usuarioId } },
+          select: { id: true },
+        });
+        if (existente) throw new ErroApp('JA_INSCRITO');
+        if (encerrado(d, agora)) throw new ErroApp('DESAFIO_ENCERRADO');
+
+        const vagaNumero = await menorVagaLivre(tx, d.id, d.totalVagas);
+        if (vagaNumero === null) throw new ErroApp('VAGAS_ESGOTADAS');
+
+        return tx.participante.create({
+          data: {
+            desafioId: d.id,
+            usuarioId: params.usuarioId,
+            vagaNumero,
+            pagamentoStatus: status,
+            pagamentoInformadoEm: status === 'INFORMADO' ? agora : null,
+            pagamentoConfirmadoEm: status === 'CONFIRMADO' ? agora : null,
+            pagamentoConfirmadoPorId: status === 'CONFIRMADO' ? params.adminId : null,
+          },
+        });
+      },
+      { maxWait: 15_000, timeout: 15_000 },
+    );
+  } catch (e) {
+    // A mesma pessoa incluída duas vezes ao mesmo tempo: o índice único segura a segunda.
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') throw new ErroApp('JA_INSCRITO');
     throw e;
   }
 }

@@ -26,14 +26,14 @@ async function vagasPreenchidas(browser: Browser): Promise<number> {
   }
 }
 
-/** Login do admin pela tela /entrar (e-mail e senha no emulador), voltando para /admin. */
+/** Login do admin pela tela /entrar (e-mail e senha no emulador), voltando para a aba Participantes. */
 async function entrarComoAdminPelaTela(page: Page): Promise<void> {
-  await page.goto('/entrar?volta=/admin');
+  await page.goto('/entrar?volta=/admin/participantes');
   const form = page.getByRole('form', { name: 'Entrar na conta' });
   await form.getByLabel('E-mail').fill(ADMIN.email);
   await form.getByLabel('Senha', { exact: true }).fill(ADMIN.senha);
   await form.getByRole('button', { name: 'Entrar', exact: true }).click();
-  await expect(page).toHaveURL(/\/admin$/, { timeout: 20_000 });
+  await expect(page).toHaveURL(/\/admin\/participantes$/, { timeout: 20_000 });
   await expect(page.getByRole('heading', { level: 2, name: 'Pagamentos a confirmar' })).toBeVisible({
     timeout: 20_000,
   });
@@ -59,7 +59,7 @@ test('admin confirma o pagamento pela fila, a participante entra no desafio e um
   const pagante = await ctxPagante.newPage();
   await pagante.goto('/desafio');
   await expect(pagante).toHaveURL(/\/pagamento$/, { timeout: 20_000 });
-  await expect(pagante.getByRole('heading', { level: 2, name: 'Recebemos seu aviso' })).toBeVisible({
+  await expect(pagante.getByRole('heading', { level: 2, name: 'Pagamento em análise' })).toBeVisible({
     timeout: 20_000,
   });
 
@@ -98,7 +98,7 @@ test('admin confirma o pagamento pela fila, a participante entra no desafio e um
     await expect(dialogo).toBeVisible();
     await dialogo.getByRole('button', { name: 'Remover inscrição' }).click();
     await expect(admin.getByText('Inscrição removida. A vaga voltou para a fila.')).toBeVisible({ timeout: 20_000 });
-    await expect(admin).toHaveURL(/\/admin$/, { timeout: 20_000 });
+    await expect(admin).toHaveURL(/\/admin\/participantes$/, { timeout: 20_000 });
     await expect(admin.getByRole('link', { name: new RegExp(DESISTENTE.nome) })).toHaveCount(0);
 
     expect(await vagasPreenchidas(browser)).toBe(antes - 1);

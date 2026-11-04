@@ -157,19 +157,13 @@ async function semearDias(desafioId: string, participanteId: string, dias: Plano
         imagemExemplo(tipo, numeroDia, 400),
       ]);
       await Promise.all([enviar(storageKey, full), enviar(thumbKey, thumb)]);
-      await prisma.fotoProva.upsert({
-        where: { diaId_tipo: { diaId: dia.id, tipo } },
-        update: { storageKey, thumbKey, status: 'CONFIRMADA', mimeType: 'image/webp', tamanhoBytes: full.length },
-        create: {
-          diaId: dia.id,
-          tipo,
-          storageKey,
-          thumbKey,
-          status: 'CONFIRMADA',
-          mimeType: 'image/webp',
-          tamanhoBytes: full.length,
-        },
+      const dados = { storageKey, thumbKey, status: 'CONFIRMADA' as const, mimeType: 'image/webp', tamanhoBytes: full.length };
+      const existente = await prisma.fotoProva.findFirst({
+        where: { diaId: dia.id, tipo, status: { not: 'PENDENTE' } },
+        select: { id: true },
       });
+      if (existente) await prisma.fotoProva.update({ where: { id: existente.id }, data: dados });
+      else await prisma.fotoProva.create({ data: { diaId: dia.id, tipo, ...dados } });
     }
   }
 }

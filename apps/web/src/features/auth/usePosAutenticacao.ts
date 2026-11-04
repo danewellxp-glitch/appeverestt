@@ -11,6 +11,7 @@ import { destinoDaParticipacao, destinoSeguro } from './sessao';
 /**
  * Para onde ir quando já há sessão (logo depois de entrar, ou ao abrir /entrar já logado),
  * na ordem (docs/FRONTEND.md §5.4):
+ *   admin                  → ?volta=/rota ou /admin (não paga, não passa pela /bem-vindo)
  *   perfil incompleto      → /bem-vindo (preservando acao/volta)
  *   ?acao=inscrever         → inscreve → /pagamento (vaga reservada, pagamento pendente)
  *                             ou /bem-vindo?etapa=vaga (já confirmado: revelação da vaga)
@@ -34,6 +35,11 @@ export function usePosAutenticacao(me: MeResposta | null | undefined) {
     iniciado.current = true;
 
     async function concluir(sessao: MeResposta): Promise<void> {
+      // Admin não paga nem precisa de vaga ou cadastro completo: vai direto para o painel.
+      if (sessao.usuario.papel === 'ADMIN') {
+        void navegar(destinoSeguro(volta) ?? '/admin', { replace: true });
+        return;
+      }
       if (!sessao.usuario.perfilCompleto) {
         const busca = new URLSearchParams();
         if (acao) busca.set('acao', acao);
