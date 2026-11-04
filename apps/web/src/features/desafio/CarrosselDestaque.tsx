@@ -1,10 +1,11 @@
-import { ALTITUDE_CUME, altitudeSimbolica, type DiaDetalhe } from '@everest/shared';
-import { Check, Copy, Trophy } from 'lucide-react';
+import { ALTITUDE_CUME, altitudeSimbolica, type DiaDetalhe, type MeuProgresso } from '@everest/shared';
+import { Check, Copy, Sparkles, Trophy } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Botao } from '../../components/ui/Botao';
 import { Contador } from '../../components/ui/Contador';
 import { useToast } from '../../components/ui/Toast';
 import { useCheckin } from '../checkin/useCheckin';
+import { CriarStory } from '../compartilhar/CriarStory';
 import { copiarTexto } from './navegacao';
 
 const FORMATO = new Intl.NumberFormat('pt-BR');
@@ -69,13 +70,17 @@ export function CardStoryDoDia({
   dia,
   instagramHandle,
   hashtag,
+  progresso,
 }: {
   slug: string;
   dia: DiaDetalhe;
   instagramHandle: string;
   hashtag: string;
+  /** Com o progresso, mostra o "Criar meu story" (gera a imagem pronta). */
+  progresso?: MeuProgresso;
 }) {
   const { toast } = useToast();
+  const [criando, setCriando] = useState(false);
   const checkin = useCheckin(slug, dia, dia.editavel);
   const postado = checkin.valores?.storyPostado ?? dia.storyPostado;
   const texto = `@${instagramHandle} #${hashtag}`;
@@ -91,6 +96,11 @@ export function CardStoryDoDia({
         <b className="text-vermelho-texto">#{hashtag}</b>
       </p>
       <div className="mt-auto flex flex-wrap gap-2">
+        {progresso && (
+          <Botao tamanho="sm" icone={<Sparkles className="size-4" aria-hidden />} onClick={() => setCriando(true)}>
+            Criar meu story
+          </Botao>
+        )}
         <Botao
           tamanho="sm"
           variante="secundario"
@@ -114,6 +124,20 @@ export function CardStoryDoDia({
           {postado ? 'Postado' : 'Marcar como postado'}
         </Botao>
       </div>
+      {progresso && (
+        <CriarStory
+          aberta={criando}
+          aoFechar={() => setCriando(false)}
+          slug={slug}
+          dia={checkin.valores ? { ...dia, ...checkin.valores } : dia}
+          progresso={progresso}
+          instagramHandle={instagramHandle}
+          hashtag={hashtag}
+          storyPostado={postado}
+          podeMarcar={dia.editavel}
+          aoMarcarPostado={() => checkin.alterar((v) => ({ ...v, storyPostado: true }), { imediato: true })}
+        />
+      )}
     </article>
   );
 }

@@ -170,6 +170,7 @@ export default function Desafio() {
               dia={dia}
               instagramHandle={desafio.instagramHandle}
               hashtag={desafio.hashtag}
+              progresso={progresso}
             />
           ) : null}
         </CarrosselDestaque>

@@ -21,6 +21,7 @@ import { ResumoDia } from '../features/checkin/ResumoDia';
 import { useAcaoRapida } from '../features/checkin/useAcaoRapida';
 import { useCheckin } from '../features/checkin/useCheckin';
 import { useDiaSelecionado } from '../features/checkin/useDiaSelecionado';
+import { CriarStory } from '../features/compartilhar/CriarStory';
 import { CardFotos } from '../features/fotos/CardFotos';
 import { tiposFotosValidas } from '../features/fotos/fotosValidas';
 import { usePollingFotos } from '../features/fotos/usePollingFotos';
@@ -66,6 +67,7 @@ function ConteudoDia({
   totalDias,
   online,
   desafio,
+  progresso,
 }: {
   slug: string;
   dia: DiaDetalhe;
@@ -73,8 +75,10 @@ function ConteudoDia({
   totalDias: number;
   online: boolean;
   desafio: DesafioAtual | undefined;
+  progresso: MeuProgresso;
 }) {
   const { toast } = useToast();
+  const [criandoStory, setCriandoStory] = useState(false);
   const editavel = dia.editavel && online;
   const checkin = useCheckin(slug, dia, editavel);
   usePollingFotos(slug, dia);
@@ -166,6 +170,19 @@ function ConteudoDia({
             aoAlterar={(postado) => checkin.alterar((v) => ({ ...v, storyPostado: postado }))}
             instagramHandle={desafio?.instagramHandle}
             hashtag={desafio?.hashtag}
+            aoCriarStory={() => setCriandoStory(true)}
+          />
+          <CriarStory
+            aberta={criandoStory}
+            aoFechar={() => setCriandoStory(false)}
+            slug={slug}
+            dia={{ ...dia, ...valores }}
+            progresso={progresso}
+            instagramHandle={desafio?.instagramHandle}
+            hashtag={desafio?.hashtag}
+            storyPostado={valores.storyPostado}
+            podeMarcar={editavel}
+            aoMarcarPostado={() => checkin.alterar((v) => ({ ...v, storyPostado: true }))}
           />
         </>
       ) : (
@@ -230,6 +247,7 @@ function TelaDia({
       totalDias={progresso.totalDias}
       online={online}
       desafio={desafio}
+      progresso={progresso}
     />
   );
 }
