@@ -9,7 +9,7 @@ export function SecaoLanding({
 }: {
   id: string;
   eyebrow: string;
-  titulo: string;
+  titulo: ReactNode;
   children: ReactNode;
 }) {
   const idTitulo = `${id}-titulo`;

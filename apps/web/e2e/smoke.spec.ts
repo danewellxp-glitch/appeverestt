@@ -65,7 +65,7 @@ test('smoke: criar conta, vaga, check-in completo com fotos, ranking e remoção
   await expect(page.getByRole('heading', { level: 1 })).toContainText('melhor');
   const preenchidasAntes = await vagasPreenchidas(page);
   await expect(page.getByText(/Inscrição:\s*R\$\s*50,00\s*via Pix/)).toBeVisible();
-  for (const secao of ['5 hábitos. Todo dia.', 'Quem é o TT', 'Fotos', 'Como funciona', 'Perguntas frequentes']) {
+  for (const secao of ['3 hábitos simples, todos os dias!', 'Quem é o TT', 'Fotos', 'Como funciona', 'Perguntas frequentes']) {
     await expect(page.getByRole('heading', { level: 2, name: secao, exact: true })).toBeAttached();
   }
   await expect(page.getByRole('heading', { level: 2, name: /^Restam? \d+ vagas?$/ })).toBeAttached();
