@@ -11,6 +11,7 @@ import { CardsAtividade } from '../features/desafio/CardsAtividade';
 import { CtaFixo } from '../features/desafio/CtaFixo';
 import { FiqueLigado } from '../features/desafio/FiqueLigado';
 import { CardFeedback } from '../features/feedback/CardFeedback';
+import { ConvitePush } from '../features/push/ConvitePush';
 import { FaixaDias } from '../features/desafio/FaixaDias';
 import { caminhoDoDia, preCarregarDia } from '../features/desafio/navegacao';
 import { formatarDiaCurto } from '../lib/datas';
@@ -197,6 +198,8 @@ export default function Desafio() {
             <Skeleton className="h-36 rounded-[28px]" />
           )}
           <CardFeedback status={progresso.status} diaAtual={progresso.diaAtual} totalDias={progresso.totalDias} />
+          {/* Lembretes no celular (R22): só enquanto há dias pela frente. */}
+          {emAndamento && <ConvitePush />}
         </Secao>
       </Surgir>
 

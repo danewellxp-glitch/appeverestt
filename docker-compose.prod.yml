@@ -105,6 +105,9 @@ services:
       FIREBASE_SERVICE_ACCOUNT_BASE64: ${FIREBASE_SERVICE_ACCOUNT_BASE64:?defina FIREBASE_SERVICE_ACCOUNT_BASE64 no .env}
       AUTH_SENHA_LEGADO: 'false'
       PIX_COPIA_E_COLA: ${PIX_COPIA_E_COLA:?defina PIX_COPIA_E_COLA no .env}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:?defina VAPID_PUBLIC_KEY no .env (npx web-push generate-vapid-keys)}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:?defina VAPID_PRIVATE_KEY no .env}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:?defina VAPID_SUBJECT no .env (mailto:...)}
 
   web:
     build:

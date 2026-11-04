@@ -18,6 +18,13 @@ const ENV_OK = {
   FIREBASE_PROJECT_ID: 'demo-everest',
 };
 
+/** Par VAPID de exemplo (formato válido; só testes). */
+const VAPID_OK = {
+  VAPID_PUBLIC_KEY: 'BIrDb0zAnpObJ4Zp49KwoXdDb7tUEJSc5NSA1bkGoUkez98mnky3-c3GNgt_XU7d0QTZ8zazAX6T6xIObkx5BgU',
+  VAPID_PRIVATE_KEY: 'l2Fxlx1_n94rzgfOWZXPS0biSEUyaRcHS1DAMX6z1ZA',
+  VAPID_SUBJECT: 'mailto:testes@everest.dev',
+};
+
 /** Payload de demonstração (nunca os dados reais do embaixador). */
 const PIX_DEMO = gerarPixEstatico({
   chave: 'pix@exemplo.dev',
@@ -56,8 +63,22 @@ describe('validarEnv', () => {
       validarEnv({ ...prod, FIREBASE_SERVICE_ACCOUNT_BASE64: 'e30=', FIREBASE_AUTH_EMULATOR_HOST: '127.0.0.1:9099' }),
     ).toThrow(/FIREBASE_AUTH_EMULATOR_HOST/);
     expect(
-      validarEnv({ ...prod, FIREBASE_SERVICE_ACCOUNT_BASE64: 'e30=', PIX_COPIA_E_COLA: PIX_DEMO }).NODE_ENV,
+      validarEnv({ ...prod, FIREBASE_SERVICE_ACCOUNT_BASE64: 'e30=', PIX_COPIA_E_COLA: PIX_DEMO, ...VAPID_OK }).NODE_ENV,
     ).toBe('production');
+  });
+
+  it('VAPID: as três obrigatórias em produção; em dev, opcionais mas juntas; subject mailto/https', () => {
+    const prod = { ...ENV_OK, NODE_ENV: 'production', FIREBASE_SERVICE_ACCOUNT_BASE64: 'e30=', PIX_COPIA_E_COLA: PIX_DEMO };
+    expect(() => validarEnv(prod)).toThrow(/VAPID_PUBLIC_KEY/);
+    expect(() => validarEnv({ ...prod, ...VAPID_OK, VAPID_PRIVATE_KEY: '' })).toThrow(/VAPID_PRIVATE_KEY/);
+    expect(validarEnv({ ...prod, ...VAPID_OK }).VAPID_SUBJECT).toBe('mailto:testes@everest.dev');
+
+    expect(validarEnv(ENV_OK).VAPID_PUBLIC_KEY).toBeUndefined();
+    expect(() => validarEnv({ ...ENV_OK, VAPID_PUBLIC_KEY: VAPID_OK.VAPID_PUBLIC_KEY })).toThrow(/VAPID_PRIVATE_KEY/);
+    expect(() => validarEnv({ ...ENV_OK, ...VAPID_OK, VAPID_SUBJECT: 'testes@everest.dev' })).toThrow(/VAPID_SUBJECT/);
+    expect(validarEnv({ ...ENV_OK, ...VAPID_OK, VAPID_SUBJECT: 'https://everest.dev' }).VAPID_SUBJECT).toBe(
+      'https://everest.dev',
+    );
   });
 
   it('PIX_COPIA_E_COLA: obrigatório em produção, opcional em dev, validado (CRC e valor) quando presente', () => {

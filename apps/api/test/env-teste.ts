@@ -20,6 +20,10 @@ export const ENV_TESTE: Record<string, string> = {
   // Payload Pix de demonstração (mesmo literal do shared/__tests__/pix.test.ts).
   PIX_COPIA_E_COLA:
     '00020101021126560014br.gov.bcb.pix0115pix@exemplo.dev0215DESAFIO 30 DIAS520400005303986540550.005802BR5912EVEREST DEMO6009SAO PAULO62150511EVERESTDEMO63048FC9',
+  // Par VAPID só dos testes (o envio é falso: WEB_PUSH é trocado nos testes de push).
+  VAPID_PUBLIC_KEY: 'BIrDb0zAnpObJ4Zp49KwoXdDb7tUEJSc5NSA1bkGoUkez98mnky3-c3GNgt_XU7d0QTZ8zazAX6T6xIObkx5BgU',
+  VAPID_PRIVATE_KEY: 'l2Fxlx1_n94rzgfOWZXPS0biSEUyaRcHS1DAMX6z1ZA',
+  VAPID_SUBJECT: 'mailto:testes@everest.dev',
 };
 
 export function aplicarEnvTeste(): void {

@@ -11,6 +11,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService, chaveVagas, chavesDoRanking } from '../../redis/redis.module';
 import { DesafioService, dataIso, infoTempo } from '../desafios/desafio.service';
 import { travarDesafio } from '../inscricoes/inscrever';
+import { PushAgendador } from '../push/push.agendador';
 
 export interface OcupacaoDesafio {
   /** Inscrições com número de vaga. */
@@ -118,6 +119,7 @@ export class AdminDesafiosService {
     private readonly prisma: PrismaService,
     private readonly cache: CacheService,
     private readonly desafios: DesafioService,
+    private readonly agendador: PushAgendador,
   ) {}
 
   private async ocupacao(ids: string[]): Promise<Map<string, OcupacaoDesafio>> {
@@ -189,6 +191,8 @@ export class AdminDesafiosService {
         },
         { maxWait: 15_000, timeout: 15_000 },
       );
+      // Os lembretes push seguem o fuso do desafio ativo (R22).
+      if (input.ativar) await this.agendador.sincronizarSemFalhar();
       return paraConfig(d, SEM_INSCRICOES);
     } catch (e) {
       // Slug criado ao mesmo tempo por outra requisição, ou outra ativação simultânea.
@@ -235,6 +239,8 @@ export class AdminDesafiosService {
     }
     // Vagas e o feed (mostra o total de vagas) saem do cache.
     await this.cache.apagar(chaveVagas(d.id), ...chavesDoRanking(d.id));
+    // Ativar/desativar muda o fuso dos lembretes push (R22).
+    if (input.ativo !== undefined && input.ativo !== d.ativo) await this.agendador.sincronizarSemFalhar();
     return this.config(atualizado);
   }
 }

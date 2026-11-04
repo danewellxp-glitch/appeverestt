@@ -1,25 +1,31 @@
-import { Body, Controller, Get, Header, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpCode, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import {
   ApiConflictResponse,
   ApiCookieAuth,
   ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
+  ApiServiceUnavailableResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import {
   atualizarDesafioSchema,
+  avisoPushSchema,
   criarDesafioSchema,
   type AdminDesafioConfig,
   type AdminDesafiosResposta,
   type AdminMetricas,
   type AtualizarDesafioInput,
+  type AvisoPushInput,
+  type AvisoPushResultado,
   type CriarDesafioInput,
+  type PushResumoAdmin,
 } from '@everest/shared';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { ApiZodBody } from '../../common/swagger';
+import { PushService } from '../push/push.service';
 import { AdminDesafiosService } from './desafios-admin.service';
 import { MetricasService } from './metricas.service';
 
@@ -98,6 +104,7 @@ export class AdminDesafiosController {
   constructor(
     private readonly desafios: AdminDesafiosService,
     private readonly metricasService: MetricasService,
+    private readonly push: PushService,
   ) {}
 
   @Get()
@@ -166,5 +173,34 @@ export class AdminDesafiosController {
   @ApiNotFoundResponse({ description: 'NAO_ENCONTRADO.' })
   metricas(@Param('slug') slug: string): Promise<AdminMetricas> {
     return this.metricasService.metricas(slug);
+  }
+
+  @Get(':slug/push')
+  @Header('Cache-Control', 'no-store')
+  @ApiOkResponse({
+    description: 'Quantos participantes confirmados (conta não excluída) têm o push ativo, e em quantos aparelhos.',
+    schema: { example: { pessoas: 18, aparelhos: 21 } satisfies PushResumoAdmin },
+  })
+  @ApiNotFoundResponse({ description: 'NAO_ENCONTRADO.' })
+  resumoPush(@Param('slug') slug: string): Promise<PushResumoAdmin> {
+    return this.push.resumo(slug);
+  }
+
+  @Post(':slug/avisos')
+  @HttpCode(200)
+  @ApiZodBody(avisoPushSchema, { modelo: 'livre', titulo: 'Live hoje às 20h', corpo: 'Entra no Instagram do desafio.' })
+  @ApiOkResponse({
+    description:
+      'Envia agora um push para os participantes confirmados com o push ativo. Modelos `agua`/`treino`/`leitura` ' +
+      'levam o botão de ação; `livre` usa título e mensagem e abre /hoje.',
+    schema: { example: { destinatarios: 21, entregues: 20, removidas: 1, falhas: 0 } satisfies AvisoPushResultado },
+  })
+  @ApiServiceUnavailableResponse({ description: 'PUSH_NAO_CONFIGURADO: VAPID ausente neste ambiente.' })
+  @ApiNotFoundResponse({ description: 'NAO_ENCONTRADO.' })
+  enviarAviso(
+    @Param('slug') slug: string,
+    @Body(new ZodValidationPipe(avisoPushSchema)) body: AvisoPushInput,
+  ): Promise<AvisoPushResultado> {
+    return this.push.enviarAviso(slug, body);
   }
 }

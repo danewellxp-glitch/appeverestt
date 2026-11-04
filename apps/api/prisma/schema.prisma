@@ -33,36 +33,37 @@ enum StatusPagamento {
 }
 
 model Usuario {
-  id                 String         @id @default(cuid())
+  id                 String          @id @default(cuid())
   nome               String
   /// sempre salvo em lowercase + trim
-  email              String         @unique
+  email              String          @unique
   /// uid do Firebase Auth (vinculado no POST /auth/sessao)
-  firebaseUid        String?        @unique
+  firebaseUid        String?         @unique
   /// foto do Google (pode ser null)
   fotoUrl            String?
   /// só usuários legados/seed (login por senha atrás de AUTH_SENHA_LEGADO)
   senhaHash          String?
-  papel              Papel          @default(USUARIO)
+  papel              Papel           @default(USUARIO)
   /// incrementar invalida todas as sessões
-  tokenVersao        Int            @default(0)
+  tokenVersao        Int             @default(0)
   /// null = perfil incompleto (precisa passar pela /bem-vindo)
   aceitouTermosEm    DateTime?
   /// Dados de cadastro (Q7): obrigatórios para se inscrever; null até a /bem-vindo
   /// usuário do Instagram, sem "@", minúsculo
   instagram          String?
-  dataNascimento     DateTime?      @db.Date
+  dataNascimento     DateTime?       @db.Date
   /// só dígitos com DDD, sem +55
   whatsapp           String?
   bairro             String?
   cidade             String?
-  uf                 String?        @db.Char(2)
+  uf                 String?         @db.Char(2)
   /// consentimento separado para marketing (X9); null = não aceitou ou revogou
   aceitouMarketingEm DateTime?
   /// conta excluída (dados anonimizados; a vaga continua ocupada — X5)
   excluidoEm         DateTime?
-  criadoEm           DateTime       @default(now())
+  criadoEm           DateTime        @default(now())
   participacoes      Participante[]
+  inscricoesPush     PushInscricao[]
 }
 
 model Desafio {
@@ -167,4 +168,23 @@ model Feedback {
   criadoEm           DateTime     @default(now())
   atualizadoEm       DateTime     @updatedAt
   participante       Participante @relation(fields: [participanteId], references: [id], onDelete: Cascade)
+}
+
+/// Aparelho com notificações push ativas (R22). Um endpoint por navegador/aparelho; se outra pessoa
+/// entrar no mesmo aparelho, a inscrição muda de dono. Apagada na exclusão da conta (X5).
+model PushInscricao {
+  id            String    @id @default(cuid())
+  usuarioId     String
+  /// URL do serviço de push do navegador (única)
+  endpoint      String    @unique
+  p256dh        String
+  auth          String
+  userAgent     String?
+  criadoEm      DateTime  @default(now())
+  ultimoEnvioEm DateTime?
+  /// erros seguidos (fora 404/410); a inscrição é apagada ao chegar a 5
+  falhas        Int       @default(0)
+  usuario       Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
 }

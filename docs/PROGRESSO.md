@@ -291,3 +291,14 @@ P0 = participante real perde dia ou ganha dia indevido · P1 = número errado ou
 - [x] **DoD:** web unit 162 (+19: `acaoRapida`, `useAcaoRapida`, `atalhos`); typecheck e lint verdes; manifest do build conferido com os 3 atalhos. Smoke E2E ganhou `/hoje?acao=agua` (+250 ml, toast, URL limpa, persistência), `treino` já marcado e o teste do manifest
 - [ ] E2E do web não rodado neste servidor (sem Java para o emulador do Firebase)
 - [ ] Widget nativo de tela inicial não existe para PWA (Android nem iOS); só com app nativo. Próximo passo possível: Web Push com botões de ação no Android (registrar água direto da notificação)
+
+## R22: Notificações push com ações rápidas (2026-11-05)
+- [x] Shared: `regras/acaoRapida.ts` (saiu do web, que reexporta), `regras/push.ts` (`LEMBRETES_PUSH`, `MODELOS_AVISO`), schemas `pushInscricaoSchema`, `avisoPushSchema`, `acaoRapidaSchema`, tipos do push e o código `PUSH_NAO_CONFIGURADO`
+- [x] API (`modules/push`): `PushInscricao` (migration `20261105100000_push_inscricao`); `GET /push/chave-publica`, `GET/PUT/DELETE /push/inscricao`; `POST /acoes-rapidas` (mesmo caminho de salvar do `PUT /dias/:n`, 30/min); `GET /admin/desafios/:slug/push` e `POST /admin/desafios/:slug/avisos`. Lembretes por job schedulers do BullMQ (água 10h/14h/17h, treino 18h, leitura 21h, fuso do desafio ativo), ressincronizados ao ativar/desativar desafio. 404/410 apaga a inscrição; 5 falhas seguidas também. Excluir a conta apaga as inscrições
+- [x] Web: service worker próprio (`src/sw.ts`, `injectManifest`) com precache, fallback da SPA, `SKIP_WAITING`, `push` e `notificationclick` (botão de ação → `POST /api/acoes-rapidas` e confirmação; sem sessão → abre `/hoje?acao=X`). `usePush`, "Lembretes no celular" no Perfil, `ConvitePush` na home, linha na `FolhaInstalar` (iPhone) e a aba `/admin/avisos`
+- [x] **DoD:** shared 82, api unit 92 e e2e 122 (`push.e2e-spec` com 16 casos, infra dev só em 127.0.0.1), web unit 220; typecheck, lint e build verdes. SW conferido no navegador (vite preview + Playwright com API simulada): registra, 3 atalhos no manifest, fallback offline, push falso com botão "+250 ml", clique no botão chama a API, "Atualizar" continua funcionando
+- [ ] Produção: gerar as chaves VAPID e pôr no `.env` antes do próximo `up` (`docs/DEPLOY-CONTABO.md`); sem elas o compose não sobe
+- [ ] Teste real no Android (botão na notificação) e no iPhone com o app instalado
+- [ ] Duas ações de água ao mesmo tempo podem perder uma soma (lê e grava o dia sem trava). Raro; tratar se aparecer
+- [ ] E2E do web e axe nas telas novas não rodados aqui (sem Java para o emulador do Firebase)
+

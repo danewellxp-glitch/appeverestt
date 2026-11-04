@@ -10,6 +10,8 @@ import {
   type AdminParticipante,
   type AdminParticipanteDetalhe,
   type AdminParticipantesResposta,
+  type AvisoPushInput,
+  type AvisoPushResultado,
   type AtualizarDesafioInput,
   type ConferenciaInput,
   type ConferenciaResposta,
@@ -17,6 +19,7 @@ import {
   type InvalidacaoInput,
   type InvalidacaoResposta,
   type PagamentoAdminInput,
+  type PushResumoAdmin,
 } from '@everest/shared';
 import { api, ehApiError } from '../../lib/api';
 import { chaves, useDesafioAtual, useMe } from '../../lib/queries';
@@ -26,6 +29,7 @@ export const chavesAdmin = {
   desafios: ['admin', 'desafios'] as const,
   desafio: (slug: string) => ['admin', 'desafio', slug] as const,
   metricas: (slug: string) => ['admin', 'metricas', slug] as const,
+  push: (slug: string) => ['admin', 'push', slug] as const,
 };
 
 /** Indicadores se atualizam sozinhos a cada 60 s (só com a aba visível). */
@@ -314,6 +318,30 @@ export function useConferenciaDia() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['admin'] });
     },
+  });
+}
+
+/** GET /admin/desafios/:slug/push: quantos confirmados têm o push ativo (aba Avisos, R22). */
+export function useAdminPush(slug: string | undefined) {
+  return useQuery({
+    queryKey: chavesAdmin.push(slug ?? ''),
+    queryFn: ({ signal }) =>
+      api<PushResumoAdmin>(`/admin/desafios/${encodeURIComponent(slug ?? '')}/push`, { signal }),
+    enabled: Boolean(slug),
+  });
+}
+
+/** POST /admin/desafios/:slug/avisos: dispara um aviso pronto (água/treino/leitura) ou livre. */
+export function useEnviarAviso(slug: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: AvisoPushInput) =>
+      api<AvisoPushResultado>(`/admin/desafios/${encodeURIComponent(slug ?? '')}/avisos`, {
+        method: 'POST',
+        body: input,
+      }),
+    // Inscrições vencidas saem no envio: a contagem muda.
+    onSuccess: () => qc.invalidateQueries({ queryKey: chavesAdmin.push(slug ?? '') }),
   });
 }
 

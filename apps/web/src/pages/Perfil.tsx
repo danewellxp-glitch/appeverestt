@@ -29,6 +29,7 @@ import { type ErrosCampos, errosDoServidor, mensagemGeral } from '../features/au
 import { useAtualizarPerfil } from '../features/auth/perfil';
 import { useExcluirConta } from '../features/auth/useExcluirConta';
 import { useLogout } from '../features/auth/useLogout';
+import { LinhaLembretes } from '../features/push/LinhaLembretes';
 import { FolhaInstalar } from '../features/pwa/FolhaInstalar';
 import { useInstallPrompt } from '../features/pwa/useInstallPrompt';
 import { useMe } from '../lib/queries';
@@ -103,7 +104,7 @@ function LinhaBotao({
   );
 }
 
-/** /perfil (docs/FRONTEND.md §9.9): tema, dados, comunicação, instalar, links, sair e excluir. */
+/** /perfil (docs/FRONTEND.md §9.9): tema, dados, comunicação (novidades e lembretes), instalar, links, sair e excluir. */
 export default function Perfil() {
   const { data: me } = useMe();
   const tema = useTema();
@@ -193,6 +194,7 @@ export default function Perfil() {
           aoAlternar={alternarMarketing}
         />
         <p className="px-1 text-xs text-texto-2">Por e-mail, WhatsApp e Instagram. Você pode desligar quando quiser.</p>
+        {confirmado && <LinhaLembretes aoInstalar={() => setFolha('instalar')} />}
       </section>
 
       <Lista titulo="Atalhos">

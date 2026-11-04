@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { useToast } from '../../components/ui/Toast';
 import { api } from '../../lib/api';
 import { chaves } from '../../lib/queries';
+import { desligarPushAoSair } from '../push/usePush';
 
 /** DELETE /me (X5): apaga fotos e dados pessoais; a sessão é encerrada e a pessoa volta para a "/". */
 export function useExcluirConta() {
@@ -10,7 +11,11 @@ export function useExcluirConta() {
   const navegar = useNavigate();
   const { toast } = useToast();
   return useMutation({
-    mutationFn: () => api<{ ok: true }>('/me', { method: 'DELETE', silenciar401: true }),
+    mutationFn: async () => {
+      // A API apaga as inscrições junto com a conta; aqui só cancela a deste navegador.
+      await desligarPushAoSair();
+      return api<{ ok: true }>('/me', { method: 'DELETE', silenciar401: true });
+    },
     onSuccess: async () => {
       // Navega antes de limpar a sessão: senão a rota protegida manda para /entrar primeiro.
       // flushSync: a tela nova monta já, antes de a sessão sumir (senão a rota protegida antiga redireciona).

@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router/dom';
 import { router } from './app/router';
 import { ToastProvider } from './components/ui/Toast';
+import { PushGlobais } from './features/push/PushGlobais';
 import { PwaGlobais } from './features/pwa/PwaGlobais';
 import { aplicarModoApp } from './features/pwa/standalone';
 import { iniciarCapturaInstalacao } from './features/pwa/useInstallPrompt';
@@ -35,6 +36,7 @@ createRoot(raiz).render(
       <ToastProvider>
         <RouterProvider router={router} />
         <PwaGlobais />
+        <PushGlobais />
       </ToastProvider>
     </QueryClientProvider>
   </StrictMode>,

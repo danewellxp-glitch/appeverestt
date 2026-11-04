@@ -77,7 +77,12 @@ export default defineConfig({
         // Toque longo no ícone (Android): água, treino e leitura em 1 toque (features/pwa/atalhos.ts).
         shortcuts: atalhosDoManifest(),
       },
-      workbox: {
+      // SW próprio (src/sw.ts) para receber o push (R22); o precache e o fallback de SPA
+      // continuam lá, iguais ao SW que o plugin gerava.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      injectManifest: {
         // Só o app shell (assets do build + ícones). Nada de runtimeCaching:
         // /api e URLs assinadas do storage NUNCA vão para o cache.
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,webp,woff2}'],
@@ -85,11 +90,6 @@ export default defineConfig({
         // dos ícones do PWA (scripts/marca.cjs) e não precisa ir para o precache.
         // Fotos da landing (public/landing/) são grandes: carregam sob demanda, fora do precache.
         globIgnores: ['**/logo.png', '**/landing/**'],
-        navigateFallback: '/index.html',
-        // /__/* é o login do Firebase (popup e iframe do Google): tem que ir para a rede,
-        // senão o SW devolve o index.html e o popup mostra o 404 do app.
-        navigateFallbackDenylist: [/^\/api/, /^\/__\//],
-        cleanupOutdatedCaches: true,
       },
       // SW desligado no `vite dev` (sem dev-dist); teste com build + preview.
       devOptions: { enabled: false },

@@ -1,6 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { Test } from '@nestjs/testing';
+import { Test, type TestingModuleBuilder } from '@nestjs/testing';
 import type { Desafio, Prisma, StatusPagamento } from '@prisma/client';
 import type { App } from 'supertest/types';
 import request from 'supertest';
@@ -21,12 +21,14 @@ export interface Contexto {
   verificador: VerificadorFalso;
 }
 
-export async function criarApp(): Promise<Contexto> {
+/** `ajustar` troca outros providers (ex.: WEB_PUSH falso nos testes de push). */
+export async function criarApp(
+  ajustar: (b: TestingModuleBuilder) => TestingModuleBuilder = (b) => b,
+): Promise<Contexto> {
   const verificador = new VerificadorFalso();
-  const modulo = await Test.createTestingModule({ imports: [AppModule] })
-    .overrideProvider(VERIFICADOR_FIREBASE)
-    .useValue(verificador)
-    .compile();
+  const modulo = await ajustar(
+    Test.createTestingModule({ imports: [AppModule] }).overrideProvider(VERIFICADOR_FIREBASE).useValue(verificador),
+  ).compile();
   const app = modulo.createNestApplication<NestExpressApplication>({ logger: ['error', 'warn'] });
   configurarApp(app);
   await app.init();
@@ -40,7 +42,7 @@ export async function criarApp(): Promise<Contexto> {
 
 export async function limparTudo(prisma: PrismaService): Promise<void> {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE "Feedback", "FotoProva", "DiaDesafio", "Participante", "Desafio", "Usuario" CASCADE',
+    'TRUNCATE TABLE "PushInscricao", "Feedback", "FotoProva", "DiaDesafio", "Participante", "Desafio", "Usuario" CASCADE',
   );
   const redis = new Redis(process.env.REDIS_URL ?? '');
   const todas = (
