@@ -7,7 +7,9 @@ import {
   TAMANHO_MAX_FOTO_BYTES,
   TIPOS_FOTO,
 } from './constantes';
+import { ACOES_RAPIDAS } from './regras/acaoRapida';
 import { hojeNoFuso } from './regras/diaAtual';
+import { LIMITES_AVISO_PUSH, MODELOS_AVISO_PUSH } from './regras/push';
 import {
   IDADE_MINIMA,
   UFS,
@@ -306,3 +308,34 @@ export const adicionarParticipanteSchema = z.object({
     .default('CONFIRMADO'),
 });
 export type AdicionarParticipanteInput = z.infer<typeof adicionarParticipanteSchema>;
+
+// ---------- R22: push ----------
+
+export const acaoRapidaSchema = z.enum(ACOES_RAPIDAS, { error: 'Ação inválida.' });
+
+export const pushInscricaoSchema = z.object({
+  endpoint: z.url({ error: 'Endereço de inscrição inválido.' }).max(2048),
+  chaves: z.object({
+    p256dh: z.string().min(1).max(256),
+    auth: z.string().min(1).max(256),
+  }),
+  userAgent: z.string().max(512).optional(),
+});
+export type PushInscricaoInput = z.infer<typeof pushInscricaoSchema>;
+
+export const pushEndpointSchema = z.object({ endpoint: z.url().max(2048) });
+
+const { tituloMax, corpoMax } = LIMITES_AVISO_PUSH;
+
+export const avisoPushSchema = z
+  .object({
+    modelo: z.enum(MODELOS_AVISO_PUSH, { error: 'Modelo de aviso inválido.' }),
+    titulo: z.string().trim().max(tituloMax, { error: `Até ${tituloMax} caracteres.` }).optional(),
+    corpo: z.string().trim().max(corpoMax, { error: `Até ${corpoMax} caracteres.` }).optional(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.modelo !== 'livre') return;
+    if (!v.titulo) ctx.addIssue({ code: 'custom', path: ['titulo'], message: 'Escreva o título.' });
+    if (!v.corpo) ctx.addIssue({ code: 'custom', path: ['corpo'], message: 'Escreva a mensagem.' });
+  });
+export type AvisoPushInput = z.infer<typeof avisoPushSchema>;

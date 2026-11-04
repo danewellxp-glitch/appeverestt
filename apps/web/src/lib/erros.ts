@@ -25,6 +25,7 @@ export const MENSAGENS_ERRO: Record<CodigoErro | 'REDE', string> = {
   DESAFIO_JA_EXISTE: 'Já existe um desafio com esse identificador.',
   DESAFIO_NAO_EDITAVEL: 'Essa mudança não é mais possível neste desafio.',
   PAGAMENTO_INDISPONIVEL: 'O pagamento ainda não está disponível. Tente de novo mais tarde.',
+  PUSH_NAO_CONFIGURADO: 'As notificações ainda não estão disponíveis. Tente de novo mais tarde.',
   ERRO_INTERNO: 'Algo deu errado do nosso lado. Tente novamente.',
   REDE: 'Sem conexão. Verifique sua internet.',
 };

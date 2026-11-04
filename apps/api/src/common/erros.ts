@@ -25,6 +25,7 @@ const STATUS_PADRAO: Record<CodigoErro, HttpStatus> = {
   DESAFIO_JA_EXISTE: HttpStatus.CONFLICT,
   DESAFIO_NAO_EDITAVEL: HttpStatus.CONFLICT,
   PAGAMENTO_INDISPONIVEL: HttpStatus.SERVICE_UNAVAILABLE,
+  PUSH_NAO_CONFIGURADO: HttpStatus.SERVICE_UNAVAILABLE,
   ERRO_INTERNO: HttpStatus.INTERNAL_SERVER_ERROR,
 };
 
@@ -52,6 +53,7 @@ export const MENSAGENS_PADRAO: Record<CodigoErro, string> = {
   DESAFIO_JA_EXISTE: 'Já existe um desafio com esse identificador.',
   DESAFIO_NAO_EDITAVEL: 'Essa mudança não é mais possível neste desafio.',
   PAGAMENTO_INDISPONIVEL: 'O pagamento não está configurado neste ambiente.',
+  PUSH_NAO_CONFIGURADO: 'As notificações não estão configuradas neste ambiente.',
   ERRO_INTERNO: 'Algo deu errado. Tente novamente.',
 };
 

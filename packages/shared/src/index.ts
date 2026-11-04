@@ -9,3 +9,5 @@ export * from './regras/ranking';
 export * from './regras/altitude';
 export * from './regras/perfil';
 export * from './regras/pix';
+export * from './regras/acaoRapida';
+export * from './regras/push';
