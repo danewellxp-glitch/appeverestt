@@ -1,4 +1,4 @@
-import { AtSign, Copy } from 'lucide-react';
+import { AtSign, Copy, Sparkles } from 'lucide-react';
 import { Botao } from '../../components/ui/Botao';
 import { Interruptor } from '../../components/ui/Interruptor';
 import { useToast } from '../../components/ui/Toast';
@@ -11,12 +11,15 @@ export function CardStory({
   aoAlterar,
   instagramHandle,
   hashtag,
+  aoCriarStory,
 }: {
   storyPostado: boolean;
   editavel: boolean;
   aoAlterar: (postado: boolean) => void;
   instagramHandle: string | undefined;
   hashtag: string | undefined;
+  /** Abre a folha que gera a imagem do story. */
+  aoCriarStory?: () => void;
 }) {
   const { toast } = useToast();
   const texto = instagramHandle && hashtag ? `@${instagramHandle} #${hashtag}` : null;
@@ -29,6 +32,11 @@ export function CardStory({
       cumprido={storyPostado}
       falta="Pendente"
     >
+      {aoCriarStory && (
+        <Botao larguraTotal variante="gradiente" icone={<Sparkles className="size-5" aria-hidden />} onClick={aoCriarStory}>
+          Criar meu story
+        </Botao>
+      )}
       {texto && (
         <div className="flex items-center gap-2 rounded-2xl bg-superficie-2 py-1.5 pr-1.5 pl-3.5 text-sm font-semibold">
           <span className="min-w-0 flex-1 select-all [overflow-wrap:anywhere]">{texto}</span>
