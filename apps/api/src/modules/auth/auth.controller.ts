@@ -38,6 +38,7 @@ export const EXEMPLO_ME: MeResposta = {
     cidade: 'São Paulo',
     uf: 'SP',
     aceitouMarketing: true,
+    aceitaCutucadas: true,
   },
   participacao: null,
 };

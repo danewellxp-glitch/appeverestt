@@ -13,6 +13,7 @@ import {
 import { ErroApp } from '../../common/erros';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService, chaveTreinosVersao } from '../../redis/redis.module';
 import { StorageService } from '../../storage/storage.service';
 import type { UsuarioSessao } from '../auth/sessao';
 import { DesafioService } from '../desafios/desafio.service';
@@ -26,6 +27,10 @@ import {
 } from './fotos.constantes';
 
 const pipeUpload = new ZodValidationPipe(uploadUrlSchema);
+
+export interface VisibilidadeFotoResposta {
+  visivelTurma: boolean;
+}
 
 function tamanhoDeclarado(body: unknown): number | null {
   if (typeof body !== 'object' || body === null) return null;
@@ -42,6 +47,7 @@ export class FotosService implements OnModuleInit {
     private readonly storage: StorageService,
     private readonly desafios: DesafioService,
     private readonly dias: DiaService,
+    private readonly cache: CacheService,
     @InjectQueue(FILA_FOTOS) private readonly fila: Queue<DadosProcessarFoto>,
   ) {}
 
@@ -91,6 +97,11 @@ export class FotosService implements OnModuleInit {
       if (pendentes.length > 0) {
         await tx.fotoProva.deleteMany({ where: { id: { in: pendentes.map((f) => f.id) }, status: 'PENDENTE' } });
       }
+      // Uma troca herda a escolha de esconder a foto do treino da turma (R23).
+      const recebida = await tx.fotoProva.findFirst({
+        where: { diaId: dia.id, tipo: body.tipo, status: { not: 'PENDENTE' } },
+        select: { visivelTurma: true },
+      });
       await tx.fotoProva.create({
         data: {
           id: fotoId,
@@ -100,6 +111,7 @@ export class FotosService implements OnModuleInit {
           mimeType: body.mimeType,
           tamanhoBytes: body.tamanhoBytes,
           status: 'PENDENTE',
+          visivelTurma: recebida?.visivelTurma ?? true,
         },
       });
       return pendentes.flatMap((f) => [f.storageKey, f.thumbKey]);
@@ -219,6 +231,31 @@ export class FotosService implements OnModuleInit {
       }
     }
     return { fotoId: foto.id, status: 'ENVIADA' };
+  }
+
+  /**
+   * Mostra/esconde a foto do treino na aba Treinos da turma (R23). Vale para qualquer dia (a pessoa
+   * pode se esconder depois) e para a foto recebida e uma troca em andamento do mesmo tipo.
+   */
+  async alterarVisibilidade(
+    slug: string,
+    usuario: UsuarioSessao,
+    numeroDia: number,
+    tipo: TipoFoto,
+    visivel: boolean,
+  ): Promise<VisibilidadeFotoResposta> {
+    if (tipo !== 'EXERCICIO') {
+      throw new ErroApp('VALIDACAO', 'Só a foto do treino aparece para a turma.', { tipo: 'Use EXERCICIO.' });
+    }
+    const { desafio, participante } = await this.desafios.exigirParticipante(slug, usuario.id);
+    this.dias.validarNumeroDia(desafio, numeroDia);
+    const r = await this.prisma.fotoProva.updateMany({
+      where: { tipo, dia: { participanteId: participante.id, numeroDia } },
+      data: { visivelTurma: visivel },
+    });
+    if (r.count === 0) throw new ErroApp('NAO_ENCONTRADO', 'Não há foto do treino neste dia.');
+    await this.cache.apagar(chaveTreinosVersao(desafio.id));
+    return { visivelTurma: visivel };
   }
 
   async remover(slug: string, usuario: UsuarioSessao, numeroDia: number, tipo: TipoFoto): Promise<{ ok: true }> {

@@ -50,6 +50,7 @@ describe('Auth via Firebase (e2e)', () => {
         cidade: null,
         uf: null,
         aceitouMarketing: false,
+        aceitaCutucadas: true,
       },
       participacao: null,
     });

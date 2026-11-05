@@ -1,4 +1,5 @@
 import { Global, Inject, Injectable, Module, type OnModuleDestroy } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import Redis from 'ioredis';
 import { AppConfig } from '../config/app-config.service';
 
@@ -35,6 +36,19 @@ export class CacheService {
     }
   }
 
+  /**
+   * Versão (geração) de um grupo de chaves: apagar a chave da versão invalida o grupo inteiro de uma
+   * vez (as entradas antigas ficam órfãs e somem pelo TTL). null se o Redis falhar (sem cache).
+   */
+  async versao(chave: string, ttlSegundos: number): Promise<string | null> {
+    try {
+      await this.redis.set(chave, randomUUID().slice(0, 8), 'EX', ttlSegundos, 'NX');
+      return await this.redis.get(chave);
+    } catch {
+      return null;
+    }
+  }
+
   async ping(): Promise<boolean> {
     try {
       return (await this.redis.ping()) === 'PONG';
@@ -47,9 +61,23 @@ export class CacheService {
 export const chaveVagas = (desafioId: string): string => `vagas:${desafioId}`;
 export const chaveRanking = (desafioId: string): string => `ranking:${desafioId}`;
 export const chaveFeed = (desafioId: string): string => `feed:${desafioId}`;
+/** Aba Hoje da turma (R23): parte compartilhada, sem campos de quem pede. */
+export const chaveTurma = (desafioId: string): string => `turma:${desafioId}`;
+/**
+ * Aba Treinos (R23): cache por dia em `treinos:${desafioId}:${versao}:${dia}`. Apagar a versão
+ * invalida todos os dias de uma vez (inclusive o anterior, na tolerância da virada — X18).
+ */
+export const chaveTreinosVersao = (desafioId: string): string => `treinos:${desafioId}:versao`;
+export const chaveTreinos = (desafioId: string, versao: string, dia: number): string =>
+  `treinos:${desafioId}:${versao}:${dia}`;
 
 /** Chaves que mudam junto com o ranking (check-in, fotos, invalidação, exclusão de conta). */
-export const chavesDoRanking = (desafioId: string): string[] => [chaveRanking(desafioId), chaveFeed(desafioId)];
+export const chavesDoRanking = (desafioId: string): string[] => [
+  chaveRanking(desafioId),
+  chaveFeed(desafioId),
+  chaveTurma(desafioId),
+  chaveTreinosVersao(desafioId),
+];
 
 @Injectable()
 class RedisCloser implements OnModuleDestroy {

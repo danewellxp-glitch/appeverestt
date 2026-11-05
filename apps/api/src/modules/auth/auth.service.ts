@@ -14,7 +14,7 @@ import {
 } from '@everest/shared';
 import { ErroApp } from '../../common/erros';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CacheService, chaveVagas, chavesDoRanking } from '../../redis/redis.module';
+import { CacheService, chaveTurma, chaveVagas, chavesDoRanking } from '../../redis/redis.module';
 import { StorageService } from '../../storage/storage.service';
 import type { PayloadSessao } from './sessao';
 import { type DadosToken, VERIFICADOR_FIREBASE, type VerificadorFirebase } from './verificador-firebase';
@@ -119,9 +119,15 @@ export class AuthService {
     });
   }
 
-  /** PATCH /me: nome completo, dados de cadastro (Q7), aceite e consentimento de marketing (X9). */
+  /**
+   * PATCH /me: nome completo, dados de cadastro (Q7), aceite, consentimento de marketing (X9) e
+   * cutucadas da turma (R23).
+   */
   async atualizarPerfil(usuarioId: string, input: AtualizarPerfilInput): Promise<void> {
-    const atual = await this.prisma.usuario.findUnique({ where: { id: usuarioId } });
+    const atual = await this.prisma.usuario.findUnique({
+      where: { id: usuarioId },
+      include: { participacoes: { select: { desafioId: true } } },
+    });
     if (!atual || atual.excluidoEm) throw new ErroApp('NAO_AUTENTICADO');
     const agora = new Date();
     await this.prisma.usuario.update({
@@ -142,8 +148,14 @@ export class AuthService {
             : input.aceitouMarketing
               ? (atual.aceitouMarketingEm ?? agora)
               : null,
+        // Omitido: mantém.
+        ...(input.aceitaCutucadas === undefined ? {} : { aceitaCutucadas: input.aceitaCutucadas }),
       },
     });
+    // A aba Hoje da turma mostra quem não recebe cutucadas (cache de 60 s).
+    if (input.aceitaCutucadas !== undefined && input.aceitaCutucadas !== atual.aceitaCutucadas) {
+      await this.cache.apagar(...atual.participacoes.map((p) => chaveTurma(p.desafioId)));
+    }
   }
 
   /** Inscrição exige perfil completo (aceite + dados de cadastro). */
@@ -285,6 +297,7 @@ export class AuthService {
         cidade: u.cidade,
         uf: u.uf,
         aceitouMarketing: u.aceitouMarketingEm !== null,
+        aceitaCutucadas: u.aceitaCutucadas,
       },
       participacao,
     };

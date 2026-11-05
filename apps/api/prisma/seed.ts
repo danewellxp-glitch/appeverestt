@@ -138,6 +138,7 @@ async function semearDias(desafioId: string, participanteId: string, dias: Plano
       paginasLidas: plano.paginas,
       storyPostado: plano.story,
       concluido,
+      concluidoEm: concluido ? new Date() : null,
       invalidado: plano.invalidado !== undefined,
       motivoInvalidacao: plano.invalidado ?? null,
       invalidadoPorId: plano.invalidado ? adminId : null,

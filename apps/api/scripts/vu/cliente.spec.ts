@@ -38,8 +38,8 @@ const DIA = {
   editavel: true,
   requisitosPendentes: [],
   fotos: [
-    { id: 'a', tipo: 'AGUA', status: 'CONFIRMADA', thumbUrl: null, url: null },
-    { id: 'b', tipo: 'LEITURA', status: 'PENDENTE', thumbUrl: null, url: null },
+    { id: 'a', tipo: 'AGUA', status: 'CONFIRMADA', thumbUrl: null, url: null, visivelTurma: true },
+    { id: 'b', tipo: 'LEITURA', status: 'PENDENTE', thumbUrl: null, url: null, visivelTurma: true },
   ],
 };
 

@@ -41,7 +41,8 @@ export class FeedService {
         ? Promise.resolve([])
         : this.prisma.diaDesafio.findMany({
             where: filtroHoje,
-            orderBy: { atualizadoEm: 'desc' },
+            // Hora real do fechamento (X22); `atualizadoEm` muda em qualquer edição do dia.
+            orderBy: [{ concluidoEm: { sort: 'desc', nulls: 'last' } }, { atualizadoEm: 'desc' }],
             take: MAX_AVATARES,
             select: {
               participante: { select: { usuario: { select: { nome: true, fotoUrl: true, excluidoEm: true } } } },

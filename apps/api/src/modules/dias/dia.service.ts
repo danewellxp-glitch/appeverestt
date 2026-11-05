@@ -63,7 +63,7 @@ export interface OpcoesRecalculo {
   zerarConferencia?: boolean;
 }
 
-/** Recalcula `concluido` a partir do banco (fotos ENVIADA/CONFIRMADA). Única fonte do campo. */
+/** Recalcula `concluido` (e `concluidoEm`) a partir do banco (fotos ENVIADA/CONFIRMADA). Única fonte do campo. */
 export async function recalcularDia(db: Cliente, diaId: string, opcoes: OpcoesRecalculo = {}): Promise<boolean> {
   const dia = await db.diaDesafio.findUnique({
     where: { id: diaId },
@@ -79,10 +79,13 @@ export async function recalcularDia(db: Cliente, diaId: string, opcoes: OpcoesRe
     fotosValidas: dia.fotos.map((f) => f.tipo),
   });
   const zerar = opcoes.zerarConferencia === true && dia.conferidoEm !== null;
-  if (concluido !== dia.concluido || zerar) {
+  // `concluidoEm` (X22): hora real do fechamento; mantida enquanto o dia segue fechado, limpa ao desfazer.
+  const concluidoEm = concluido ? (dia.concluidoEm ?? new Date()) : null;
+  const mudouHora = (concluidoEm?.getTime() ?? null) !== (dia.concluidoEm?.getTime() ?? null);
+  if (concluido !== dia.concluido || zerar || mudouHora) {
     await db.diaDesafio.update({
       where: { id: diaId },
-      data: { concluido, ...(zerar ? { conferidoEm: null, conferidoPorId: null } : {}) },
+      data: { concluido, concluidoEm, ...(zerar ? { conferidoEm: null, conferidoPorId: null } : {}) },
     });
   }
   return concluido;
@@ -231,7 +234,7 @@ export class DiaService {
     const thumbUrl =
       f.status === 'CONFIRMADA' && f.thumbKey ? await this.storage.urlLeitura(f.thumbKey) : null;
     const url = valida ? await this.storage.urlLeitura(f.storageKey) : null;
-    return { id: f.id, tipo: f.tipo, status: f.status, thumbUrl, url };
+    return { id: f.id, tipo: f.tipo, status: f.status, thumbUrl, url, visivelTurma: f.visivelTurma };
   }
 
   async detalhe(

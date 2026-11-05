@@ -26,6 +26,10 @@ const STATUS_PADRAO: Record<CodigoErro, HttpStatus> = {
   DESAFIO_NAO_EDITAVEL: HttpStatus.CONFLICT,
   PAGAMENTO_INDISPONIVEL: HttpStatus.SERVICE_UNAVAILABLE,
   PUSH_NAO_CONFIGURADO: HttpStatus.SERVICE_UNAVAILABLE,
+  JA_CUTUCOU: HttpStatus.CONFLICT,
+  CUTUCADA_RECUSADA: HttpStatus.CONFLICT,
+  POSE_JA_DEFINIDA: HttpStatus.CONFLICT,
+  POSE_SEM_TREINO: HttpStatus.FORBIDDEN,
   ERRO_INTERNO: HttpStatus.INTERNAL_SERVER_ERROR,
 };
 
@@ -54,6 +58,10 @@ export const MENSAGENS_PADRAO: Record<CodigoErro, string> = {
   DESAFIO_NAO_EDITAVEL: 'Essa mudança não é mais possível neste desafio.',
   PAGAMENTO_INDISPONIVEL: 'O pagamento não está configurado neste ambiente.',
   PUSH_NAO_CONFIGURADO: 'As notificações não estão configuradas neste ambiente.',
+  JA_CUTUCOU: 'Você já cutucou essa pessoa hoje.',
+  CUTUCADA_RECUSADA: 'Essa pessoa não pode ser cutucada agora.',
+  POSE_JA_DEFINIDA: 'Alguém já sugeriu a pose de hoje.',
+  POSE_SEM_TREINO: 'Mande a foto do treino primeiro.',
   ERRO_INTERNO: 'Algo deu errado. Tente novamente.',
 };
 
