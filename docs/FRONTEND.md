@@ -53,6 +53,8 @@
 | web | `@fontsource/big-shoulders-display` (pesos 700, 800, 900) | Fonte de títulos e números | Se não existir no npm, baixe os `.woff2` do Google Fonts para `apps/web/src/assets/fonts/` e declare `@font-face` |
 | api | `firebase-admin` | Validar o `idToken` e excluir usuário | — |
 | raiz (dev) | `firebase-tools` | Emulador de Auth local (`demo-everest`) | Só desenvolvimento e testes |
+| web (dev) | `workbox-core`, `workbox-precaching`, `workbox-routing` 7.x | Service worker próprio (`src/sw.ts`, R22) | O `injectManifest` do vite-plugin-pwa precisa delas para o worker com `push`/`notificationclick`. Mesma versão que o plugin usa |
+| api | `web-push` | Envio das notificações (R22) | Injetado pelo token `WEB_PUSH` (fake nos testes) |
 
 **Não adicione** `motion`/`framer-motion`, `clsx`, `tailwind-merge`, nem lib de toast ou de bottom sheet. As animações usam View Transitions + CSS (seção 7), e os componentes saem do zero (seção 8).
 
@@ -710,6 +712,7 @@ Segue a seção 5.4, item 4, e os campos da seção 4.4. **Diferença do protót
 - **Card "Meus dados":** os campos da seção 4.4 editáveis (o mesmo formulário da `/bem-vindo`, botão "Salvar") e o switch **"Receber novidades e ofertas da Everest"** (consentimento de marketing; desligar revoga na hora).
 - **Card "Aparência":** `Segmentado` Claro / Escuro / Sistema + a nota "Sistema segue o modo do seu celular.".
 - **Lista:** Instalar o app (folha), Regras, Política de privacidade e Painel do embaixador (só ADMIN).
+- **Lembretes no celular (R22, só inscritos confirmados):** `Interruptor` com o estado (ativo / bloqueado nas configurações do navegador / no iPhone, instale o app antes, que abre a `FolhaInstalar`). Sair ou excluir a conta desliga o push deste aparelho.
 - **Lista de conta:** Sair e "Excluir minha conta" (em `vermelho-texto`, abre a folha de confirmação).
 
 ### 9.10 `/privacidade`
@@ -723,6 +726,11 @@ Segue a seção 5.4, item 4, e os campos da seção 4.4. **Diferença do protót
 - **Switch de inscrições** no estilo `toggle-row`, mantendo a confirmação atual ao fechar.
 - **Busca** (mantém a busca sem acento + `useDeferredValue`) e a lista com `Avatar`, nome completo, "Vaga nº N · N dias concluídos" e a pílula laranja "N para revisar".
 - **Ordem da lista:** quem tem mais itens para revisar primeiro; depois, a ordem do ranking.
+
+### 9.11.1 `/admin/avisos` (R22)
+- Quantas pessoas e aparelhos têm o push ativo (`GET /admin/desafios/:slug/push`).
+- 3 avisos prontos (água, treino, leitura; textos de `MODELOS_AVISO` no shared) com prévia e confirmação em `FolhaInferior`, e um aviso livre (título até 60, mensagem até 160, abre `/hoje`).
+- O resultado do envio aparece num `Alerta`: destinatários, entregues, inscrições vencidas removidas e falhas.
 
 ### 9.12 `/admin/participantes/:id`
 - Topo com nome e "Vaga nº N · N dias".
@@ -915,6 +923,9 @@ Use estes textos exatamente. Eles já estão no protótipo.
 - [ ] `pnpm check:launch` sem marcadores
 - [ ] Contas do dono (`docs/CONTAS.md`) e `PIX_COPIA_E_COLA` real na API
 - **DoD:** login com Google funcionando no **iPhone com o app instalado** (redirect) e no Android (popup) no domínio real.
+
+### R22: Notificações push (Web Push)
+- [x] Plano em `docs/PLANO-R22-PUSH.md`; o registro do que foi feito está em `docs/PROGRESSO.md` (R22).
 
 ---
 

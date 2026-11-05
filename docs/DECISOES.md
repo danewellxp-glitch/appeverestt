@@ -18,7 +18,7 @@ Status: **ASSUMIDO** = default do PROMPT (seção 4), ainda não confirmado pelo
 | Q11 | Multi-desafio | Modelo de dados suporta; UI usa o único desafio `ativo` | — | ASSUMIDO |
 | Q12 | Login | Firebase Auth (Google + e-mail/senha) com cookie da API: o front troca o `idToken` por `POST /auth/sessao`, que grava o mesmo cookie httpOnly (JWT). Senha local (argon2) fica só como legado atrás de `AUTH_SENHA_LEGADO` | `docs/FRONTEND.md` §4.2 e §5 | CONFIRMADO |
 | Q13 | Fuso horário | `America/Sao_Paulo` | `Desafio.timezone` | ASSUMIDO |
-| Q14 | Notificações | Fora do MVP | — | ASSUMIDO |
+| Q14 | Notificações | Web Push (R22, decisão do dono em 2026-11-04): lembretes fixos no fuso do desafio (água 10h/14h/17h, treino 18h, leitura 21h) para inscritos confirmados que ativaram; botão de ação no Android registra sem abrir o app; aviso livre ou pronto pelo admin. iPhone só com o app instalado (iOS 16.4+) e sem botões | `docs/PLANO-R22-PUSH.md`, `@everest/shared` `regras/push.ts` | CONFIRMADO |
 | Q15 | Domínio | `everestt.app.br` (app) e `arquivos.everestt.app.br` (fotos), atrás do túnel da Cloudflare | `.env` do servidor (`DOMINIO_APP`, `DOMINIO_ARQUIVOS`) | CONFIRMADO |
 | X1 | Editar dias anteriores? | Não. Só o dia atual é editável | env `PERMITIR_EDITAR_DIAS_ANTERIORES=false` | ASSUMIDO |
 | X2 | Até quando dá para se inscrever? | Enquanto `inscricoesAbertas = true` e o desafio não terminou | banco + endpoint admin | ASSUMIDO |

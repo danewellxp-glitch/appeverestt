@@ -29,6 +29,7 @@ const Admin = lazy(() => import('../pages/Admin'));
 const AdminIndicadores = lazy(() => import('../pages/AdminIndicadores'));
 const AdminParticipantes = lazy(() => import('../pages/AdminParticipantes'));
 const AdminDesafio = lazy(() => import('../pages/AdminDesafio'));
+const AdminAvisos = lazy(() => import('../pages/AdminAvisos'));
 const AdminDesafioForm = lazy(() => import('../pages/AdminDesafioForm'));
 const AdminParticipante = lazy(() => import('../pages/AdminParticipante'));
 const AdminFeedbacks = lazy(() => import('../pages/AdminFeedbacks'));
@@ -82,7 +83,7 @@ export const router = createBrowserRouter([
           {
             element: <RotaAdmin />,
             children: [
-              // Painel com abas (layout com <Outlet />): Indicadores (padrão), Participantes e Desafio.
+              // Painel com abas (layout com <Outlet />): Indicadores (padrão), Participantes, Desafio e Avisos.
               {
                 path: '/admin',
                 element: <Admin />,
@@ -90,6 +91,7 @@ export const router = createBrowserRouter([
                   { index: true, element: <AdminIndicadores /> },
                   { path: 'participantes', element: <AdminParticipantes /> },
                   { path: 'desafio', element: <AdminDesafio /> },
+                  { path: 'avisos', element: <AdminAvisos /> },
                 ],
               },
               { path: '/admin/desafios/novo', element: <AdminDesafioForm /> },

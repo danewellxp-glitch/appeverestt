@@ -84,6 +84,7 @@ export function FolhaInstalar({ aberta, aoFechar }: { aberta: boolean; aoFechar:
             <li className={PASSO}>Escolha &quot;Adicionar à Tela de Início&quot;</li>
             <li className={PASSO}>Toque em Adicionar</li>
           </ol>
+          <p className="text-[13px] text-texto-2">Depois de instalar, ative os lembretes no Perfil.</p>
           <Botao variante="secundario" larguraTotal onClick={aoFechar}>
             Entendi
           </Botao>

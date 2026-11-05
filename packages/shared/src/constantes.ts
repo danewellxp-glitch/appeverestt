@@ -70,6 +70,8 @@ export const CODIGOS_ERRO = [
   'DESAFIO_NAO_EDITAVEL',
   /** 503: PIX_COPIA_E_COLA não configurado (só fora de produção). */
   'PAGAMENTO_INDISPONIVEL',
+  /** 503: chaves VAPID do push não configuradas. */
+  'PUSH_NAO_CONFIGURADO',
   'ERRO_INTERNO',
 ] as const;
 export type CodigoErro = (typeof CODIGOS_ERRO)[number];

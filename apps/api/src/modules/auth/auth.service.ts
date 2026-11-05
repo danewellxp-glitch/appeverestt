@@ -171,6 +171,8 @@ export class AuthService {
       await tx.fotoProva.deleteMany({ where: { id: { in: fotos.map((f) => f.id) } } });
       // O depoimento é texto pessoal: some junto com a conta (a vaga continua ocupada — X5).
       await tx.feedback.deleteMany({ where: { participante: { usuarioId } } });
+      // Aparelhos com push (R22): o usuário fica (anonimizado), então o CASCADE não cobre.
+      await tx.pushInscricao.deleteMany({ where: { usuarioId } });
       await tx.usuario.update({
         where: { id: usuarioId },
         data: {

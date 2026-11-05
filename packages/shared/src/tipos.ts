@@ -1,6 +1,7 @@
 // Formatos de resposta da API, compartilhados com o front.
 import type { Requisito, TipoFoto } from './constantes';
 import type { StatusDesafio } from './regras/diaAtual';
+import type { AcaoRapida } from './regras/acaoRapida';
 import type { ItemRankingPosicionado } from './regras/ranking';
 
 export type Papel = 'USUARIO' | 'ADMIN';
@@ -464,4 +465,48 @@ export interface FeedResposta {
   maiorSequenciaAtiva: { nomeExibicao: string; dias: number } | null;
   vagasOcupadas: number;
   totalVagas: number;
+}
+
+// ---------- R22: push ----------
+
+export interface PushChavePublica {
+  chave: string;
+}
+
+export interface PushEstado {
+  inscrito: boolean;
+}
+
+/** O que o service worker recebe em cada push. */
+export interface PayloadPush {
+  titulo: string;
+  corpo: string;
+  /** Caminho dentro do app aberto no toque. */
+  url: string;
+  /** Com ação, o Android mostra o botão que registra sem abrir o app. */
+  acao?: AcaoRapida;
+  /** Rótulo do botão de ação. */
+  botao?: string;
+  /** Notificações com a mesma tag se substituem. */
+  tag: string;
+}
+
+export interface AvisoPushResultado {
+  destinatarios: number;
+  entregues: number;
+  /** Inscrições vencidas (404/410) apagadas. */
+  removidas: number;
+  falhas: number;
+}
+
+export interface AcaoRapidaResposta {
+  dia: DiaDetalhe;
+  mensagem: string;
+  mudou: boolean;
+}
+
+export interface PushResumoAdmin {
+  /** Participantes confirmados com o push ativo em pelo menos um aparelho. */
+  pessoas: number;
+  aparelhos: number;
 }

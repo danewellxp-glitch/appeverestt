@@ -95,6 +95,19 @@ docker image prune -f
 
 A API aplica as migrations sozinha ao subir (`prisma migrate deploy` antes do `node dist/main`).
 
+Uma vez, antes da atualização que trouxe as notificações push (R22), gere as chaves VAPID e ponha
+no `.env` do servidor. A chave privada é segredo; não troque as chaves depois, ou todo mundo
+precisa ativar os lembretes de novo.
+
+```bash
+npx web-push generate-vapid-keys
+# no .env:
+# VAPID_PUBLIC_KEY=...
+# VAPID_PRIVATE_KEY=...
+# VAPID_SUBJECT=mailto:contato@everestt.app.br
+docker compose -f docker-compose.prod.yml up -d --build api web
+```
+
 Uma vez, depois da atualização que trouxe o sinal de foto parecida (R20, X20), calcule o hash das fotos
 já enviadas. Pode repetir: só mexe em foto sem hash.
 

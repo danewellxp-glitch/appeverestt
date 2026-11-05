@@ -62,6 +62,21 @@ export const envSchema = z
    * Fora de produção pode faltar: GET /pagamento responde `pix: null` e POST /informar responde 503.
    */
   PIX_COPIA_E_COLA: opcional,
+  /**
+   * Web Push (R22). Gere o par uma vez com `npx web-push generate-vapid-keys` (trocar invalida as
+   * inscrições de todos os aparelhos). Obrigatórias em produção; fora dela, sem as três,
+   * GET /push/chave-publica e os avisos respondem 503 PUSH_NAO_CONFIGURADO e os lembretes não saem.
+   */
+  VAPID_PUBLIC_KEY: opcional,
+  /** SEGREDO: chave privada VAPID. */
+  VAPID_PRIVATE_KEY: opcional,
+  /** Contato do remetente exigido pelos serviços de push: `mailto:...` ou `https://...`. */
+  VAPID_SUBJECT: opcional.pipe(
+    z
+      .string()
+      .regex(/^(mailto:|https:\/\/)/, 'Use mailto:email ou uma URL https://')
+      .optional(),
+  ),
 })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && !env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
@@ -84,6 +99,20 @@ export const envSchema = z
         path: ['PIX_COPIA_E_COLA'],
         message: 'Obrigatório em produção (o "copia e cola" do Pix da inscrição)',
       });
+    }
+    const vapid = ['VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY', 'VAPID_SUBJECT'] as const;
+    const algumVapid = vapid.some((k) => env[k]);
+    for (const k of vapid) {
+      if (env[k]) continue;
+      if (env.NODE_ENV === 'production') {
+        ctx.addIssue({
+          code: 'custom',
+          path: [k],
+          message: 'Obrigatório em produção (notificações push; gere com npx web-push generate-vapid-keys)',
+        });
+      } else if (algumVapid) {
+        ctx.addIssue({ code: 'custom', path: [k], message: 'Informe as três variáveis VAPID juntas' });
+      }
     }
     if (env.PIX_COPIA_E_COLA) {
       const pix = lerPix(env.PIX_COPIA_E_COLA);

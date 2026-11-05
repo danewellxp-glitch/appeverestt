@@ -25,7 +25,7 @@ function CarregandoAba() {
 
 /**
  * /admin: layout do painel do embaixador. Mostra o desafio ativo e as abas Indicadores (padrão),
- * Participantes e Desafio. Sem desafio ativo, mostra a lista para ativar e o "Criar desafio".
+ * Participantes, Desafio e Avisos. Sem desafio ativo, mostra a lista para ativar e o "Criar desafio".
  */
 export default function Admin() {
   const consulta = useAdminDesafios();

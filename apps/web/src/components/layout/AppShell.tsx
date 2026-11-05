@@ -8,7 +8,7 @@ import { Watermark } from './Watermark';
 
 const SELETOR_CARREGANDO = 'main [role="status"][aria-label^="Carregando"]';
 /** Abas do painel do embaixador: trocar entre elas mantém o foco na aba (não volta ao h1). */
-const ABAS_DO_PAINEL = new Set(['/admin', '/admin/participantes', '/admin/desafio']);
+const ABAS_DO_PAINEL = new Set(['/admin', '/admin/participantes', '/admin/desafio', '/admin/avisos']);
 
 /**
  * Depois de cada navegação (não na primeira carga), move o foco para o h1 da página nova
