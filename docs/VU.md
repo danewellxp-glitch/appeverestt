@@ -72,8 +72,11 @@ $DC run --rm vu node dist/cli/scripts/vu.js rodada --desafio teste-vu
 
 # 2b) R23: roteiro das rotas da turma (Hoje, cutucadas, pose, visibilidade, Treinos) com >= 5 VUs pagos.
 #     Para teste avulso, use outro desafio de teste e números fora dos VUs do loop:
-$DC run --rm vu node dist/cli/scripts/vu.js preparar --desafio teste-r23 --quantidade 5 --inicio 101
+#     --direto: a API só inscreve no desafio ATIVO (o real); com o de teste inativo, inscreve no banco já pago.
+$DC run --rm vu node dist/cli/scripts/criar-desafio.js --slug teste-r23 --nome "Teste R23" --dataInicio AAAA-MM-DD --handle everest --totalVagas 10 --ativar false
+$DC run --rm vu node dist/cli/scripts/vu.js preparar --desafio teste-r23 --quantidade 5 --inicio 101 --direto
 $DC run --rm vu node dist/cli/scripts/vu.js turma --desafio teste-r23
+$DC run --rm vu node dist/cli/scripts/vu.js limpar --desafio teste-r23 --remover-desafio   # não toca nos VUs do loop
 
 # 3) Resumo: personas, pagamentos, check-ins e fotos de hoje, última rodada.
 $DC run --rm vu node dist/cli/scripts/vu.js status --desafio teste-vu
