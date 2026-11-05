@@ -2,7 +2,7 @@
 // --remover-desafio, o próprio desafio de teste. Nunca toca em usuário que não seja VU.
 import { DeleteObjectsCommand, ListObjectsV2Command, type S3Client } from '@aws-sdk/client-s3';
 import { configS3DoEnv, criarClienteS3 } from '../../src/storage/s3';
-import { DOMINIO_VU, numeroDoEmail } from './config';
+import { DOMINIO_VU, chaveSessao, numeroDoEmail } from './config';
 import {
   type Contexto,
   apagarChavesDoSimulador,
@@ -169,8 +169,15 @@ export async function limpar(ctx: Contexto, op: OpcoesLimpar): Promise<void> {
       process.exitCode = 1;
     }
 
-    // 5) Sessões guardadas, última rodada etc.
-    const chaves = await apagarChavesDoSimulador(ctx);
+    // 5) Sessões guardadas, última rodada etc. Se sobrou VU inscrito em outro desafio (ex.: o loop do
+    // teste-vu), apaga só as sessões dos VUs removidos; senão, tudo do simulador.
+    const chaves =
+      idsPresos.size > 0
+        ? await ctx.redis.del(
+            ...usuariosVu.filter((u) => !idsPresos.has(u.id)).map((u) => chaveSessao(u.email)),
+            '__nenhuma__',
+          )
+        : await apagarChavesDoSimulador(ctx);
     log(
       `Redis: ${chaves} chave(s) do simulador apagada(s); caches de vagas/ranking/feed invalidados.`,
     );
