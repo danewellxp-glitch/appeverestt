@@ -45,16 +45,13 @@ describe('textos da landing', () => {
     const passos = passosComoFunciona({ valor: 'R$ 50,00', totalVagas: 50, totalDias: 30, apelido: 'TT' });
     expect(passos.map((p) => p.titulo)).toEqual([
       'Crie sua conta',
-      'Vaga reservada',
-      'Faça o Pix de R$ 50,00',
-      'O TT confirma o pagamento',
+      'Reserve a sua vaga',
+      'Realize o seu pagamento',
+      'Confirmação de pagamento',
       'Fiquem ligados',
       '30 dias de check-in',
     ]);
-    expect(passos[1]?.texto).toContain('50 desafiados');
-    expect(passosComoFunciona({ valor: null, totalVagas: 50, totalDias: 30, apelido: 'TT' })[2]?.titulo).toBe(
-      'Faça o Pix da inscrição',
-    );
+    expect(passos[1]?.texto).toContain('desafiados');
   });
 
   it('o FAQ cita o valor só quando o Pix está configurado', () => {

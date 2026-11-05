@@ -50,9 +50,9 @@ export const tt: {
   apelido: 'TT',
   // TODO_DECISAO(LANDING): nome como deve aparecer, papel (1 linha) e bio (2 ou 3 parágrafos curtos).
   nome: 'TT',
-  papel: 'Embaixador do Desafio 30 Dias Everest',
+  papel: 'Criador do Desafio 30 Dias Everest',
   bio: [
-    'O TT é o embaixador do Desafio 30 Dias Everest. É ele quem acompanha a turma de perto, confere as provas de cada dia e confirma as inscrições.',
+    'O TT é o criador do Desafio 30 Dias Everest. É ele quem acompanha a turma de perto, confere as provas de cada dia e confirma as inscrições.',
     'E ele não só organiza: faz o desafio junto com você, com as mesmas regras e no mesmo ranking.',
   ],
   // TODO_DECISAO(LANDING): @ do Instagram do TT (sem "@").
@@ -161,16 +161,16 @@ export function passosComoFunciona(p: {
     { titulo: 'Crie sua conta', texto: 'Com o Google ou com e-mail, e complete seus dados (inclusive o WhatsApp).' },
     // Mesma ordem do app: a vaga é reservada ao completar o cadastro, antes do Pix.
     {
-      titulo: 'Vaga reservada',
-      texto: `Ao completar o cadastro, seu lugar entre os ${numero.format(p.totalVagas)} desafiados já fica reservado, com número.`,
+      titulo: 'Reserve a sua vaga',
+      texto: 'Ao completar o cadastro, seu lugar entre os desafiados já fica reservado, com número. Você será direcionado para o pagamento.',
     },
     {
-      titulo: p.valor ? `Faça o Pix de ${p.valor}` : 'Faça o Pix da inscrição',
-      texto: 'O QR code e o Pix copia e cola aparecem no app. Pagou? Toque em “Já fiz o pagamento”.',
+      titulo: 'Realize o seu pagamento',
+      texto: 'O QR code e o Pix copia e cola aparecem no app. Após realizar o pagamento, toque em “Já fiz o pagamento”.',
     },
     {
-      titulo: `O ${p.apelido} confirma o pagamento`,
-      texto: 'Ele confere o Pix manualmente e libera o seu acesso. Você vê a confirmação no app.',
+      titulo: 'Confirmação de pagamento',
+      texto: 'Após a confirmação de pagamento, seu acesso será liberado em até 2h. Você vê a confirmação direto no app.',
     },
     {
       titulo: 'Fiquem ligados',
@@ -203,11 +203,12 @@ export function perguntasFrequentes(p: {
     },
     {
       pergunta: 'Minha vaga fica garantida antes de o pagamento ser confirmado?',
-      resposta: `Sim. Assim que você se inscreve, sua vaga entre as ${numero.format(p.totalVagas)} fica reservada. O ${p.apelido} confere o Pix e libera o acesso; se o pagamento não for feito, a vaga volta para a fila.`,
+      resposta:
+        'Não. Assim que você se inscreve, sua vaga fica apenas reservada; se o pagamento não for feito, a vaga volta para a fila. Você só terá a sua vaga garantida e o acesso liberado após a confirmação do pagamento.',
     },
     {
       pergunta: 'Qualquer exercício vale?',
-      resposta: 'Vale. Academia, corrida, caminhada, esporte, aula em casa: o importante é treinar todo dia e mandar a foto.',
+      resposta: 'Sim. Academia, corrida, aula em casa: o importante é treinar todo dia e mandar a foto.',
     },
     {
       pergunta: 'E se eu perder um dia?',
@@ -215,7 +216,13 @@ export function perguntasFrequentes(p: {
     },
     {
       pergunta: 'Preciso baixar algum app?',
-      resposta: 'Não. O desafio roda neste site, direto no navegador do celular. Se quiser, adicione à tela inicial.',
+      resposta:
+        'Não. O desafio roda neste site, direto no navegador do celular. Mas aconselhamos que adicione à tela inicial: assim fica mais fácil acompanhar o seu controle e o acesso é mais rápido.',
+    },
+    {
+      pergunta: 'Reembolso',
+      resposta:
+        'Você pode solicitar o reembolso até a data de início do desafio. Depois que o desafio começar, não será feito reembolso.',
     },
   ];
 }
