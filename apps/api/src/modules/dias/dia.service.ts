@@ -192,7 +192,18 @@ export class DiaService {
     const t = infoTempo(desafio, agora);
     const registros = await this.prisma.diaDesafio.findMany({
       where: { participanteId },
-      select: { numeroDia: true, concluido: true, invalidado: true, conferidoEm: true },
+      select: {
+        numeroDia: true,
+        concluido: true,
+        invalidado: true,
+        conferidoEm: true,
+        fotos: {
+          where: { tipo: 'EXERCICIO', status: 'CONFIRMADA', thumbKey: { not: null } },
+          orderBy: { criadoEm: 'desc' },
+          take: 1,
+          select: { thumbKey: true },
+        },
+      },
     });
     const porDia = new Map(registros.map((r) => [r.numeroDia, r]));
     const dataInicio = dataIso(desafio.dataInicio);
@@ -211,7 +222,15 @@ export class DiaService {
       else if (n === t.diaAtual) situacao = 'HOJE';
       else if (n < (t.diaAtual ?? 0)) situacao = 'NAO_CONCLUIDO';
       else situacao = 'FUTURO';
-      dias.push({ numeroDia: n, data: dataDoDia(dataInicio, n), situacao, concluido, invalidado: r?.invalidado ?? false });
+      const thumbKey = concluido ? r.fotos[0]?.thumbKey : null;
+      dias.push({
+        numeroDia: n,
+        data: dataDoDia(dataInicio, n),
+        situacao,
+        concluido,
+        invalidado: r?.invalidado ?? false,
+        fotoTreinoUrl: thumbKey ? await this.storage.urlLeitura(thumbKey) : null,
+      });
     }
 
     const concluidos = dias.map((d) => d.concluido);

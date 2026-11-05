@@ -1,5 +1,6 @@
 import type { DiaResumo } from '@everest/shared';
 import { AlertTriangle } from 'lucide-react';
+import { useState } from 'react';
 import { formatarDataCurta } from '../lib/datas';
 
 const DESCRICAO: Record<DiaResumo['situacao'], string> = {
@@ -14,7 +15,7 @@ const DESCRICAO: Record<DiaResumo['situacao'], string> = {
 /** Células do grid dos 30 dias (docs/FRONTEND.md §8.4). */
 function estilo(d: DiaResumo, selecionado: boolean): string {
   const base =
-    'relative grid aspect-square min-h-11 w-full place-items-center rounded-xl text-[13px] font-bold tabular-nums transition-[transform,box-shadow] duration-200';
+    'relative grid aspect-square min-h-11 w-full place-items-center overflow-hidden rounded-xl text-[13px] font-bold tabular-nums transition-[transform,box-shadow] duration-200';
   const anel = selecionado ? ' outline-2 outline-offset-2 outline-texto' : '';
   switch (d.situacao) {
     case 'CONCLUIDO':
@@ -29,6 +30,28 @@ function estilo(d: DiaResumo, selecionado: boolean): string {
     case 'FUTURO':
       return `${base} bg-superficie-2 text-texto-2 opacity-45${anel}`;
   }
+}
+
+/** Foto do treino cobrindo a célula, com véu escuro e borda vermelha de concluído. */
+function FundoFoto({ src, aoFalhar }: { src: string; aoFalhar: () => void }) {
+  return (
+    <>
+      <img
+        src={src}
+        alt=""
+        aria-hidden
+        loading="lazy"
+        decoding="async"
+        onError={aoFalhar}
+        className="absolute inset-0 size-full object-cover"
+      />
+      <span
+        aria-hidden
+        data-veu
+        className="absolute inset-0 bg-black/35 shadow-[inset_0_0_0_2px_var(--vermelho)]"
+      />
+    </>
+  );
 }
 
 /**
@@ -46,13 +69,22 @@ export function GridDias({
   aoSelecionar?: (numeroDia: number) => void;
   rotulo?: string;
 }) {
+  // Dias cuja foto não carregou (URL expirada etc.): voltam ao vermelho de concluído.
+  const [falhas, setFalhas] = useState<ReadonlySet<number>>(() => new Set());
   return (
     <ol aria-label={rotulo} className="grid grid-cols-6 gap-1.5">
       {dias.map((d) => {
         const futuro = d.situacao === 'FUTURO';
         const ativo = selecionado === d.numeroDia;
+        const foto = d.fotoTreinoUrl && !falhas.has(d.numeroDia) ? d.fotoTreinoUrl : null;
         const conteudo = (
           <>
+            {foto && (
+              <FundoFoto
+                src={foto}
+                aoFalhar={() => setFalhas((f) => new Set(f).add(d.numeroDia))}
+              />
+            )}
             {d.situacao === 'AGUARDANDO_CONFERENCIA' && (
               <span
                 aria-hidden
@@ -63,6 +95,10 @@ export function GridDias({
               <span className="flex flex-col items-center leading-none">
                 <AlertTriangle className="size-3" aria-hidden />
                 <span className="text-[10px]">{d.numeroDia}</span>
+              </span>
+            ) : foto ? (
+              <span className="relative text-white [text-shadow:0_1px_3px_rgb(0_0_0/0.6)]">
+                {d.numeroDia}
               </span>
             ) : (
               d.numeroDia

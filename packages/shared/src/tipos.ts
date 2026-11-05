@@ -95,6 +95,8 @@ export interface DiaResumo {
   situacao: SituacaoDia;
   concluido: boolean;
   invalidado: boolean;
+  /** Miniatura assinada da foto do treino (só em dia concluído com thumb pronta); fundo da célula no grid. */
+  fotoTreinoUrl?: string | null;
 }
 
 export interface MeuProgresso {
