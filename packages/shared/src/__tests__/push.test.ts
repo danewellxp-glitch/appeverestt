@@ -58,3 +58,23 @@ describe('schemas push', () => {
     ).toBe(false);
   });
 });
+
+import { modeloCutucada } from '../regras/push';
+import { LIMITES_AVISO_PUSH } from '../regras/push';
+import { cutucadaSchema, poseDiaSchema, visibilidadeFotoSchema } from '../schemas';
+
+describe('cutucada e pose (R23)', () => {
+  it('modeloCutucada', () => {
+    const p = modeloCutucada('Maria L.', 12, 'p1');
+    expect(p).toEqual({ titulo: 'Maria L. te cutucou 👋', corpo: 'Bora fechar o dia 12!', url: '/hoje', tag: 'cutucada-p1' });
+    expect(modeloCutucada('x'.repeat(200), 1, 'p').titulo.length).toBeLessThanOrEqual(LIMITES_AVISO_PUSH.tituloMax);
+  });
+  it('schemas', () => {
+    expect(cutucadaSchema.safeParse({ participanteId: 'abc' }).success).toBe(true);
+    expect(cutucadaSchema.safeParse({ participanteId: '' }).success).toBe(false);
+    expect(poseDiaSchema.parse({ texto: '  flexão com o livro ' }).texto).toBe('flexão com o livro');
+    expect(poseDiaSchema.safeParse({ texto: 'ab' }).success).toBe(false);
+    expect(poseDiaSchema.safeParse({ texto: 'x'.repeat(81) }).success).toBe(false);
+    expect(visibilidadeFotoSchema.safeParse({ visivel: false }).success).toBe(true);
+  });
+});

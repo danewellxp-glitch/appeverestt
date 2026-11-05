@@ -3,6 +3,7 @@ import {
   TIMEZONE_PADRAO,
   TOTAL_DIAS_PADRAO,
   LIMITES,
+  LIMITE_POSE,
   MIME_TYPES_FOTO,
   TAMANHO_MAX_FOTO_BYTES,
   TIPOS_FOTO,
@@ -246,6 +247,8 @@ export const atualizarPerfilSchema = z.object({
    * true = consente; false = revoga; omitido = mantém como está (nunca revoga sem querer).
    */
   aceitouMarketing: z.boolean({ error: 'Valor inválido.' }).optional(),
+  /** R23: receber cutucadas da turma. Omitido = mantém como está. */
+  aceitaCutucadas: z.boolean({ error: 'Valor inválido.' }).optional(),
 });
 export type AtualizarPerfilInput = z.infer<typeof atualizarPerfilSchema>;
 
@@ -339,3 +342,24 @@ export const avisoPushSchema = z
     if (!v.corpo) ctx.addIssue({ code: 'custom', path: ['corpo'], message: 'Escreva a mensagem.' });
   });
 export type AvisoPushInput = z.infer<typeof avisoPushSchema>;
+
+// ---------- R23: turma ----------
+
+export const cutucadaSchema = z.object({
+  participanteId: z.string({ error: 'Participante inválido.' }).min(1).max(64),
+});
+export type CutucadaInput = z.infer<typeof cutucadaSchema>;
+
+export const visibilidadeFotoSchema = z.object({
+  visivel: z.boolean({ error: 'Valor inválido.' }),
+});
+export type VisibilidadeFotoInput = z.infer<typeof visibilidadeFotoSchema>;
+
+export const poseDiaSchema = z.object({
+  texto: z
+    .string({ error: 'Escreva a pose.' })
+    .trim()
+    .min(LIMITE_POSE.min, { error: `Pelo menos ${LIMITE_POSE.min} caracteres.` })
+    .max(LIMITE_POSE.max, { error: `Até ${LIMITE_POSE.max} caracteres.` }),
+});
+export type PoseDiaInput = z.infer<typeof poseDiaSchema>;

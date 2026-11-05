@@ -42,6 +42,8 @@ export interface UsuarioMe {
   uf: string | null;
   /** Consentimento separado para marketing (X9). */
   aceitouMarketing: boolean;
+  /** R23: recebe cutucadas da turma (ligado por padrão). */
+  aceitaCutucadas: boolean;
 }
 
 export interface MeResposta {
@@ -112,6 +114,8 @@ export interface FotoDia {
   status: StatusFoto;
   thumbUrl: string | null;
   url: string | null;
+  /** R23: a foto do treino aparece na aba Treinos da turma (só tem efeito em EXERCICIO). */
+  visivelTurma: boolean;
 }
 
 export interface DiaDetalhe {
@@ -509,4 +513,66 @@ export interface PushResumoAdmin {
   /** Participantes confirmados com o push ativo em pelo menos um aparelho. */
   pessoas: number;
   aparelhos: number;
+}
+
+// ---------- R23: turma ----------
+
+export interface PessoaHoje extends PessoaFeed {
+  participanteId: string;
+  /** ISO; null em `faltam`. */
+  concluidoEm: string | null;
+  aceitaCutucadas: boolean;
+}
+
+export interface TurmaHojeResposta {
+  diaAtual: number | null;
+  status: StatusDesafio;
+  totalParticipantes: number;
+  /** Fecharam o dia atual, mais recentes primeiro. */
+  fecharam: PessoaHoje[];
+  /** Ainda não fecharam, na ordem do ranking (contas excluídas de fora). */
+  faltam: PessoaHoje[];
+  /** Ids que quem pediu já cutucou hoje. */
+  minhasCutucadasHoje: string[];
+}
+
+export interface CutucadaResposta {
+  /** false quando a pessoa não tem push ativo (a cutucada fica registrada mesmo assim). */
+  entregue: boolean;
+}
+
+export interface PoseDia {
+  texto: string;
+  autor: PessoaFeed;
+  criadoEm: string;
+}
+
+export interface FotoTreinoTurma {
+  participanteId: string;
+  nomeExibicao: string;
+  iniciais: string;
+  /** Foto de perfil. */
+  fotoUrl: string | null;
+  /** URLs assinadas (10 min). */
+  thumbUrl: string | null;
+  url: string;
+  /** O dia dessa pessoa já está fechado. */
+  concluidoDia: boolean;
+  /** É a foto de quem pediu. */
+  minha: boolean;
+}
+
+export interface TreinosTurmaResposta {
+  diaAtual: number | null;
+  /** Dia mostrado (padrão: o atual). */
+  dia: number | null;
+  status: StatusDesafio;
+  pose: PoseDia | null;
+  /** Quem pediu pode sugerir a pose: não há pose ainda e ele já mandou a foto do treino do dia. */
+  possoSugerirPose: boolean;
+  fotos: FotoTreinoTurma[];
+}
+
+export interface PoseDiaResposta {
+  pose: PoseDia;
 }

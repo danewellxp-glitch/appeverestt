@@ -24,3 +24,28 @@ describe('altitudeSimbolica', () => {
     expect(METROS_POR_DIA(30)).toBe(295);
   });
 });
+
+import { agruparPorAltitude, fracaoDaEscalada } from '../regras/altitude';
+
+describe('agruparPorAltitude (R23)', () => {
+  it('agrupa por dias, do cume para a base, mantendo a ordem interna', () => {
+    const itens = [
+      { id: 'a', diasConcluidos: 10 },
+      { id: 'b', diasConcluidos: 3 },
+      { id: 'c', diasConcluidos: 10 },
+      { id: 'd', diasConcluidos: 40 },
+    ];
+    const g = agruparPorAltitude(itens, 30);
+    expect(g.map((x) => x.diasConcluidos)).toEqual([30, 10, 3]);
+    expect(g[1]!.pessoas.map((p) => p.id)).toEqual(['a', 'c']);
+    expect(g[0]!.fracao).toBe(1);
+    expect(g[1]!.altitude).toBe(2949);
+    expect(agruparPorAltitude([], 30)).toEqual([]);
+  });
+  it('fracaoDaEscalada limita entre 0 e 1', () => {
+    expect(fracaoDaEscalada(15, 30)).toBe(0.5);
+    expect(fracaoDaEscalada(-1, 30)).toBe(0);
+    expect(fracaoDaEscalada(99, 30)).toBe(1);
+    expect(fracaoDaEscalada(5, 0)).toBe(0);
+  });
+});
