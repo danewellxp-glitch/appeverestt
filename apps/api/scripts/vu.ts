@@ -31,6 +31,8 @@ type Comando = (typeof COMANDOS)[number];
 
 const USO = `Uso: node dist/cli/scripts/vu.js <comando> --desafio <slug> [opções]
   preparar --quantidade 30     cria/inscreve os VUs (idempotente)
+           [--inicio 1]        primeiro número (ex.: 101 → vu-101..)
+           [--direto]          desafio de teste INATIVO: inscreve e confirma no banco (login e cadastro pela API)
            [--inicio 1]        número do primeiro VU (ex.: --inicio 101 --quantidade 5 → vu-101..vu-105)
   rodada [--intervalo 15]      um "tique" da simulação
          [--periodo corrida]   força o período (madrugada|manha|tarde|noite|corrida) em vez do relógio
@@ -107,7 +109,7 @@ async function main(): Promise<void> {
   try {
     switch (comando) {
       case 'preparar':
-        await preparar(ctx, { slug, ...faixaPreparar! });
+        await preparar(ctx, { slug, ...faixaPreparar!, direto: args.direto === 'true' });
         break;
       case 'rodada':
         await rodada(ctx, { slug, intervaloMin, periodo });

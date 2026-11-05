@@ -11,6 +11,11 @@ import { grupoPagamento, perfilDoVu } from './personas';
 
 export interface OpcoesPreparar extends FaixaVus {
   slug: string;
+  /**
+   * Só para desafio de teste INATIVO (a API só inscreve no ativo): login e cadastro continuam pela
+   * API; a inscrição é criada no banco já com o pagamento CONFIRMADO, como o admin faria no painel.
+   */
+  direto?: boolean;
 }
 
 interface Preparado {
@@ -33,9 +38,13 @@ export async function preparar(ctx: Contexto, op: OpcoesPreparar): Promise<void>
     throw new Error(
       `O desafio "${op.slug}" não existe. Crie-o antes (criar-desafio ou painel do admin).`,
     );
-  if (!desafio.ativo) {
+  if (op.direto && desafio.ativo) {
+    throw new Error(`--direto é só para desafio de teste inativo; "${op.slug}" está ativo.`);
+  }
+  if (!desafio.ativo && !op.direto) {
     throw new Error(
-      `O desafio "${op.slug}" não está ativo: a inscrição pela API só aceita o desafio ativo.`,
+      `O desafio "${op.slug}" não está ativo: a inscrição pela API só aceita o desafio ativo ` +
+        `(use --direto para inscrever direto no banco).`,
     );
   }
 
@@ -90,6 +99,29 @@ export async function preparar(ctx: Contexto, op: OpcoesPreparar): Promise<void>
       if (existente) {
         status = existente.pagamentoStatus;
         vaga = existente.vagaNumero;
+      } else if (op.direto) {
+        const r = await prisma.$transaction(async (tx) => {
+          await tx.$queryRaw`SELECT id FROM "Desafio" WHERE id = ${desafio.id} FOR UPDATE`;
+          const max = await tx.participante.aggregate({
+            where: { desafioId: desafio.id },
+            _max: { vagaNumero: true },
+          });
+          const agora = new Date();
+          return tx.participante.create({
+            data: {
+              desafioId: desafio.id,
+              usuarioId: me.usuario.id,
+              vagaNumero: (max._max.vagaNumero ?? 0) + 1,
+              pagamentoStatus: 'CONFIRMADO',
+              pagamentoInformadoEm: agora,
+              pagamentoConfirmadoEm: agora,
+              pagamentoConfirmadoPorId: admin?.id ?? null,
+            },
+            select: { pagamentoStatus: true, vagaNumero: true },
+          });
+        });
+        status = r.pagamentoStatus;
+        vaga = r.vagaNumero;
       } else {
         const r = await cliente.inscrever(desafio.slug);
         status = r.participacao.pagamentoStatus;
