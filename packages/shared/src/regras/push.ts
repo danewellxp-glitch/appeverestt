@@ -1,3 +1,4 @@
+import type { PayloadPush } from '../tipos';
 import type { AcaoRapida } from './acaoRapida';
 
 /**
@@ -38,3 +39,17 @@ export const MODELOS_AVISO: Record<AcaoRapida, { titulo: string; corpo: string; 
 };
 
 export const LIMITES_AVISO_PUSH = { tituloMax: 60, corpoMax: 160 } as const;
+
+/**
+ * Cutucada (R23): push para quem ainda não fechou o dia. Cutucadas do mesmo remetente se
+ * substituem (tag); de remetentes diferentes empilham.
+ */
+export function modeloCutucada(nomeRemetente: string, dia: number, remetenteId: string): PayloadPush {
+  const nome = nomeRemetente.trim().slice(0, LIMITES_AVISO_PUSH.tituloMax - ' te cutucou 👋'.length) || 'Alguém';
+  return {
+    titulo: `${nome} te cutucou 👋`,
+    corpo: `Bora fechar o dia ${dia}!`,
+    url: '/hoje',
+    tag: `cutucada-${remetenteId}`,
+  };
+}

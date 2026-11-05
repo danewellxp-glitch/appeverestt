@@ -240,7 +240,8 @@ async function executarRodada(
   return resumo;
 }
 
-async function enviarFoto(
+/** Gera a foto de prova do VU e envia pelo fluxo do app (também usada pelo smoke da turma). */
+export async function enviarFoto(
   cliente: ClienteVu,
   slug: string,
   dia: number,

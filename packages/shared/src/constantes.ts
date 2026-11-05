@@ -32,6 +32,9 @@ export const LIMITES = {
 
 export const TOTAL_DIAS_PADRAO = 30;
 
+/** Pose do dia (R23): texto curto sugerido pelo primeiro que mandar a foto do treino. */
+export const LIMITE_POSE = { min: 3, max: 80 } as const;
+
 /**
  * Tolerância da virada do dia (X18): até 5 min depois da meia-noite, o dia que acabou ainda aceita
  * o check-in e as fotos que já estavam a caminho (rede lenta, upload grande). Depois disso, só hoje.
@@ -72,6 +75,14 @@ export const CODIGOS_ERRO = [
   'PAGAMENTO_INDISPONIVEL',
   /** 503: chaves VAPID do push não configuradas. */
   'PUSH_NAO_CONFIGURADO',
+  /** 409: já cutucou essa pessoa hoje (R23). */
+  'JA_CUTUCOU',
+  /** 409: a pessoa não recebe cutucadas ou já fechou o dia (R23). */
+  'CUTUCADA_RECUSADA',
+  /** 409: a pose do dia já foi sugerida por outra pessoa (R23). */
+  'POSE_JA_DEFINIDA',
+  /** 403: só quem já mandou a foto do treino do dia sugere a pose (R23). */
+  'POSE_SEM_TREINO',
   'ERRO_INTERNO',
 ] as const;
 export type CodigoErro = (typeof CODIGOS_ERRO)[number];

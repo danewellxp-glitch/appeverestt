@@ -16,6 +16,7 @@ import { type ConfigVu, chaveSessao, rotuloVu } from './config';
 import type { FirebaseVu } from './firebase';
 import {
   type Contador,
+  type ErroHttp,
   type Requisicao,
   type Ritmo,
   cookieDaResposta,
@@ -54,6 +55,22 @@ export interface IdentidadeVu {
 }
 
 export type Navegacao = 'meu-progresso' | 'ranking' | 'feed';
+
+/** Uma resposta final da API (depois dos retries), para medir latência. */
+export interface Medicao {
+  rota: string;
+  status: number;
+  ms: number;
+}
+
+/** Resultado de `chamar`: `dados` só em 2xx; `erro` (com o `codigo` da API) nos demais. */
+export interface RespostaApi<T> {
+  status: number;
+  codigo: string | null;
+  ms: number;
+  dados: T | null;
+  erro: ErroHttp | null;
+}
 
 /** Converte o GET/PUT do dia no estado usado pelas personas. */
 export function estadoDoDetalhe(d: DiaDetalhe): EstadoDia {
@@ -138,14 +155,20 @@ export class ClienteVu {
     return JSON.parse(res.texto) as MeResposta;
   }
 
-  /** Chamada autenticada à API; em 401 refaz o login uma vez. */
-  private async api<T>(
+  /** Quem quiser medir as chamadas (ex.: o smoke da turma) recebe cada resposta final aqui. */
+  observar: ((m: Medicao) => void) | null = null;
+
+  /**
+   * Chamada autenticada à API que NÃO lança em resposta não-2xx (devolve status e `codigo`);
+   * em 401 refaz o login uma vez. Falha de rede/esgotar as tentativas ainda lança ErroHttp.
+   */
+  async chamar<T>(
     metodo: Requisicao['metodo'],
     caminho: string,
     rota: string,
     corpo?: unknown,
     ritmosExtras: readonly Ritmo[] = [],
-  ): Promise<T> {
+  ): Promise<RespostaApi<T>> {
     await this.garantirSessao();
     for (let tentativa = 0; ; tentativa++) {
       const res = await requisitar(
@@ -169,9 +192,27 @@ export class ClienteVu {
         await this.login();
         continue;
       }
-      if (!ok(res)) throw erroDaResposta(res, rota);
-      return (res.texto ? JSON.parse(res.texto) : null) as T;
+      this.observar?.({ rota, status: res.status, ms: res.ms });
+      if (!ok(res)) {
+        const erro = erroDaResposta(res, rota);
+        return { status: res.status, codigo: erro.codigo, ms: res.ms, dados: null, erro };
+      }
+      const dados = (res.texto ? JSON.parse(res.texto) : null) as T;
+      return { status: res.status, codigo: null, ms: res.ms, dados, erro: null };
     }
+  }
+
+  /** Chamada autenticada à API; lança ErroHttp em resposta não-2xx. */
+  private async api<T>(
+    metodo: Requisicao['metodo'],
+    caminho: string,
+    rota: string,
+    corpo?: unknown,
+    ritmosExtras: readonly Ritmo[] = [],
+  ): Promise<T> {
+    const r = await this.chamar<T>(metodo, caminho, rota, corpo, ritmosExtras);
+    if (r.erro) throw r.erro;
+    return r.dados as T;
   }
 
   me(): Promise<MeResposta> {

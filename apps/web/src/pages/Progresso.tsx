@@ -1,13 +1,14 @@
 import { ALTITUDE_CUME, METROS_POR_DIA, altitudeSimbolica } from '@everest/shared';
-import { Flame } from 'lucide-react';
+import { ChevronRight, Flame } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { GridDias, LegendaDias } from '../components/GridDias';
 import { Alerta, Skeleton } from '../components/ui/basicos';
 import { Botao } from '../components/ui/Botao';
 import { Contador } from '../components/ui/Contador';
 import { caminhoDoDia } from '../features/desafio/navegacao';
 import { Montanha } from '../features/progresso/Montanha';
+import { caminhoDaAba } from '../features/ranking/abas';
 import { useMe, useMeuProgresso } from '../lib/queries';
 import { marcarDirecao } from '../lib/transicoes';
 
@@ -98,6 +99,15 @@ export default function Progresso() {
         <p className="text-[13px] text-texto-2">
           Cada dia concluído sobe {METROS_POR_DIA(p.totalDias)} m. Dia perdido não desce, só não sobe.
         </p>
+        <Link
+          to={caminhoDaAba('montanha')}
+          viewTransition
+          onClick={() => marcarDirecao('aba')}
+          className="press -mx-1 flex min-h-11 items-center justify-between gap-2 rounded-2xl bg-superficie-2 px-3.5 text-sm font-semibold"
+        >
+          Ver a turma na montanha
+          <ChevronRight className="size-4 text-texto-2" aria-hidden />
+        </Link>
       </section>
 
       <div className="surgir grid grid-cols-2 gap-3" style={{ '--i': 2 } as CSSProperties}>

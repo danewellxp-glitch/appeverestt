@@ -1,10 +1,12 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import {
   numeroDiaSchema,
   tipoFotoSchema,
   uploadUrlSchema,
+  visibilidadeFotoSchema,
+  type VisibilidadeFotoInput,
   type ConfirmarFotoResposta,
   type TipoFoto,
   type UploadUrlResposta,
@@ -14,7 +16,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { ApiZodBody } from '../../common/swagger';
 import type { UsuarioSessao } from '../auth/sessao';
-import { FotosService } from './fotos.service';
+import { FotosService, type VisibilidadeFotoResposta } from './fotos.service';
 
 @ApiTags('fotos')
 @ApiCookieAuth()
@@ -56,6 +58,24 @@ export class FotosController {
     @UsuarioAtual() usuario: UsuarioSessao,
   ): Promise<ConfirmarFotoResposta> {
     return this.fotos.confirmar(slug, usuario, n, fotoId);
+  }
+
+  @Patch(':tipo/visibilidade')
+  @ApiZodBody(visibilidadeFotoSchema, { visivel: false })
+  @ApiOkResponse({
+    description:
+      'Mostra/esconde a foto do treino na aba Treinos da turma (R23). Só EXERCICIO; vale para qualquer dia do ' +
+      'desafio (mesmo fora da janela de edição).',
+    schema: { example: { visivelTurma: false } satisfies VisibilidadeFotoResposta },
+  })
+  visibilidade(
+    @Param('slug') slug: string,
+    @Param('n', new ZodValidationPipe(numeroDiaSchema)) n: number,
+    @Param('tipo', new ZodValidationPipe(tipoFotoSchema)) tipo: TipoFoto,
+    @Body(new ZodValidationPipe(visibilidadeFotoSchema)) body: VisibilidadeFotoInput,
+    @UsuarioAtual() usuario: UsuarioSessao,
+  ): Promise<VisibilidadeFotoResposta> {
+    return this.fotos.alterarVisibilidade(slug, usuario, n, tipo, body.visivel);
   }
 
   @Delete(':tipo')

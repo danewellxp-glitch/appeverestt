@@ -1,3 +1,5 @@
+import { TIMEZONE_PADRAO } from '@everest/shared';
+
 /** Formata 'YYYY-MM-DD' sem passar por fuso (evita o "dia anterior" do new Date('YYYY-MM-DD')). */
 export function formatarData(iso: string, opcoes: { comDiaSemana?: boolean } = {}): string {
   const [a, m, d] = iso.split('-').map(Number);
@@ -43,4 +45,11 @@ export function tempoRelativo(iso: string, agora: number = Date.now()): string {
   const horas = Math.floor(minutos / 60);
   if (horas < 24) return RELATIVO.format(-horas, 'hour');
   return RELATIVO.format(-Math.floor(horas / 24), 'day');
+}
+
+/** ISO 8601 → "07:42" no fuso do desafio (padrão: Brasília). */
+export function formatarHora(iso: string, timezone: string = TIMEZONE_PADRAO): string {
+  const momento = new Date(iso);
+  if (Number.isNaN(momento.getTime())) return '';
+  return new Intl.DateTimeFormat('pt-BR', { timeZone: timezone, hour: '2-digit', minute: '2-digit' }).format(momento);
 }

@@ -29,7 +29,7 @@ interface Vapid {
   privateKey: string;
 }
 
-type Destino = Pick<PushInscricao, 'id' | 'usuarioId' | 'endpoint' | 'p256dh' | 'auth'>;
+export type Destino = Pick<PushInscricao, 'id' | 'usuarioId' | 'endpoint' | 'p256dh' | 'auth'>;
 
 /** Status HTTP de um erro do web-push (WebPushError.statusCode), se houver. */
 function statusDoErro(e: unknown): number | null {
@@ -121,6 +121,15 @@ export class PushService {
           participacoes: { some: { desafioId, pagamentoStatus: 'CONFIRMADO' } },
         },
       },
+      select: { id: true, endpoint: true, p256dh: true, auth: true, usuarioId: true },
+      orderBy: { criadoEm: 'asc' },
+    });
+  }
+
+  /** Aparelhos de uma pessoa (cutucada, R23). Conta excluída não tem inscrições (apagadas na exclusão). */
+  async aparelhosDoUsuario(usuarioId: string): Promise<Destino[]> {
+    return this.prisma.pushInscricao.findMany({
+      where: { usuarioId, usuario: { excluidoEm: null } },
       select: { id: true, endpoint: true, p256dh: true, auth: true, usuarioId: true },
       orderBy: { criadoEm: 'asc' },
     });

@@ -42,11 +42,11 @@ export async function criarApp(
 
 export async function limparTudo(prisma: PrismaService): Promise<void> {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE "PushInscricao", "Feedback", "FotoProva", "DiaDesafio", "Participante", "Desafio", "Usuario" CASCADE',
+    'TRUNCATE TABLE "Cutucada", "PoseDia", "PushInscricao", "Feedback", "FotoProva", "DiaDesafio", "Participante", "Desafio", "Usuario" CASCADE',
   );
   const redis = new Redis(process.env.REDIS_URL ?? '');
   const todas = (
-    await Promise.all(['vagas:*', 'ranking:*', 'feed:*'].map((padrao) => redis.keys(padrao)))
+    await Promise.all(['vagas:*', 'ranking:*', 'feed:*', 'turma:*', 'treinos:*'].map((padrao) => redis.keys(padrao)))
   ).flat();
   if (todas.length > 0) await redis.del(...todas);
   await redis.quit();
@@ -263,7 +263,7 @@ export async function participanteComDias(
     },
   });
   for (const n of diasConcluidos) {
-    await prisma.diaDesafio.create({ data: { participanteId: p.id, numeroDia: n, ...CHECKIN_COMPLETO, concluido: true } });
+    await prisma.diaDesafio.create({ data: { participanteId: p.id, numeroDia: n, ...CHECKIN_COMPLETO, concluido: true, concluidoEm: new Date() } });
   }
   return p.id;
 }

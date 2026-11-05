@@ -27,7 +27,7 @@ const EXEMPLO_DIA: DiaDetalhe = {
   motivoInvalidacao: null,
   editavel: true,
   requisitosPendentes: ['AGUA', 'FOTOS', 'STORY'],
-  fotos: [{ id: 'ckx...', tipo: 'AGUA', status: 'CONFIRMADA', thumbUrl: 'https://...', url: 'https://...' }],
+  fotos: [{ id: 'ckx...', tipo: 'AGUA', status: 'CONFIRMADA', thumbUrl: 'https://...', url: 'https://...', visivelTurma: true }],
 };
 
 const EXEMPLO_PROGRESSO: MeuProgresso = {

@@ -68,8 +68,10 @@ function ConteudoDia({
   online,
   desafio,
   progresso,
+  ehHoje,
 }: {
   slug: string;
+  ehHoje: boolean;
   dia: DiaDetalhe;
   eyebrow: string;
   totalDias: number;
@@ -157,6 +159,8 @@ function ConteudoDia({
             exercicio={valores.exercicio}
             editavel={editavel}
             aoAlterar={(feito) => checkin.alterar((v) => ({ ...v, exercicio: feito }))}
+            slug={slug}
+            ehHoje={ehHoje}
           />
           <CardLeitura
             paginas={valores.paginasLidas}
@@ -248,6 +252,7 @@ function TelaDia({
       online={online}
       desafio={desafio}
       progresso={progresso}
+      ehHoje={ehHoje}
     />
   );
 }

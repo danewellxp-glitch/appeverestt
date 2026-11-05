@@ -30,6 +30,7 @@ function me(whatsapp: string | null): MeResposta {
       cidade: 'São Paulo',
       uf: 'SP',
       aceitouMarketing: false,
+      aceitaCutucadas: true,
     },
     participacao: {
       participanteId: 'p1',

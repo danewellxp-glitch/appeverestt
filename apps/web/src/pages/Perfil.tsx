@@ -140,8 +140,11 @@ export default function Perfil() {
     });
   }
 
-  /** Liga/desliga o consentimento de marketing reaproveitando os dados atuais (o PATCH pede todos). */
-  function alternarMarketing(ligado: boolean) {
+  /**
+   * Liga/desliga uma preferência (marketing ou cutucadas) reaproveitando os dados atuais
+   * (o PATCH pede todos os campos de cadastro).
+   */
+  function alternarPreferencia(campo: 'aceitouMarketing' | 'aceitaCutucadas', ligado: boolean) {
     const r = atualizarPerfilSchema.safeParse({
       nome: u.nome,
       instagram: u.instagram ?? '',
@@ -151,14 +154,19 @@ export default function Perfil() {
       cidade: u.cidade ?? '',
       uf: u.uf ?? '',
       aceitouTermos: true,
-      aceitouMarketing: ligado,
+      aceitouMarketing: u.aceitouMarketing,
+      [campo]: ligado,
     });
     if (!r.success) {
       setFolha('dados');
       return;
     }
+    const mensagens = {
+      aceitouMarketing: ['Você vai receber novidades da Everest.', 'Pronto: sem mensagens de marketing.'],
+      aceitaCutucadas: ['A turma pode te cutucar de novo.', 'Pronto: ninguém da turma vai te cutucar.'],
+    } as const;
     atualizar.mutate(r.data, {
-      onSuccess: () => toast(ligado ? 'Você vai receber novidades da Everest.' : 'Pronto: sem mensagens de marketing.'),
+      onSuccess: () => toast(mensagens[campo][ligado ? 0 : 1]),
       onError: (e) => toast(mensagemGeral(e)),
     });
   }
@@ -191,9 +199,22 @@ export default function Perfil() {
           ligado={u.aceitouMarketing}
           rotulo="Receber novidades e ofertas da Everest"
           disabled={atualizar.isPending}
-          aoAlternar={alternarMarketing}
+          aoAlternar={(ligado) => alternarPreferencia('aceitouMarketing', ligado)}
         />
         <p className="px-1 text-xs text-texto-2">Por e-mail, WhatsApp e Instagram. Você pode desligar quando quiser.</p>
+        {confirmado && (
+          <>
+            <Interruptor
+              ligado={u.aceitaCutucadas !== false}
+              rotulo="Receber cutucadas da turma"
+              disabled={atualizar.isPending}
+              aoAlternar={(ligado) => alternarPreferencia('aceitaCutucadas', ligado)}
+            />
+            <p className="px-1 text-xs text-texto-2">
+              Quem ainda não fechou o dia pode receber uma notificação da turma, no máximo uma por pessoa por dia.
+            </p>
+          </>
+        )}
         {confirmado && <LinhaLembretes aoInstalar={() => setFolha('instalar')} />}
       </section>
 

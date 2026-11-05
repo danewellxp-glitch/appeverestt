@@ -4,6 +4,7 @@ import { CardRequisito } from '../checkin/CardRequisito';
 import { ROTULO_TIPO_FOTO, fotoEhValida } from './fotosValidas';
 import { SlotFoto } from './SlotFoto';
 import { useFotosDia } from './useUploadFoto';
+import { VisibilidadeTreino } from './VisibilidadeTreino';
 
 /** "Prova do dia": 3 slots (água, treino, leitura), cada um com o seu envio. */
 export function CardFotos({
@@ -45,6 +46,7 @@ export function CardFotos({
           />
         ))}
       </ul>
+      <VisibilidadeTreino slug={slug} numeroDia={numeroDia} foto={fotos.find((f) => f.tipo === 'EXERCICIO')} />
       <div aria-live="polite" className="text-[13px] text-vermelho-texto empty:hidden">
         {erros.map((e) => (
           <p key={e}>{e}</p>

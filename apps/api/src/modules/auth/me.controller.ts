@@ -32,11 +32,12 @@ export class MeController {
     uf: 'SP',
     aceitouTermos: true,
     aceitouMarketing: true,
+    aceitaCutucadas: true,
   })
   @ApiOkResponse({
     description:
       'Completa o perfil: nome completo, dados de cadastro (obrigatórios para a inscrição), aceite dos termos ' +
-      'e o consentimento de marketing (opcional; false revoga).',
+      'o consentimento de marketing (opcional; false revoga) e as cutucadas da turma (opcional).',
     schema: { example: EXEMPLO_ME },
   })
   async atualizar(

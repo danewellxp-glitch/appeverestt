@@ -101,6 +101,8 @@ export interface Resposta {
   status: number;
   headers: Headers;
   texto: string;
+  /** Duração da última tentativa (só o fetch: sem as esperas do ritmo e do backoff). */
+  ms: number;
 }
 
 export interface Contador {
@@ -146,6 +148,7 @@ export async function requisitar(
     let status: number;
     let headers: Headers;
     let texto: string;
+    const inicio = performance.now();
     try {
       const res = await fetch(r.url, {
         method: r.metodo,
@@ -172,7 +175,7 @@ export async function requisitar(
       await esperar(espera);
       continue;
     }
-    return { status, headers, texto };
+    return { status, headers, texto, ms: Math.round(performance.now() - inicio) };
   }
 }
 

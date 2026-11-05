@@ -62,6 +62,23 @@ describe('Check-in diário e progresso (e2e)', () => {
     expect(r2.body.requisitosPendentes).toEqual(['AGUA']);
   });
 
+  it('concluidoEm (X22): carimba ao fechar, mantém em edições que seguem fechando e limpa ao desfazer', async () => {
+    const { agente, hoje, participanteId } = await cenarioInscrito(ctx);
+    await fotosFalsas(ctx.prisma, participanteId, hoje);
+    const dia = () =>
+      ctx.prisma.diaDesafio.findUniqueOrThrow({
+        where: { participanteId_numeroDia: { participanteId, numeroDia: hoje } },
+      });
+    expect((await dia()).concluidoEm).toBeNull();
+    await agente.put(`/api/desafios/desafio-teste/dias/${hoje}`).send(CHECKIN_COMPLETO);
+    const fechou = (await dia()).concluidoEm;
+    expect(fechou).toBeInstanceOf(Date);
+    await agente.put(`/api/desafios/desafio-teste/dias/${hoje}`).send({ ...CHECKIN_COMPLETO, paginasLidas: 20 });
+    expect((await dia()).concluidoEm?.getTime()).toBe(fechou?.getTime());
+    await agente.put(`/api/desafios/desafio-teste/dias/${hoje}`).send({ ...CHECKIN_COMPLETO, aguaMl: 0 });
+    expect((await dia()).concluidoEm).toBeNull();
+  });
+
   it('body com concluido: true é ignorado', async () => {
     const { agente, hoje, participanteId } = await cenarioInscrito(ctx);
     const r = await agente

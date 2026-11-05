@@ -59,6 +59,8 @@ model Usuario {
   uf                 String?         @db.Char(2)
   /// consentimento separado para marketing (X9); null = não aceitou ou revogou
   aceitouMarketingEm DateTime?
+  /// R23: recebe cutucadas da turma (desligável no Perfil)
+  aceitaCutucadas    Boolean         @default(true)
   /// conta excluída (dados anonimizados; a vaga continua ocupada — X5)
   excluidoEm         DateTime?
   criadoEm           DateTime        @default(now())
@@ -83,6 +85,7 @@ model Desafio {
   ativo               Boolean        @default(false)
   criadoEm            DateTime       @default(now())
   participantes       Participante[]
+  poses               PoseDia[]
 }
 
 model Participante {
@@ -103,6 +106,9 @@ model Participante {
   usuario                  Usuario         @relation(fields: [usuarioId], references: [id])
   dias                     DiaDesafio[]
   feedback                 Feedback?
+  cutucadasEnviadas        Cutucada[]      @relation("CutucadaDe")
+  cutucadasRecebidas       Cutucada[]      @relation("CutucadaPara")
+  poses                    PoseDia[]
 
   @@unique([desafioId, usuarioId])
   @@unique([desafioId, vagaNumero])
@@ -118,6 +124,8 @@ model DiaDesafio {
   storyPostado      Boolean      @default(false)
   /// DERIVADO: sempre recalculado no servidor
   concluido         Boolean      @default(false)
+  /// R23: quando o dia fechou (carimbado em recalcularDia; null quando não concluído)
+  concluidoEm       DateTime?
   invalidado        Boolean      @default(false)
   motivoInvalidacao String?
   invalidadoPorId   String?
@@ -147,6 +155,8 @@ model FotoProva {
   /// repetida para o embaixador. Null enquanto não processa, em imagem lisa e nas fotos de antes da
   /// R20 (preencher com `scripts/hash-fotos.ts`).
   hashPerceptual String?
+  /// R23: a foto do treino aparece na aba Treinos da turma (só tem efeito em EXERCICIO)
+  visivelTurma   Boolean    @default(true)
   dia            DiaDesafio @relation(fields: [diaId], references: [id], onDelete: Cascade)
 
   /// Única por (dia, tipo) só entre as fotos que já chegaram (status <> PENDENTE): índice parcial
@@ -187,4 +197,32 @@ model PushInscricao {
   usuario       Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId])
+}
+
+/// Cutucada (R23): um participante lembra outro de fechar o dia. Uma por (remetente, destinatário, dia).
+model Cutucada {
+  id        String       @id @default(cuid())
+  deId      String
+  paraId    String
+  numeroDia Int
+  criadoEm  DateTime     @default(now())
+  de        Participante @relation("CutucadaDe", fields: [deId], references: [id], onDelete: Cascade)
+  para      Participante @relation("CutucadaPara", fields: [paraId], references: [id], onDelete: Cascade)
+
+  @@unique([deId, paraId, numeroDia])
+  @@index([paraId, numeroDia])
+}
+
+/// Pose do dia (R23): sugerida pelo primeiro que mandar a foto do treino; uma por dia do desafio.
+model PoseDia {
+  id        String       @id @default(cuid())
+  desafioId String
+  numeroDia Int
+  texto     String
+  autorId   String
+  criadoEm  DateTime     @default(now())
+  desafio   Desafio      @relation(fields: [desafioId], references: [id], onDelete: Cascade)
+  autor     Participante @relation(fields: [autorId], references: [id], onDelete: Cascade)
+
+  @@unique([desafioId, numeroDia])
 }
