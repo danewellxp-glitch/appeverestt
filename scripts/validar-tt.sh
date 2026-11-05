@@ -5,8 +5,15 @@
 #   2) --deploy: reconstrói web e api de produção (docker-compose.prod.yml)
 #   3) depois do deploy, repete a verificação pública até passar (até 10 vezes, a cada 15 s):
 #      scripts/verificar-producao.mjs + cada texto esperado presente no bundle publicado.
+# Pode rodar de um worktree (ex.: ../app-tt-tt): o build usa o código commitado daquele worktree
+# e o .env da pasta principal. Antes do deploy, marca as imagens atuais como :antes-<commit>.
 set -uo pipefail
 cd "$(dirname "$0")/.."
+
+ENV_FILE=.env
+if [ ! -f "$ENV_FILE" ]; then
+  ENV_FILE="$(git worktree list --porcelain | sed -n '1s/^worktree //p')/.env"
+fi
 
 DEPLOY=0
 ESPERADOS=()
@@ -34,11 +41,14 @@ tentar 3 5 "checagens locais" locais || exit 1
 
 [ "$DEPLOY" = 1 ] || { echo "Sem --deploy: nada publicado."; exit 0; }
 
-echo "▶ deploy (web e api)"
-docker compose -f docker-compose.prod.yml up -d --build web api || exit 1
+ANTES=$(git rev-parse --short HEAD)
+docker tag everest-web:producao "everest-web:antes-$ANTES" 2>/dev/null
+docker tag everest-api:producao "everest-api:antes-$ANTES" 2>/dev/null
+echo "▶ deploy (web e api) a partir de $(pwd) — imagens anteriores em :antes-$ANTES"
+docker compose -f docker-compose.prod.yml --env-file "$ENV_FILE" up -d --build web api || exit 1
 docker image prune -f >/dev/null
 
-DOMINIO=$(grep -E '^DOMINIO_APP=' .env | cut -d= -f2- | tr -d '"')
+DOMINIO=$(grep -E '^DOMINIO_APP=' "$ENV_FILE" | cut -d= -f2- | tr -d '"')
 URL="https://$DOMINIO"
 
 publico() {
