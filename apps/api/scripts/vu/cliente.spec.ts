@@ -182,6 +182,32 @@ describe('ClienteVu', () => {
     ).rejects.toMatchObject({ status: 409, codigo: 'DIA_NAO_EDITAVEL' });
   });
 
+  it('chamar não lança em 4xx: devolve status, código e avisa o observador', async () => {
+    const token = jwt(daquiA30Dias);
+    const { cliente, redisDados } = montar((c) =>
+      c.url.endsWith('/cutucadas')
+        ? resposta(409, { codigo: 'JA_CUTUCOU', mensagem: 'Você já cutucou essa pessoa hoje.' })
+        : resposta(200, { entregue: false }),
+    );
+    redisDados.set('everest-vu:sessao:vu-07@vu.everestt.app.br', token);
+    const medicoes: { rota: string; status: number }[] = [];
+    cliente.observar = (m) => medicoes.push({ rota: m.rota, status: m.status });
+
+    const r = await cliente.chamar('POST', 'desafios/teste-vu/cutucadas', 'POST cutucadas', {
+      participanteId: 'p3',
+    });
+    expect(r).toMatchObject({ status: 409, codigo: 'JA_CUTUCOU', dados: null });
+    expect(r.erro?.detalhe).toBe('Você já cutucou essa pessoa hoje.');
+    expect(r.ms).toBeGreaterThanOrEqual(0);
+
+    const ok = await cliente.chamar('GET', 'desafios/teste-vu/turma/hoje', 'GET turma/hoje');
+    expect(ok).toMatchObject({ status: 200, codigo: null, dados: { entregue: false }, erro: null });
+    expect(medicoes).toEqual([
+      { rota: 'POST cutucadas', status: 409 },
+      { rota: 'GET turma/hoje', status: 200 },
+    ]);
+  });
+
   it('estado do dia: só fotos ENVIADA/CONFIRMADA contam como enviadas', () => {
     expect(estadoDoDetalhe(DIA as Parameters<typeof estadoDoDetalhe>[0])).toEqual({
       aguaMl: 500,

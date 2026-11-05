@@ -1,16 +1,16 @@
 // `preparar`: cria os VUs (Firebase), loga pela API pública, completa o cadastro, inscreve,
 // avisa o pagamento e, como "admin", confirma ~75% direto no banco. Idempotente.
 import { hojeNoFuso, type StatusPagamento } from '@everest/shared';
+import { type FaixaVus, numerosDaFaixa } from './args';
 import { ClienteVu } from './cliente';
-import { DOMINIO_VU, rotuloVu } from './config';
+import { DOMINIO_VU, emailDoVu, rotuloVu } from './config';
 import { type Contexto, invalidarCachesDoDesafio } from './contexto';
 import { dadosDoVu } from './dados';
 import { ErroHttp } from './http';
 import { grupoPagamento, perfilDoVu } from './personas';
 
-export interface OpcoesPreparar {
+export interface OpcoesPreparar extends FaixaVus {
   slug: string;
-  quantidade: number;
 }
 
 interface Preparado {
@@ -49,15 +49,21 @@ export async function preparar(ctx: Contexto, op: OpcoesPreparar): Promise<void>
   const ocupadas = await prisma.participante.count({
     where: { desafioId: desafio.id, vagaNumero: { not: null } },
   });
+  const numeros = numerosDaFaixa(op);
   const vusInscritos = await prisma.participante.count({
     where: { desafioId: desafio.id, usuario: { email: FILTRO_EMAIL_VU } },
   });
+  // Da faixa pedida, quantos já estão inscritos (não ocupam vaga nova).
+  const daFaixaInscritos = await prisma.participante.count({
+    where: { desafioId: desafio.id, usuario: { email: { in: numeros.map(emailDoVu) } } },
+  });
   const livres = desafio.totalVagas - ocupadas;
+  const faixa = `VU ${rotuloVu(op.inicio)}–${rotuloVu(op.inicio + op.quantidade - 1)}`;
   log(
-    `Preparando ${op.quantidade} VUs em "${desafio.slug}" (${ocupadas}/${desafio.totalVagas} vagas ocupadas, ` +
-      `${vusInscritos} já são VUs) via ${ctx.config.baseUrl}`,
+    `Preparando ${op.quantidade} VUs (${faixa}) em "${desafio.slug}" (${ocupadas}/${desafio.totalVagas} vagas ocupadas, ` +
+      `${vusInscritos} já são VUs, ${daFaixaInscritos} desta faixa) via ${ctx.config.baseUrl}`,
   );
-  if (op.quantidade - vusInscritos > livres) {
+  if (op.quantidade - daFaixaInscritos > livres) {
     log(`! Só há ${livres} vagas livres: alguns VUs vão ficar sem inscrição (VAGAS_ESGOTADAS).`);
   }
 
@@ -65,7 +71,7 @@ export async function preparar(ctx: Contexto, op: OpcoesPreparar): Promise<void>
   const preparados: Preparado[] = [];
   let erros = 0;
 
-  for (let n = 1; n <= op.quantidade; n++) {
+  for (const n of numeros) {
     const dados = dadosDoVu(n, hoje);
     const cliente = new ClienteVu(ctx, { numero: n, email: dados.email, nome: dados.nome });
     const rotulo = `VU ${rotuloVu(n)}`;

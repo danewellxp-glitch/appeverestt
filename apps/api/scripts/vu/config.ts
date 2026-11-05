@@ -11,10 +11,12 @@ export const CHAVE_ULTIMA_RODADA = `${PREFIXO_REDIS}ultima-rodada`;
 export const chaveSessao = (email: string): string => `${PREFIXO_REDIS}sessao:${email}`;
 
 export const QUANTIDADE_MAX = 200;
+/** O e-mail tem de 2 a 4 dígitos (vu-01 … vu-9999). */
+export const NUMERO_MAX_VU = 9999;
 export const INTERVALO_PADRAO_MIN = 15;
 
 export function emailDoVu(numero: number): string {
-  if (!Number.isInteger(numero) || numero < 1 || numero > 9999) {
+  if (!Number.isInteger(numero) || numero < 1 || numero > NUMERO_MAX_VU) {
     throw new Error(`Número de VU inválido: ${numero}`);
   }
   return `vu-${String(numero).padStart(2, '0')}@${DOMINIO_VU}`;
