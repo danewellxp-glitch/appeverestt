@@ -302,3 +302,11 @@ P0 = participante real perde dia ou ganha dia indevido · P1 = número errado ou
 - [ ] Duas ações de água ao mesmo tempo podem perder uma soma (lê e grava o dia sem trava). Raro; tratar se aparecer
 - [ ] E2E do web e axe nas telas novas não rodados aqui (sem Java para o emulador do Firebase)
 
+
+## R23: Hub da turma — Montanha, Hoje com cutucadas e Treinos com pose do dia (2026-11-05)
+Pedido do Dan: o Ranking vira o hub social do desafio. Branch `r23-turma`. Decisões X21 a X25.
+- [x] Shared: `agruparPorAltitude`, `fracaoDaEscalada`, `modeloCutucada`, schemas de cutucada, pose e visibilidade, `LIMITE_POSE`, códigos `JA_CUTUCOU`, `CUTUCADA_RECUSADA`, `POSE_JA_DEFINIDA`, `POSE_SEM_TREINO`; shared 86 testes
+- [x] API: migration `20261105140000_turma` (`concluidoEm` com backfill, `aceitaCutucadas`, `Cutucada`, `PoseDia`, `visivelTurma`); `GET turma/hoje`, `POST cutucadas` (20/min), `GET turma/treinos?dia=n`, `POST turma/pose` (5/min), `PATCH dias/:n/fotos/EXERCICIO/visibilidade` (vale com o dia fechado; troca de foto mantém a escolha). Cache `turma:*` junto do ranking; treinos com chave de versão `treinos:<id>:versao` que invalida todos os dias de uma vez. api unit 113, e2e 137 (`turma.e2e-spec` 14)
+- [x] Web: `/ranking?aba=ranking|montanha|hoje|treinos` (`Segmentado compacto`), Montanha da turma (bolhas por altitude com prioridade; grupos sem espaço viram ponto, a lista tem todos), Hoje com cutucar, Treinos com seletor de dia e pose, aviso e "Esconder da turma" no check-in, pose no card do treino, interruptor de cutucadas no Perfil, privacidade e regras; web 257 testes, capturas 390/360 px claro e escuro conferidas
+- [x] Simulador: `preparar --inicio N` e comando `turma` (roteiro das rotas da R23 com 5 VUs, uma linha por checagem e latência p50/p95 por rota)
+- [ ] Produção: migration roda no boot; chaves VAPID da R22 continuam pendentes (sem elas a cutucada só fica registrada)
