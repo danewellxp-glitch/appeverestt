@@ -55,7 +55,9 @@ export const privacidade: ConteudoPrivacidade = {
     {
       titulo: 'Fotos de prova',
       paragrafos: [
-        'Servem só para conferir os requisitos do desafio. Elas não aparecem para outros participantes nem são publicadas. Removemos a localização e outros dados escondidos da imagem quando ela chega, e ela fica num armazenamento privado, aberto só por links que expiram em minutos.',
+        'Servem para conferir os requisitos do desafio e não são publicadas fora do app. As fotos de água e de leitura não aparecem para outros participantes.',
+        'A foto do treino aparece para os participantes do mesmo desafio, na aba Treinos do ranking, junto com seu nome curto. Ela fica visível por padrão e você pode esconder cada foto da turma no check-in do dia, no interruptor "Esconder da turma".',
+        'Removemos a localização e outros dados escondidos da imagem quando ela chega, e ela fica num armazenamento privado, aberto só por links que expiram em minutos.',
       ],
     },
     {
@@ -63,7 +65,8 @@ export const privacidade: ConteudoPrivacidade = {
       itens: [
         'Você vê tudo o que enviou.',
         'O embaixador vê suas fotos e seus dados de cadastro para a conferência.',
-        'Os outros participantes veem só seu nome curto (como "Maria S."), sua foto do Google e seus números no ranking. E-mail, WhatsApp e endereço nunca aparecem para eles.',
+        'Os outros participantes veem só seu nome curto (como "Maria S."), sua foto do Google, seus números no ranking, se você já fechou o dia de hoje e a foto do treino que você não escondeu. E-mail, WhatsApp e endereço nunca aparecem para eles.',
+        'Participantes podem te mandar uma cutucada (uma notificação, no máximo uma por pessoa por dia) quando você ainda não fechou o dia. Dá para desligar no Perfil, em "Receber cutucadas da turma".',
       ],
     },
     {

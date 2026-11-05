@@ -74,6 +74,7 @@ function meBase(parcial: { perfilCompleto?: boolean; participacao?: Participacao
       cidade: 'São Paulo',
       uf: 'SP',
       aceitouMarketing: false,
+      aceitaCutucadas: true,
     },
     participacao: parcial.participacao ?? null,
   };

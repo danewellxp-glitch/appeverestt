@@ -30,3 +30,20 @@ describe('Segmentado', () => {
     expect(aoMudar).toHaveBeenCalledWith('sistema');
   });
 });
+
+describe('Segmentado compacto', () => {
+  it('empilha ícone e rótulo (4 opções cabem em 360 px)', () => {
+    render(
+      <Segmentado
+        opcoes={[...OPCOES, { valor: 'outro', rotulo: 'Outro', icone: <svg data-testid="icone" /> }]}
+        valor="claro"
+        aoMudar={() => undefined}
+        rotulo="Abas"
+        compacto
+      />,
+    );
+    const botao = screen.getByRole('button', { name: 'Outro' });
+    expect(botao.className).toContain('flex-col');
+    expect(botao.className).toContain('min-w-0');
+  });
+});

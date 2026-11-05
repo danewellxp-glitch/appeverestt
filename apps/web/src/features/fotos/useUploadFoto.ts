@@ -71,6 +71,8 @@ export function useFotosDia(slug: string, numeroDia: number) {
       qc.invalidateQueries({ queryKey: chaves.dia(slug, numeroDia) }),
       qc.invalidateQueries({ queryKey: chaves.progresso(slug) }),
       qc.invalidateQueries({ queryKey: chaves.ranking(slug) }),
+      // A foto do treino entra no feed da turma (e pode liberar a pose do dia).
+      qc.invalidateQueries({ queryKey: ['turma', 'treinos', slug] }),
     ]);
   }, [qc, slug, numeroDia]);
 

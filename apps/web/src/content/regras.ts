@@ -41,7 +41,7 @@ export function regrasDiarias(instagram: string, hashtag: string): Regra[] {
     {
       id: 'FOTOS',
       titulo: 'Prova do dia',
-      texto: `${numero.format(METAS.fotos)} fotos: uma da água, uma do treino e uma da leitura.`,
+      texto: `${numero.format(METAS.fotos)} fotos: uma da água, uma do treino e uma da leitura. A do treino aparece para a turma na aba Treinos (dá para esconder); água e leitura ficam só com o embaixador.`,
     },
     { id: 'STORY', titulo: 'Story', texto: `Um story marcando ${instagram} e usando ${hashtag}.` },
   ];

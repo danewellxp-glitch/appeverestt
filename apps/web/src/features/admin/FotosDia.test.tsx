@@ -13,6 +13,7 @@ function foto(tipo: AdminFotoDia['tipo'], parecida: AdminFotoDia['parecida']): A
     status: 'CONFIRMADA',
     thumbUrl: `https://arquivos.exemplo/${tipo}.thumb.webp`,
     url: `https://arquivos.exemplo/${tipo}.full.webp`,
+    visivelTurma: true,
     parecida,
   };
 }

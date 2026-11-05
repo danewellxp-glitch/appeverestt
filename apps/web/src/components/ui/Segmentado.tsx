@@ -12,11 +12,14 @@ export function Segmentado<T extends string>({
   valor,
   aoMudar,
   rotulo,
+  compacto = false,
 }: {
   opcoes: readonly OpcaoSegmentado<T>[];
   valor: T;
   aoMudar: (valor: T) => void;
   rotulo: string;
+  /** Ícone em cima do rótulo, texto menor: cabe 4 opções num celular de 360 px. */
+  compacto?: boolean;
 }) {
   return (
     <div role="group" aria-label={rotulo} className="flex gap-0.5 rounded-full bg-superficie-2 p-1">
@@ -28,7 +31,7 @@ export function Segmentado<T extends string>({
             type="button"
             aria-pressed={ativo}
             onClick={() => aoMudar(o.valor)}
-            className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full px-2.5 text-[13px] font-medium transition-colors duration-200 ${ativo ? 'bg-superficie text-texto shadow-[0_1px_3px_rgb(0_0_0/0.14)]' : 'text-texto-2 hover:text-texto'}`}
+            className={`flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-full font-medium ${compacto ? 'flex-col gap-0.5 px-1 py-1.5 text-[11.5px] leading-none' : 'gap-1.5 px-2.5 text-[13px]'} transition-colors duration-200 ${ativo ? 'bg-superficie text-texto shadow-[0_1px_3px_rgb(0_0_0/0.14)]' : 'text-texto-2 hover:text-texto'}`}
           >
             {o.icone}
             {o.rotulo}

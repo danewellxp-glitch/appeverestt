@@ -26,6 +26,10 @@ export const MENSAGENS_ERRO: Record<CodigoErro | 'REDE', string> = {
   DESAFIO_NAO_EDITAVEL: 'Essa mudança não é mais possível neste desafio.',
   PAGAMENTO_INDISPONIVEL: 'O pagamento ainda não está disponível. Tente de novo mais tarde.',
   PUSH_NAO_CONFIGURADO: 'As notificações ainda não estão disponíveis. Tente de novo mais tarde.',
+  JA_CUTUCOU: 'Você já cutucou essa pessoa hoje.',
+  CUTUCADA_RECUSADA: 'Essa pessoa não recebe cutucadas agora.',
+  POSE_JA_DEFINIDA: 'Alguém já sugeriu a pose de hoje.',
+  POSE_SEM_TREINO: 'Mande a foto do treino primeiro.',
   ERRO_INTERNO: 'Algo deu errado do nosso lado. Tente novamente.',
   REDE: 'Sem conexão. Verifique sua internet.',
 };

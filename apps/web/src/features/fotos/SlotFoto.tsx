@@ -1,5 +1,5 @@
 import type { FotoDia, TipoFoto } from '@everest/shared';
-import { BookOpen, Check, Droplets, Dumbbell, Loader2, RefreshCw, X } from 'lucide-react';
+import { BookOpen, Check, Droplets, Dumbbell, EyeOff, Loader2, RefreshCw, X } from 'lucide-react';
 import { useRef } from 'react';
 import { ROTULO_TIPO_FOTO, fotoEhValida } from './fotosValidas';
 import type { EstadoFoto } from './useUploadFoto';
@@ -117,6 +117,12 @@ export function SlotFoto({
         <span className={`${SELO} bg-black/60`}>
           <Check className="size-3 shrink-0" aria-hidden />
           {rotulo}
+        </span>
+      )}
+      {tipo === 'EXERCICIO' && valida && foto.visivelTurma === false && !upload && (
+        <span className="absolute top-1.5 left-1.5 grid size-[30px] place-items-center rounded-full bg-black/60 text-white">
+          <EyeOff className="size-[15px]" aria-hidden />
+          <span className="sr-only">Escondida da turma</span>
         </span>
       )}
       {editavel && !ocupado && (

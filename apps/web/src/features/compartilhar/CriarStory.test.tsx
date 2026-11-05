@@ -108,6 +108,7 @@ describe('CriarStory', () => {
             status: 'CONFIRMADA',
             thumbUrl: null,
             url: 'https://x/f.webp',
+            visivelTurma: true,
           },
         ],
       },

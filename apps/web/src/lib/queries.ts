@@ -6,6 +6,8 @@ import type {
   MeResposta,
   MeuProgresso,
   RankingResposta,
+  TreinosTurmaResposta,
+  TurmaHojeResposta,
 } from '@everest/shared';
 import { api, ehApiError } from './api';
 
@@ -17,6 +19,9 @@ export const chaves = {
   dia: (slug: string, n: number) => ['dia', slug, n] as const,
   ranking: (slug: string) => ['ranking', slug] as const,
   feed: (slug: string) => ['feed', slug] as const,
+  turmaHoje: (slug: string) => ['turma', 'hoje', slug] as const,
+  /** `dia` null = o dia atual (padrão do servidor). */
+  treinosTurma: (slug: string, dia: number | null) => ['turma', 'treinos', slug, dia] as const,
   pagamento: (slug: string) => ['pagamento', slug] as const,
   feedback: (slug: string) => ['feedback', slug] as const,
   adminParticipantes: (slug: string) => ['admin', 'participantes', slug] as const,
@@ -84,5 +89,34 @@ export function useFeed(slug: string | undefined) {
     queryKey: chaves.feed(slug ?? ''),
     queryFn: ({ signal }) => api<FeedResposta>(`/desafios/${encodeURIComponent(slug ?? '')}/feed`, { signal }),
     enabled: Boolean(slug),
+  });
+}
+
+/** Quem fechou e quem falta fechar o dia atual (aba Hoje do ranking). O servidor guarda 60 s. */
+export function useTurmaHoje(slug: string | undefined) {
+  return useQuery({
+    queryKey: chaves.turmaHoje(slug ?? ''),
+    queryFn: ({ signal }) =>
+      api<TurmaHojeResposta>(`/desafios/${encodeURIComponent(slug ?? '')}/turma/hoje`, { signal }),
+    enabled: Boolean(slug),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+  });
+}
+
+/** Fotos de treino da turma num dia (null = dia atual) e a pose do dia. URLs assinadas valem 10 min. */
+export function useTreinosTurma(slug: string | undefined, dia: number | null, opcoes: { habilitado?: boolean } = {}) {
+  return useQuery({
+    queryKey: chaves.treinosTurma(slug ?? '', dia),
+    queryFn: ({ signal }) =>
+      api<TreinosTurmaResposta>(
+        `/desafios/${encodeURIComponent(slug ?? '')}/turma/treinos${dia === null ? '' : `?dia=${dia}`}`,
+        { signal },
+      ),
+    enabled: Boolean(slug) && (opcoes.habilitado ?? true),
+    staleTime: 30_000,
+    refetchInterval: 8 * 60_000,
+    refetchIntervalInBackground: false,
   });
 }
